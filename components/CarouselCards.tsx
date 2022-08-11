@@ -1,19 +1,24 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { View } from "react-native"
 import Carousel, { Pagination } from 'react-native-snap-carousel'
 import CarouselCardItem, { SLIDER_WIDTH, ITEM_WIDTH } from './CarouselCardItem'
-import data from './data.ts'
+import { getFavorites, SearchString } from '../components/data';
 
 const CarouselCards = () => {
   const isCarousel = React.useRef(null)
   const [index, setIndex] = React.useState(0)
+  const [favorites, updateFavorites] = useState(getFavorites());
+  useEffect(()=>{
+    updateFavorites(getFavorites());
+  }, [SearchString])
+
   return (
     <View>
       <Carousel
         layout="default"
         layoutCardOffset={9}
         ref={isCarousel}
-        data={data}
+        data={favorites}
         renderItem={CarouselCardItem}
         sliderWidth={SLIDER_WIDTH}
         itemWidth={ITEM_WIDTH}
@@ -22,7 +27,7 @@ const CarouselCards = () => {
         onSnapToItem={(index) => setIndex(index)}
       />
       <Pagination
-  dotsLength={data.length}
+  dotsLength={favorites.length}
   activeDotIndex={index}
   carouselRef={isCarousel}
   dotStyle={{

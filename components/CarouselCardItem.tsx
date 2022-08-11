@@ -1,22 +1,46 @@
+import { Link } from '@react-navigation/native';
 import React from 'react'
-import { View, Text, StyleSheet, Dimensions, Image, ScrollView } from "react-native"
+import { View, Text, StyleSheet, Dimensions, Image, ScrollView, Linking, Pressable } from "react-native"
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PressableImage from './PressableImage'
 
 export const SLIDER_WIDTH = Dimensions.get('window').width + 80
 export const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.50)
 export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * 3 / 5);
 
+
+
+
 const CarouselCardItem = ({ item, index }) => {
   return ( 
     <View style={styles.container} key={index}>  
       <ScrollView scrollEnabled={true}>
-        <Image
-          source={{ uri: item.imgUrl }}
-          style={styles.image}
-        />
+        <View style={{flex:1, flexDirection:'row'}}>
+          <Image
+            source={{ uri: item.imgUrl }}
+            style={styles.image}
+          />
+          <PressableImage
+            source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
+            style={styles.contactIcon}
+            url={item.twitter}
+            />
+          <PressableImage
+            source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
+            style={styles.contactIcon}
+            url={item.instagram}/>
+          <PressableImage
+            source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
+            style={styles.contactIcon}
+            url={item.facebook}/>
+            
+          <PressableImage
+            source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
+            style={styles.contactIcon}
+            url={item.web}/>
+        </View>
           
         <Text style={styles.header}>{item.title}</Text>        
-        
         <Text style={styles.body}>{item.body}</Text>
       </ScrollView>
     </View>
@@ -57,6 +81,11 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     paddingLeft: 20,
     paddingRight: 20
+  },
+  contactIcon:{
+    width:22,
+    height:22,
+    margin: 2,
   }
 })
 
