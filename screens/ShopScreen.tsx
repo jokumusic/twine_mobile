@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, ImageBackground, FlatList } from 'react-native';
 import ImageCarousel from '../components/ImageCarousel';
-import { Text, View, TextInput } from '../components/Themed';
+import { Text, View, TextInput, Button} from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import CarouselCards from '../components/CarouselCards'
 
@@ -26,7 +26,6 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
