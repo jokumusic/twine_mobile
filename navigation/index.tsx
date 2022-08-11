@@ -9,7 +9,8 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
 import { ColorSchemeName, Pressable } from 'react-native';
-
+import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
+import LinkingConfiguration from './LinkingConfiguration';
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import AboutScreen from '../screens/AboutScreen';
@@ -18,9 +19,10 @@ import NotFoundScreen from '../screens/NotFoundScreen';
 import ShopScreen from '../screens/ShopScreen';
 import StoresScreen from '../screens/StoresScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import StoreDetailsScreen from '../screens/StoreDetailsScreen';
+import CreateProductScreen from '../screens/CreateProductScreen';
+import EditStoreScreen from '../screens/EditStoreScreen';
 
-import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
-import LinkingConfiguration from './LinkingConfiguration';
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
@@ -46,6 +48,9 @@ function RootNavigator() {
       <Stack.Group screenOptions={{ presentation: 'modal' }}>
         <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen name="CreateStore" component={CreateStoreScreen} />
+        <Stack.Screen name="StoreDetails" component={StoreDetailsScreen} />
+        <Stack.Screen name="CreateProduct" component={CreateProductScreen} />
+        <Stack.Screen name="EditStore" component={EditStoreScreen} />
       </Stack.Group>
     </Stack.Navigator>
   );
@@ -70,7 +75,8 @@ function BottomTabNavigator() {
         name="ShopTab"
         component={ShopScreen}
         options={({ navigation }: RootTabScreenProps<'ShopTab'>) => ({
-          title: 'Shop',
+          title: 'Browse',
+          headerShown: true,
           tabBarIcon: ({ color }) => <TabBarIcon name='search' color={color} />,
           headerRight: () => (
             <Pressable
@@ -93,6 +99,7 @@ function BottomTabNavigator() {
         component={StoresScreen}
         options={({ navigation }: RootTabScreenProps<'StoresTab'>) => ({
           title: 'Manage Stores',
+          headerShown: true,
           tabBarIcon: ({ color }) => <TabBarIcon name='store' color={color} />,
           headerRight: () => (
             <Pressable
@@ -116,6 +123,7 @@ function BottomTabNavigator() {
         component={SettingsScreen}
         options={({ navigation }: RootTabScreenProps<'SettingsTab'>) => ({
           title: 'Settings',
+          headerShown: true,
           tabBarIcon: ({ color }) => <TabBarIcon name='cog' color={color} />,
         })}
       />

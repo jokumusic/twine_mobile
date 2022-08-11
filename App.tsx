@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { ColorSchemeName, AppRegistry, Text } from 'react-native';
+import {Suspense} from 'react';
+import { ColorSchemeName, AppRegistry, Text,View, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import {store,persistor} from './reducers/store';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -12,8 +13,28 @@ import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
 
-import {DarkTheme as PaperDarkTheme, DefaultTheme as PaperDefaultTheme, Provider as PaperProvider } from 'react-native-paper';
+import {ActivityIndicator, DarkTheme as PaperDarkTheme, DefaultTheme as PaperDefaultTheme, Provider as PaperProvider } from 'react-native-paper';
 
+import { clusterApiUrl, Keypair } from '@solana/web3.js';
+import { useMemo } from 'react';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+
+const DEVNET_ENDPOINT = /*#__PURE__*/ clusterApiUrl('devnet');
+
+
+/*const wallets = useMemo(() => [
+  new SolanaMobileWalletAdapter({
+      addressSelector: createDefaultAddressSelector(),
+      appIdentity: {
+          name: 'twine',
+          uri: 'https://twine.io',
+          icon: './assets/images/adaptive-icon.png',
+     },
+      authorizationResultCache: createDefaultAuthorizationResultCache(),
+  }),
+  //new PhantomWalletAdapter()
+]);
+*/
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
@@ -21,15 +42,25 @@ export default function App() {
   if (!isLoadingComplete) {
     return null;
   } else {
-    return (      
+    return (
       <Provider store={store}>
         <PersistGate loading={<Text>Loading...</Text>} persistor={persistor}>
-        <SafeAreaProvider>
-          <PaperProvider theme={PaperDarkTheme}>
-          <Navigation colorScheme={colorScheme}/>
-          <StatusBar />
-          </PaperProvider>
-        </SafeAreaProvider>
+          <SafeAreaProvider>
+            <PaperProvider theme={PaperDarkTheme}>
+            <Suspense
+              fallback={
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator
+                    size="large"
+                    style={styles.loadingIndicator}
+                  />
+                </View>
+              }>
+              <Navigation colorScheme={colorScheme}/>
+              <StatusBar />
+              </Suspense>
+            </PaperProvider>
+          </SafeAreaProvider>
         </PersistGate>
       </Provider>
     );
@@ -53,3 +84,17 @@ export function Main() {
 
 //AppRegistry.registerComponent(appName, () => Main);
 */
+
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    height: '100%',
+    justifyContent: 'center',
+  },
+  loadingIndicator: {
+    marginVertical: 'auto',
+  },
+  shell: {
+    height: '100%',
+  },
+});

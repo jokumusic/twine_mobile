@@ -1,24 +1,20 @@
-import React, {useReducer, useState} from 'react';
+import React, {useMemo, useReducer, useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import * as Settings from '../reducers/settings';
 import { RootTabScreenProps } from '../types';
 import { StyleSheet } from 'react-native';
 import { Text, View, TextInput, Button, FlatList } from '../components/Themed';
 import Colors from '../constants/Colors';
-import { AccountInfo } from '@solana/web3.js';
-import { useWallet, ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
+import {Keypair, clusterApiUrl, PublicKey, PublicKeyInitData, AccountInfo} from '@solana/web3.js';
+import AccountBalance from '../components/AccountBalance';
 
 
 export default function SettingsScreen({ navigation }: RootTabScreenProps<'SettingsTab'>) {
   const settings = useSelector(state=>state);
   const dispatch = useDispatch();
-  const [masterKey, updateMasterKey] = useState(settings.masterKey);
   const [other, updateOther] = useState('');
-  /*const [endpoint, updateEndpoint] = useState("http://127.0.0.1:8899");
-  const [wallets, updateWallets] = useState([new PhantomWalletAdapter()]);
-*/
+
+
   return (  
     <View>
       <Text>
@@ -28,25 +24,13 @@ export default function SettingsScreen({ navigation }: RootTabScreenProps<'Setti
       </Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)"/>
 
- 
-    
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Master Key:</Text>
-        <TextInput style={styles.fieldValue} placeholder='' value={masterKey} onChangeText={(text) => updateMasterKey(text)}/>
-      </View>
-
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Other Value:</Text>
         <TextInput style={styles.fieldValue} placeholder='' value={other} onChangeText={(text) => updateOther(text)}/>
       </View>
 
-      <View style={styles.separator}/>
-
-    <View>
-      <Button title='Save' onPress={()=>{dispatch(Settings.setMasterKey(masterKey))}}/>
+      <View style={styles.separator}/>  
     </View>
-  
-  </View>
   );
 }
 
