@@ -19,12 +19,14 @@ import {
   AccountInfo,
 } from "@solana/web3.js";
 import * as web3 from "@solana/web3.js";
+import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
 
 
 export default function CreateStoreScreen() {
   const [state, updateState] = useState('')
   const settings = useSelector(state => state);
   const dispatch = useDispatch();
+  const [storeData, updateStoreData] = useState({name:'', description:''});
 /*
   async function showAccountInfo() {
       Solana
@@ -91,17 +93,51 @@ async function createStore() {
     .catch(error=>console.log(error));     
 }
 
+const readStore = async () => {
+  console.log('reading store');  
+
+  const pubkey = Phantom.getWalletPublicKey();
+  const network = clusterApiUrl("devnet")
+  const connection = new Connection(network);
+
+  const wallet = {
+    signTransaction: Phantom.signTransaction,
+    signAllTransactions: Phantom.signAllTransactions,
+    publicKey: pubkey
+  };
+
+  const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
+  const program = new anchor.Program(idl as anchor.Idl, new PublicKey("BKzDVQpoGW77U3ayBN6ELDbvEvSi2TYpSzHm8KhNmrCx"), provider) as anchor.Program<Twine>;
+  
+  console.log('generating PDA...');
+  const [storePda, storePdaBump] = PublicKey
+    .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
+    
+    console.log('fetching data from PDA...');
+    const store = program.account
+    .store
+    .fetch(storePda)
+    .then(d=>{
+      console.log('got store data');
+      updateStoreData({name: d.name, description: d.description});
+    })
+    .catch(error=>console.log(error));
+    
+    
+}
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Store</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       
       <View style={styles.body}>
-        <TextInput placeholder='Name'/>
+        <TextInput placeholder='Name' value={storeData.name}/>
         <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1}} 
         placeholder='Description'
         multiline={true}
-        numberOfLines={4}/>
+        numberOfLines={4}
+        value={storeData.description}/>
       </View>
 {/*
      <View style={styles.accountInfo}>
@@ -113,6 +149,7 @@ async function createStore() {
       <View style={styles.container}>
         <Button title='Connect Wallet' onPress={connectWallet}/>
         <Button title='Create Store' onPress={createStore} />
+        <Button title='Read Store Data' onPress={readStore} />
       </View>
       
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
