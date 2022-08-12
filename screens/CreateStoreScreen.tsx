@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, connect } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
 //import * as Settings from '../reducers/settings'
@@ -21,6 +21,7 @@ import {
 import * as web3 from "@solana/web3.js";
 import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
 import { program } from '../dist/browser/types/src/spl/associated-token';
+import { getCustomTabsSupportingBrowsersAsync } from 'expo-web-browser';
 
 
 export default function CreateStoreScreen() {
@@ -42,7 +43,8 @@ export default function CreateStoreScreen() {
 async function connectWallet(){
   Phantom
   .connect()
-  .then(()=>console.log('connected to wallet'));
+  .then(()=>console.log('connected to wallet'))
+  .catch(err=> console.log(err));
 }
 
 
@@ -58,27 +60,27 @@ function getProgram(connection: Connection, pubkey: PublicKey){
   return program;  
 }
 
-async function createStore() {
-  console.log('creating store'); 
-  const pubkey = Phantom.getWalletPublicKey();
-  const network = clusterApiUrl("devnet")
-  const connection = new Connection(network);
-  
+async function createCompany() {  
+    const pubkey = Phantom.getWalletPublicKey();
+    const network = clusterApiUrl("devnet")
+    const connection = new Connection(network);    
     const program = getProgram(connection, pubkey);
-    console.log('program created');
-    const [storePda, storePdaBump] = PublicKey
-      .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
-    const storeName = storeData.name;
-    const storeDescription = storeData.description;
-    
+    const [companyPda, companyPdaBump] = PublicKey
+    .findProgramAddressSync([anchor.utils.bytes.utf8.encode("company"), pubkey.toBuffer()], program.programId);
+    const companyInfo = await connection.getAccountInfo(companyPda);
+    if(companyInfo) {
+      console.log('company already exists');
+      return;
+    }
+  
+    console.log('creating company...');
     const tx = await program.methods
-    .createStore(storeName, storeDescription)
+    .createCompany()
     .accounts({
-      store: storePda,
+      company: companyPda,
       payer: pubkey,
       owner: pubkey,
-    })
-    
+    })    
     .transaction()
     .catch(reason=>console.log(reason));
 
@@ -89,13 +91,58 @@ async function createStore() {
     .signAndSendTransaction(tx, false)
     .then(async (trans)=>{
       console.log('sent trans:', trans);
-      const createdStore = await program.account
+      const createdCompany = await program.account
                                   .store
-                                  .fetch(storePda)
+                                  .fetch(companyPda)
                                   .catch(error=>console.log(error));
-      console.log('OnChain StoreName is ', createdStore.storeName);      
+      console.log('company created');      
     })
-    .catch(error=>console.log(error));     
+    .catch(error=>console.log(error));  
+}
+
+async function createStore() {
+  const pubkey = Phantom.getWalletPublicKey();
+  const network = clusterApiUrl("devnet")
+  const connection = new Connection(network);  
+  const program = getProgram(connection, pubkey);
+  const [storePda, storePdaBump] = PublicKey
+    .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
+
+  const storeInfo = await connection.getAccountInfo(storePda);
+  if(storeInfo){
+    console.log('store already exists');
+    return;
+  }
+    
+  console.log('creating store'); 
+  const storeName = storeData.name;
+  const storeDescription = storeData.description;
+  
+  const tx = await program.methods
+  .createStore(storeName, storeDescription)
+  .accounts({
+    store: storePda,
+    payer: pubkey,
+    owner: pubkey,
+  })
+  
+  .transaction()
+  .catch(reason=>console.log(reason));
+
+  tx.feePayer = pubkey;  
+  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+  Phantom
+  .signAndSendTransaction(tx, false)
+  .then(async (trans)=>{
+    console.log('sent trans:', trans);
+    const createdStore = await program.account
+                                .store
+                                .fetch(storePda)
+                                .catch(error=>console.log(error));
+    console.log('OnChain StoreName is ', createdStore.storeName);      
+  })
+  .catch(error=>console.log(error));     
 }
 
 const readStore = async () => {
@@ -188,7 +235,9 @@ const updateStore = async() =>{
   */}
 
       <View style={styles.container}>
+        <Text>The following buttons are for testing and to temporarily deal with Phantom not responding on every call</Text>
         <Button title='Connect Wallet' onPress={connectWallet}/>
+        <Button title='Create Company'  onPress={createCompany} />
         <Button title='Create Store' onPress={createStore} />
         <Button title='Read Store Data' onPress={readStore} />
         <Button title='Update Store Data' onPress={updateStore} />
