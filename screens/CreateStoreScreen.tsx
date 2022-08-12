@@ -20,6 +20,7 @@ import {
 } from "@solana/web3.js";
 import * as web3 from "@solana/web3.js";
 import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
+import { program } from '../dist/browser/types/src/spl/associated-token';
 
 
 export default function CreateStoreScreen() {
@@ -44,27 +45,31 @@ async function connectWallet(){
   .then(()=>console.log('connected to wallet'));
 }
 
+
+function getProgram(connection: Connection, pubkey: PublicKey){
+  const wallet = {
+    signTransaction: Phantom.signTransaction,
+    signAllTransactions: Phantom.signAllTransactions,
+    publicKey: pubkey
+  };
+
+  const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
+  const program = new anchor.Program(idl as anchor.Idl, new PublicKey("BKzDVQpoGW77U3ayBN6ELDbvEvSi2TYpSzHm8KhNmrCx"), provider) as anchor.Program<Twine>;
+  return program;  
+}
+
 async function createStore() {
-  console.log('creating store');  
-
-    const pubkey = Phantom.getWalletPublicKey();
-    const network = clusterApiUrl("devnet")
-    const connection = new Connection(network);
-
-    const wallet = {
-      signTransaction: Phantom.signTransaction,
-      signAllTransactions: Phantom.signAllTransactions,
-      publicKey: pubkey
-    };
+  console.log('creating store'); 
+  const pubkey = Phantom.getWalletPublicKey();
+  const network = clusterApiUrl("devnet")
+  const connection = new Connection(network);
   
-    const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
-    const program = new anchor.Program(idl as anchor.Idl, new PublicKey("BKzDVQpoGW77U3ayBN6ELDbvEvSi2TYpSzHm8KhNmrCx"), provider) as anchor.Program<Twine>;
-    
+    const program = getProgram(connection, pubkey);
     console.log('program created');
     const [storePda, storePdaBump] = PublicKey
       .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
-    const storeName = "test-store";
-    const storeDescription = "test-store description";
+    const storeName = storeData.name;
+    const storeDescription = storeData.description;
     
     const tx = await program.methods
     .createStore(storeName, storeDescription)
@@ -85,45 +90,75 @@ async function createStore() {
     .then(async (trans)=>{
       console.log('sent trans:', trans);
       const createdStore = await program.account
-      .store
-      .fetch(storePda)
-      .catch(error=>console.log(error));
+                                  .store
+                                  .fetch(storePda)
+                                  .catch(error=>console.log(error));
       console.log('OnChain StoreName is ', createdStore.storeName);      
     })
     .catch(error=>console.log(error));     
 }
 
 const readStore = async () => {
-  console.log('reading store');  
-
+  console.log('reading store');
   const pubkey = Phantom.getWalletPublicKey();
   const network = clusterApiUrl("devnet")
   const connection = new Connection(network);
+  const program = getProgram(connection, pubkey);
 
-  const wallet = {
-    signTransaction: Phantom.signTransaction,
-    signAllTransactions: Phantom.signAllTransactions,
-    publicKey: pubkey
-  };
-
-  const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
-  const program = new anchor.Program(idl as anchor.Idl, new PublicKey("BKzDVQpoGW77U3ayBN6ELDbvEvSi2TYpSzHm8KhNmrCx"), provider) as anchor.Program<Twine>;
-  
   console.log('generating PDA...');
   const [storePda, storePdaBump] = PublicKey
     .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
     
     console.log('fetching data from PDA...');
     const store = program.account
-    .store
-    .fetch(storePda)
-    .then(d=>{
-      console.log('got store data');
-      updateStoreData({name: d.name, description: d.description});
+                        .store
+                        .fetch(storePda)
+                        .then(d=>{
+                          console.log('got store data');
+                          updateStoreData({name: d.name, description: d.description});
+                        })
+                        .catch(error=>console.log(error));
+}
+
+const updateStore = async() =>{
+  console.log('updating store...');
+  const pubkey = Phantom.getWalletPublicKey();
+  const network = clusterApiUrl("devnet");
+  const connection = new Connection(network);
+  const program = getProgram(connection, pubkey);
+
+  const [storePda, storePdaBump] = PublicKey
+  .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
+  const storeName = storeData.name;
+  const storeDescription = storeData.description;
+
+  const tx = await program.methods
+  .updateStore(storeName, storeDescription)
+  .accounts({
+    store: storePda,
+    payer: pubkey,
+    owner: pubkey,
+  })
+  .transaction()
+  .catch(reason=>console.log(reason));
+
+  tx.feePayer = pubkey;  
+  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+  
+  Phantom
+  .signAndSendTransaction(tx, false)
+  .then(async (trans)=>{
+    console.log('signed trans:', trans);
+      program
+        .account
+        .store
+        .fetch(storePda)
+        .next(updatedStore=>{
+          console.log('OnChain StoreName is ', updatedStore.storeName);   
+        })
+        .catch(error=>console.log(error));         
     })
-    .catch(error=>console.log(error));
-    
-    
+    .catch(err=>console.log(err))
 }
 
   return (
@@ -132,12 +167,18 @@ const readStore = async () => {
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       
       <View style={styles.body}>
-        <TextInput placeholder='Name' value={storeData.name}/>
+        <TextInput 
+          placeholder='Name'
+          value={storeData.name}
+          onChangeText={(t)=>updateStoreData({name: t, description: storeData.description})}
+          />
         <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1}} 
         placeholder='Description'
         multiline={true}
         numberOfLines={4}
-        value={storeData.description}/>
+        value={storeData.description}
+        onChangeText={(t)=>updateStoreData({name: storeData.name, description: t})}
+        />
       </View>
 {/*
      <View style={styles.accountInfo}>
@@ -150,6 +191,7 @@ const readStore = async () => {
         <Button title='Connect Wallet' onPress={connectWallet}/>
         <Button title='Create Store' onPress={createStore} />
         <Button title='Read Store Data' onPress={readStore} />
+        <Button title='Update Store Data' onPress={updateStore} />
       </View>
       
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
