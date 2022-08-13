@@ -23,6 +23,7 @@ import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStat
 import { program } from '../dist/browser/types/src/spl/associated-token';
 import { getCustomTabsSupportingBrowsersAsync } from 'expo-web-browser';
 
+const twine_program = new PublicKey("ow1FPwr4YunmzcYzCswCnhVqpEiD6H32zVJMSdRsi7Q");
 
 export default function CreateStoreScreen() {
   const [state, updateState] = useState('')
@@ -56,7 +57,7 @@ function getProgram(connection: Connection, pubkey: PublicKey){
   };
 
   const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
-  const program = new anchor.Program(idl as anchor.Idl, new PublicKey("BKzDVQpoGW77U3ayBN6ELDbvEvSi2TYpSzHm8KhNmrCx"), provider) as anchor.Program<Twine>;
+  const program = new anchor.Program(idl as anchor.Idl, twine_program, provider) as anchor.Program<Twine>;
   return program;  
 }
 
@@ -78,7 +79,6 @@ async function createCompany() {
     .createCompany()
     .accounts({
       company: companyPda,
-      payer: pubkey,
       owner: pubkey,
     })    
     .transaction()
@@ -91,6 +91,7 @@ async function createCompany() {
     .signAndSendTransaction(tx, false)
     .then(async (trans)=>{
       console.log('sent trans:', trans);
+      await connection.confirmTransaction(trans.signature); //wait for confirmation before trying to retrieve account data
       const createdCompany = await program.account
                                   .store
                                   .fetch(companyPda)
@@ -105,8 +106,14 @@ async function createStore() {
   const network = clusterApiUrl("devnet")
   const connection = new Connection(network);  
   const program = getProgram(connection, pubkey);
+  const [companyPda, companyPdaBump] = PublicKey
+  .findProgramAddressSync([anchor.utils.bytes.utf8.encode("company"), pubkey.toBuffer()], program.programId);
   const [storePda, storePdaBump] = PublicKey
-    .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
+    .findProgramAddressSync([
+        anchor.utils.bytes.utf8.encode("store"),
+        pubkey.toBuffer(),
+        companyPda.toBuffer(),
+        new Uint8Array([0,0,0,0])], program.programId);
 
   const storeInfo = await connection.getAccountInfo(storePda);
   if(storeInfo){
@@ -121,11 +128,10 @@ async function createStore() {
   const tx = await program.methods
   .createStore(storeName, storeDescription)
   .accounts({
-    store: storePda,
-    payer: pubkey,
+    company: companyPda,
+    store: storePda,    
     owner: pubkey,
-  })
-  
+  })  
   .transaction()
   .catch(reason=>console.log(reason));
 
@@ -136,6 +142,7 @@ async function createStore() {
   .signAndSendTransaction(tx, false)
   .then(async (trans)=>{
     console.log('sent trans:', trans);
+    await connection.confirmTransaction(trans.signature); //wait for confirmation before retrieving account data
     const createdStore = await program.account
                                 .store
                                 .fetch(storePda)
@@ -151,20 +158,24 @@ const readStore = async () => {
   const network = clusterApiUrl("devnet")
   const connection = new Connection(network);
   const program = getProgram(connection, pubkey);
-
-  console.log('generating PDA...');
-  const [storePda, storePdaBump] = PublicKey
-    .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
+  const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
+                                                  anchor.utils.bytes.utf8.encode("company"),
+                                                  pubkey.toBuffer()], program.programId);
+  const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
+                                                anchor.utils.bytes.utf8.encode("store"),
+                                                pubkey.toBuffer(),
+                                                companyPda.toBuffer(),
+                                                new Uint8Array([0,0,0,0])], program.programId);
     
     console.log('fetching data from PDA...');
     const store = program.account
-                        .store
-                        .fetch(storePda)
-                        .then(d=>{
-                          console.log('got store data');
-                          updateStoreData({name: d.name, description: d.description});
-                        })
-                        .catch(error=>console.log(error));
+                          .store
+                          .fetch(storePda)
+                          .then(d=>{
+                            console.log('got store data');
+                            updateStoreData({name: d.name, description: d.description});
+                          })
+                          .catch(error=>console.log(error));
 }
 
 const updateStore = async() =>{
@@ -174,16 +185,23 @@ const updateStore = async() =>{
   const connection = new Connection(network);
   const program = getProgram(connection, pubkey);
 
-  const [storePda, storePdaBump] = PublicKey
-  .findProgramAddressSync([anchor.utils.bytes.utf8.encode("store"), pubkey.toBuffer()], program.programId);
+  const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
+                                                  anchor.utils.bytes.utf8.encode("company"),
+                                                  pubkey.toBuffer()], program.programId);
+  const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
+                                              anchor.utils.bytes.utf8.encode("store"),
+                                              pubkey.toBuffer(),
+                                              companyPda.toBuffer(),
+                                              new Uint8Array([0,0,0,0])], program.programId);
   const storeName = storeData.name;
   const storeDescription = storeData.description;
+  const storeNumber = 0;
 
   const tx = await program.methods
-  .updateStore(storeName, storeDescription)
+  .updateStore(storeNumber, storeName, storeDescription)
   .accounts({
+    company: companyPda,
     store: storePda,
-    payer: pubkey,
     owner: pubkey,
   })
   .transaction()
@@ -196,6 +214,7 @@ const updateStore = async() =>{
   .signAndSendTransaction(tx, false)
   .then(async (trans)=>{
     console.log('signed trans:', trans);
+    await connection.confirmTransaction(trans.signature); //wait for confirmation
       program
         .account
         .store

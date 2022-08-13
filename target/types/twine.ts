@@ -11,14 +11,9 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "owner",
           "isMut": true,
           "isSigner": true
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -37,14 +32,14 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "company",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "systemProgram",
@@ -72,17 +67,21 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "company",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "owner",
           "isMut": true,
           "isSigner": true
         }
       ],
       "args": [
+        {
+          "name": "storeNumber",
+          "type": "u32"
+        },
         {
           "name": "name",
           "type": "string"
@@ -92,27 +91,6 @@ export type Twine = {
           "type": "string"
         }
       ]
-    },
-    {
-      "name": "changeStoreOwner",
-      "accounts": [
-        {
-          "name": "store",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -146,8 +124,8 @@ export type Twine = {
             "type": "u8"
           },
           {
-            "name": "creator",
-            "type": "publicKey"
+            "name": "storeNumber",
+            "type": "u32"
           },
           {
             "name": "owner",
@@ -160,6 +138,10 @@ export type Twine = {
           {
             "name": "description",
             "type": "string"
+          },
+          {
+            "name": "productCount",
+            "type": "u64"
           }
         ]
       }
@@ -170,8 +152,12 @@ export type Twine = {
         "kind": "struct",
         "fields": [
           {
-            "name": "creator",
-            "type": "publicKey"
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "productNumber",
+            "type": "u64"
           },
           {
             "name": "owner",
@@ -179,6 +165,10 @@ export type Twine = {
           },
           {
             "name": "store",
+            "type": "publicKey"
+          },
+          {
+            "name": "mint",
             "type": "publicKey"
           },
           {
@@ -192,6 +182,10 @@ export type Twine = {
           {
             "name": "cost",
             "type": "u64"
+          },
+          {
+            "name": "sku",
+            "type": "string"
           }
         ]
       }
@@ -257,6 +251,33 @@ export type Twine = {
           }
         ]
       }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "PublicKeyMismatch",
+      "msg": "PublicKeyMismatch"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidMintAuthority",
+      "msg": "InvalidMintAuthority"
+    },
+    {
+      "code": 6002,
+      "name": "UninitializedAccount",
+      "msg": "UninitializedAccount"
+    },
+    {
+      "code": 6003,
+      "name": "IncorrectOwner",
+      "msg": "IncorrectOwner"
+    },
+    {
+      "code": 6004,
+      "name": "StoreNumberDoesntMatchCompanyStoreCount",
+      "msg": "StoreNumberDoesntMatchCompanyStoreCount"
     }
   ]
 };
@@ -274,14 +295,9 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "owner",
           "isMut": true,
           "isSigner": true
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -300,14 +316,14 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "company",
           "isMut": true,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "owner",
-          "isMut": false,
-          "isSigner": false
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "systemProgram",
@@ -335,17 +351,21 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "company",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "owner",
           "isMut": true,
           "isSigner": true
         }
       ],
       "args": [
+        {
+          "name": "storeNumber",
+          "type": "u32"
+        },
         {
           "name": "name",
           "type": "string"
@@ -355,27 +375,6 @@ export const IDL: Twine = {
           "type": "string"
         }
       ]
-    },
-    {
-      "name": "changeStoreOwner",
-      "accounts": [
-        {
-          "name": "store",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -409,8 +408,8 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
-            "name": "creator",
-            "type": "publicKey"
+            "name": "storeNumber",
+            "type": "u32"
           },
           {
             "name": "owner",
@@ -423,6 +422,10 @@ export const IDL: Twine = {
           {
             "name": "description",
             "type": "string"
+          },
+          {
+            "name": "productCount",
+            "type": "u64"
           }
         ]
       }
@@ -433,8 +436,12 @@ export const IDL: Twine = {
         "kind": "struct",
         "fields": [
           {
-            "name": "creator",
-            "type": "publicKey"
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "productNumber",
+            "type": "u64"
           },
           {
             "name": "owner",
@@ -442,6 +449,10 @@ export const IDL: Twine = {
           },
           {
             "name": "store",
+            "type": "publicKey"
+          },
+          {
+            "name": "mint",
             "type": "publicKey"
           },
           {
@@ -455,6 +466,10 @@ export const IDL: Twine = {
           {
             "name": "cost",
             "type": "u64"
+          },
+          {
+            "name": "sku",
+            "type": "string"
           }
         ]
       }
@@ -520,6 +535,33 @@ export const IDL: Twine = {
           }
         ]
       }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "PublicKeyMismatch",
+      "msg": "PublicKeyMismatch"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidMintAuthority",
+      "msg": "InvalidMintAuthority"
+    },
+    {
+      "code": 6002,
+      "name": "UninitializedAccount",
+      "msg": "UninitializedAccount"
+    },
+    {
+      "code": 6003,
+      "name": "IncorrectOwner",
+      "msg": "IncorrectOwner"
+    },
+    {
+      "code": 6004,
+      "name": "StoreNumberDoesntMatchCompanyStoreCount",
+      "msg": "StoreNumberDoesntMatchCompanyStoreCount"
     }
   ]
 };
