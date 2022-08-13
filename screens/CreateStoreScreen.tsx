@@ -231,7 +231,7 @@ const updateStore = async() =>{
                               .fetch(storePda)
                               .catch(error=>console.log(error));  
 
-  console.log('OnChain StoreName is ', updatedStore.name);
+  console.log('OnChain store: ', updatedStore);
   setActivityIndicatorIsVisible(false);
 }
 
