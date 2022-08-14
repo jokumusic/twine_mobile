@@ -24,6 +24,7 @@
     "@react-navigation/bottom-tabs": "^6.0.5",
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
+    "@solana/spl-token": "^0.3.0",
     "@solana/web3.js": "^1.50.1",
     "@types/bs58": "^4.0.1",
     "@types/react-native-snap-carousel": "^3.8.5",

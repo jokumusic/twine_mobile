@@ -91,6 +91,88 @@ export type Twine = {
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "createProduct",
+      "accounts": [
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "product",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "productMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintProductRef",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "store",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "company",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "program",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "storeNumber",
+          "type": "u32"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "cost",
+          "type": "u64"
+        },
+        {
+          "name": "sku",
+          "type": "string"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -122,6 +204,10 @@ export type Twine = {
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "company",
+            "type": "publicKey"
           },
           {
             "name": "storeNumber",
@@ -164,11 +250,11 @@ export type Twine = {
             "type": "publicKey"
           },
           {
-            "name": "store",
+            "name": "company",
             "type": "publicKey"
           },
           {
-            "name": "mint",
+            "name": "store",
             "type": "publicKey"
           },
           {
@@ -186,6 +272,22 @@ export type Twine = {
           {
             "name": "sku",
             "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mintProductRef",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "product",
+            "type": "publicKey"
           }
         ]
       }
@@ -375,6 +477,88 @@ export const IDL: Twine = {
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "createProduct",
+      "accounts": [
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "product",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "productMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintProductRef",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "store",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "company",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "program",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "storeNumber",
+          "type": "u32"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "cost",
+          "type": "u64"
+        },
+        {
+          "name": "sku",
+          "type": "string"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -406,6 +590,10 @@ export const IDL: Twine = {
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "company",
+            "type": "publicKey"
           },
           {
             "name": "storeNumber",
@@ -448,11 +636,11 @@ export const IDL: Twine = {
             "type": "publicKey"
           },
           {
-            "name": "store",
+            "name": "company",
             "type": "publicKey"
           },
           {
-            "name": "mint",
+            "name": "store",
             "type": "publicKey"
           },
           {
@@ -470,6 +658,22 @@ export const IDL: Twine = {
           {
             "name": "sku",
             "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mintProductRef",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "product",
+            "type": "publicKey"
           }
         ]
       }

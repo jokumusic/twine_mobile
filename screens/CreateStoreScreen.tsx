@@ -12,7 +12,7 @@ import * as web3 from "@solana/web3.js";
 import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
 import { program } from '../dist/browser/types/src/spl/associated-token';
 import { getCustomTabsSupportingBrowsersAsync } from 'expo-web-browser';
-import { CircleActivityIndicator} from '../components/ActivityIndicator';
+
 
 import {
   clusterApiUrl,
@@ -25,7 +25,7 @@ import {
 } from "@solana/web3.js";
 
 
-const twine_program = new PublicKey("ow1FPwr4YunmzcYzCswCnhVqpEiD6H32zVJMSdRsi7Q");
+const twine_program = new PublicKey("GMfD6UaH9SCYv6xoT7Jb7X14L2TSQaJbtLGpdzU4f88P");
 
 export default function CreateStoreScreen() {
   const [state, updateState] = useState('')
@@ -92,9 +92,9 @@ async function createCompany() {
     tx.feePayer = pubkey;  
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-    await Phantom
-    .signAndSendTransaction(tx, false)
-    .catch(error=>console.log(error));
+    const trans = await Phantom
+      .signAndSendTransaction(tx, false)
+      .catch(error=>console.log(error));
     
     await connection.confirmTransaction(trans.signature); //wait for confirmation before trying to retrieve account data
     const createdCompany = await program.account
@@ -161,7 +161,7 @@ async function createStore() {
 
 const readStore = async () => {
   setActivityIndicatorIsVisible(true);
-  console.log('reading store');
+  console.log('reading store data');
   const pubkey = Phantom.getWalletPublicKey();
   const network = clusterApiUrl("devnet")
   const connection = new Connection(network);
@@ -182,6 +182,7 @@ const readStore = async () => {
   
   updateStoreData({name: store.name, description: store.description});
                         
+  console.log('done')
   setActivityIndicatorIsVisible(false);
 }
 
