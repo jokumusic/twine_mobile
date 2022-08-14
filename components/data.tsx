@@ -61,7 +61,7 @@ export const CardView = (item: any) => {
             <Image 
               source={{uri:item.imgUrl}}
               style={{width:80, height: 80}}/>
-            <View style={{flex:1, flexDirection: 'row', alignContent: 'flex-end', flexGrow: 1,}}>
+            <View >
               <PressableImage
                 source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
                 style={styles.contactIcon}
@@ -85,14 +85,14 @@ export const CardView = (item: any) => {
                 url={item.wiki}/>
             </View>
 
-            <View style={{flexDirection: 'column', alignContent: 'center', width: 100, margin:4}}>
-              <Text style={{fontSize:10, flexWrap: 'wrap', flex:1}}>{item.price ? '$' + item.price : ''}</Text>              
-                { item.rating &&
+            <View style={{flexDirection: 'column', alignContent: 'center', width: 100, margin:4}}>                          
+              { item.rating &&
                 <View style={{flex:1, flexDirection:'row', alignContent:'flex-start' }}>
                   <FontAwesome name="star" size={18} color={'gold'} style={{ margin:2 }}/>
                   <Text style={{fontSize:9, position: 'absolute', left: 8, top: 5}}>{Math.round(item.rating)}</Text>                  
                 </View>
-                }
+              }
+              <Text style={{fontSize:12, flexWrap: 'wrap', flex:1}}>{item.price ? '$' + item.price.toFixed(2) : ''}</Text>  
             </View>            
           </View>
         </View>
@@ -100,8 +100,8 @@ export const CardView = (item: any) => {
         </View>
         <View style={styles.cardBottomRow}>   
           <Text style={styles.itemHeader}>{item.title}</Text>  
-          <ScrollView contentContainerStyle={{flexGrow:1, flexDirection:'column'}}>  
-              <Text style={{fontSize:12}}>{item.body}</Text>
+          <ScrollView>  
+              <Text style={styles.itemBody}>{item.body}</Text>
           </ScrollView>
         </View>
         
@@ -175,11 +175,8 @@ const styles = new StyleSheet.create ({
     flexDirection: 'row',
   },
   itemBody: {
-    color: "#222",
     fontSize: 12,
-    paddingLeft: 20,
-    paddingRight: 10,
-    borderWidth: 1,
+    margin: 2,
   },
 });
 
@@ -194,7 +191,7 @@ export const favorites = [
       wiki:'https://everipedia.org/wiki/lang_en/anatoly-yakovenko',
     },
     {
-      id: 3,
+      id: 1,
       imgUrl: 'https://www.dualipa.com/wp-content/uploads/2019/10/DONT_START_NOW.jpg',
       title: 'Dua Lipa Official',
       body: 'This is the official Dua Lipa store!',
@@ -205,13 +202,13 @@ export const favorites = [
       wiki: 'https://en.wikipedia.org/wiki/Dua_Lipa',
     },   
     {
-      id: 1,
+      id: 2,
       imgUrl: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
       title: 'Busy Media Inc.',  
       body: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
     },
     {
-      id: 2,
+      id: 3,
       imgUrl: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
       title: 'Trendy Clothing Co.',
       body: 'All the trendy modern, old, contemporary clothes are here!',
@@ -275,7 +272,7 @@ export const mixedItems = [
     id: 7,
     imgUrl: 'https://www.producemarketguide.com/sites/default/files/Commodities.tar/Commodities/carrots_commodity-page.png',
     title: 'A Carrot',
-    body: 'Buy my carrot!',
+    body: 'Buy this carrot!',
     price: 3.50,
     rating: 5,
   },
