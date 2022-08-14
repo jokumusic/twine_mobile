@@ -5,8 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import PressableImage from './PressableImage'
 
 export const SLIDER_WIDTH = Dimensions.get('window').width + 80
-export const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.50)
-export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * 3 / 5);
+export const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .4)
+export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * .4);
 
 
 
@@ -14,7 +14,7 @@ export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * 3 / 5);
 const CarouselCardItem = ({ item, index }) => {
   return ( 
     <View style={styles.container} key={index}>  
-      <ScrollView scrollEnabled={true}>
+      <ScrollView>
         <View style={{flex:1, flexDirection:'row'}}>
           <Image
             source={{ uri: item.imgUrl }}
@@ -50,6 +50,7 @@ const CarouselCardItem = ({ item, index }) => {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 10,
     backgroundColor: 'white',
     borderRadius: 8,
     width: ITEM_WIDTH,
@@ -78,7 +79,6 @@ const styles = StyleSheet.create({
   body: {
     color: "#222",
     fontSize: 15,
-    paddingLeft: 20,
     paddingLeft: 20,
     paddingRight: 20
   },

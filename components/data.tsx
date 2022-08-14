@@ -4,7 +4,7 @@ import PressableImage from './PressableImage';
 
 export const WINDOW_WIDTH = Dimensions.get('window').width;
 export const ITEM_WIDTH = Math.round(WINDOW_WIDTH) * .30;
-export const ITEM_HEIGHT = ITEM_WIDTH; //Math.round(ITEM_WIDTH/4);
+export const ITEM_HEIGHT = ITEM_WIDTH + 35; //Math.round(ITEM_WIDTH/4);
 
 
 
@@ -52,47 +52,57 @@ export const getStores = ()=>{
 const colors = ['pink','orange','red','green','blue','purple','white','lime','#22FFFF','#00FFFF','#118681','#4499FF','#125533','#047582'];
 
 export const CardView = (item: any) => {
-  console.log(item.title)
   return (
     <View style={[styles.card,{backgroundColor: colors[Math.floor(Math.random() * colors.length)],}]}>
       <Pressable onPress={()=>{}} style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
-        <View style={styles.header}>
-          <Image 
-            source={{uri:item.imgUrl}}
-            style={{width:ITEM_WIDTH/2, height: ITEM_HEIGHT/2}}/>
-          <Text>{item.price}</Text>
+        <View style={styles.cardTopRow}>
+          <View style={{flex:1, flexDirection: 'row', alignContent:'flex-start'}}>
+            <Image 
+              source={{uri:item.imgUrl}}
+              style={{width:50, height: 50}}/>
+            <View style={{flex:1, flexDirection: 'row', alignContent: 'flex-end', flexGrow: 1,}}>
+              <PressableImage
+                source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
+                style={styles.contactIcon}
+                url={item.twitter}
+              />
+              <PressableImage
+                source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
+                style={styles.contactIcon}
+                url={item.instagram}/>
+              <PressableImage
+                source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
+                style={styles.contactIcon}
+                url={item.facebook}/>          
+              <PressableImage
+                source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
+                style={styles.contactIcon}
+                url={item.web}/>
+            </View>
+
+            <View style={{flex:1, flexDirection: 'column', alignContent: 'flex-end', flexGrow: 1, width: 100, marginTop:3, }}>
+              <Text style={{fontSize:10}}>{item.price ? item.price + ' USDC' : ''}</Text>
+              <Text style={{fontSize:10}}>{item.rating ? item.rating + ' stars' : ''}</Text>
+            </View>            
+          </View>
         </View>
-        <View style={{flex:1, flexDirection: 'row', alignContent:'flex-end', flexWrap: 'nowrap', height:30}}>
-          <PressableImage
-            source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
-            style={styles.contactIcon}
-            url={item.twitter}
-          />
-          <PressableImage
-            source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
-            style={styles.contactIcon}
-            url={item.instagram}/>
-          <PressableImage
-            source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
-            style={styles.contactIcon}
-            url={item.facebook}/>          
-          <PressableImage
-            source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
-            style={styles.contactIcon}
-            url={item.web}/>
+        <View style={styles.cardMiddleRow}>
+          <Text style={styles.itemHeader}>{item.title}</Text>         
         </View>
-        <View >
-          <Text style={styles.itemHeader}>{item.title}</Text>
-          <Text style={styles.itemBody}>{item.body}</Text>
-          <Text style={styles.itemBody}>{item.price} USDC</Text>
+        <View style={styles.cardBottomRow}>          
+          <View>
+            <ScrollView>
+              <Text style={{fontSize:12}}>{item.body}</Text>
+            </ScrollView>
+          </View>
         </View>
+        
     </Pressable>
   </View>
   );
 }
 
-export const HorizontalScrollView = (items : []) => {
-  items = getStores().slice(0,4);
+export const HorizontalScrollView = (items) => {
   if(items != undefined) {
     return (
       <ScrollView horizontal={true} style={{alignContent: 'center'}}>
@@ -111,9 +121,9 @@ export const HorizontalScrollView = (items : []) => {
 
 const styles = new StyleSheet.create ({
   card: {
-    borderRadius: 8,
+    borderRadius: 4,
     width: ITEM_WIDTH,
-    height: ITEM_HEIGHT + 100,
+    height: ITEM_HEIGHT,
     paddingBottom: 10,
     shadowColor: "#000",
     shadowOffset: {
@@ -125,22 +135,40 @@ const styles = new StyleSheet.create ({
     elevation: 7,
     margin: 4,
   },
+  cardTopRow:{
+    backgroundColor: 'red',
+    height: 50,
+    width: '100%',
+    fontSize: 12,
+  },
+  cardMiddleRow:{
+    //backgroundColor: 'yellow',
+    height: 40,
+    width: '100%',
+    alignSelf: 'baseline',
+  },
+  cardBottomRow:{
+    //backgroundColor: 'blue',
+    width: '100%',
+    //height: '60%',
+  },
   contactIcon:{
-    width:22,
-    height:22,
+    width:17,
+    height:17,
     margin: 1,
   },
   itemHeader: {
     color: "#222",
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: "bold",
     paddingLeft: 5,
-    borderWidth: 1,
-    borderColor: 'red'
+    //borderWidth: 1,
+    //borderColor: 'red',
+    flexDirection: 'row',
   },
   itemBody: {
     color: "#222",
-    fontSize: 15,
+    fontSize: 12,
     paddingLeft: 20,
     paddingRight: 10,
     borderWidth: 1,
@@ -149,7 +177,7 @@ const styles = new StyleSheet.create ({
 
 export const favorites = [
     {
-      id: -1,
+      id: 0,
       imgUrl: 'https://cryptosrus.com/wp-content/uploads/2021/12/Anatoly-Yakovenko-of-Solana-Reveals-Why-Were-Not-in-a-Crypto-Bubble.jpg',
       title: 'Anatoly Yakovenko Official',  
       body: 'Hi! Come watch me eat glass!',
@@ -157,7 +185,7 @@ export const favorites = [
       instagram: 'https://www.instagram.com/anatolyyakovenko.sola/',
     },
     {
-      id: 0,
+      id: 1,
       imgUrl: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
       title: 'Busy Media Inc.',  
       body: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
@@ -166,7 +194,7 @@ export const favorites = [
       web:'https://',  
     },
     {
-      id: 1,
+      id: 2,
       imgUrl: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
       title: 'Trendy Clothing Co.',
       body: 'All the trendy modern, old, contemporary clothes are here!',
@@ -174,7 +202,7 @@ export const favorites = [
       web:'https://',  
     },
     {
-      id: 2,
+      id: 3,
       imgUrl: 'https://www.dualipa.com/wp-content/uploads/2019/10/DONT_START_NOW.jpg',
       title: 'Dua Lipa Official',
       body: 'This is the official Dua Lipa store!',
@@ -183,7 +211,7 @@ export const favorites = [
       facebook: 'https://www.facebook.com/DuaLipa'
     },   
     {
-      id: 5,
+      id: 4,
       imgUrl: 'https://images-na.ssl-images-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png',
       title: 'Amazon',
       body: 'Official Amazon Store',
@@ -198,6 +226,9 @@ export const mixedItems = [
     imgUrl: 'https://m.media-amazon.com/images/M/MV5BNDVkYjU0MzctMWRmZi00NTkxLTgwZWEtOWVhYjZlYjllYmU4XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_.jpg',
     title: 'Friends Official',
     body: 'Your F.R.I.E.N.D.S store',
+    web: 'https://www.warnerbros.com/tv/friends',
+    instagram: 'https://www.instagram.com/friends/',
+    rating: 5,
   },
   {
     id: 3,
@@ -207,6 +238,7 @@ export const mixedItems = [
     twitter: 'https://twitter.com/tomcruise',
     instagram: 'https://www.instagram.com/tomcruise',
     facebook: 'https://www.facebook.com/officialtomcruise',
+    rating: 2,
   },
   {
     id: 4,
@@ -214,7 +246,8 @@ export const mixedItems = [
     title: 'Walmart',
     body: 'Save money. Live better.',
     twitter: 'https://twitter.com/Walmart', 
-    web: 'https://walmart.com'
+    web: 'https://walmart.com',
+    rating: 2,
   },
   {
     id: 5,
@@ -222,6 +255,7 @@ export const mixedItems = [
     title: 'Solana Baseball Cap',
     body: 'SOL|Cryptocurrency HAT|Investor Gift - Adult Unisex Size',
     price: 12.58,
+    rating: 5,
   },
   {
     id: 6,
@@ -229,6 +263,7 @@ export const mixedItems = [
     title: 'Katie Perry - I Kissed A Girl',
     body: 'Purchase song from official Katy Perry Store',
     price: 1.20,
+    rating: 3,
   },
   {
     id: 7,
@@ -236,6 +271,7 @@ export const mixedItems = [
     title: 'A Carrot',
     body: 'Buy my carrot!',
     price: 3.50,
+    rating: 5,
   },
   {
     id: 8,
@@ -250,6 +286,54 @@ export const mixedItems = [
     title: 'SPAM Classic 25% Less Sodium - 12 Oz',
     body: 'The real stuff just tastes better...',
     price: 3.5,
+    rating: 5,
+  },
+  {
+    id: 10,
+    imgUrl: 'https://cryptosrus.com/wp-content/uploads/2021/12/Anatoly-Yakovenko-of-Solana-Reveals-Why-Were-Not-in-a-Crypto-Bubble.jpg',
+    title: 'Anatoly Yakovenko Official',  
+    body: 'Hi! Come watch me eat glass!',
+    twitter: 'https://twitter.com/aeyakovenko',
+    instagram: 'https://www.instagram.com/anatolyyakovenko.sola/',
+    rating: 5,
+  },
+  {
+    id: 11,
+    imgUrl: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
+    title: 'Busy Media Inc.',  
+    body: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
+    twitter:'https://',
+    instagram:'https://',
+    web:'https://',
+    rating: 2.9,
+  },
+  {
+    id: 12,
+    imgUrl: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
+    title: 'Trendy Clothing Co.',
+    body: 'All the trendy modern, old, contemporary clothes are here!',
+    twitter: 'https://',
+    web:'https://',
+    rating: 3.5,
+  },
+  {
+    id: 13,
+    imgUrl: 'https://www.dualipa.com/wp-content/uploads/2019/10/DONT_START_NOW.jpg',
+    title: 'Dua Lipa Official',
+    body: 'This is the official Dua Lipa store!',
+    twitter: 'https://twitter.com/DUALIPA',
+    instagram: 'https://www.instagram.com/dualipa',
+    facebook: 'https://www.facebook.com/DuaLipa',
+    rating: 4.2,
+  },   
+  {
+    id: 14,
+    imgUrl: 'https://images-na.ssl-images-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png',
+    title: 'Amazon',
+    body: 'Official Amazon Store',
+    twitter: 'https://twitter.com/amazon',
+    web: 'https://amazon.com',
+    rating: 3.8
   },
 ];
   

@@ -4,9 +4,11 @@ import ImageCarousel from '../components/ImageCarousel';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import CarouselCards from '../components/CarouselCards'
-import { getFavorites, getStores, HorizontalScrollView, SearchString, setSearchString } from '../components/data';
+import { getFavorites, getStores, HorizontalScrollView, SearchString, setSearchString, CardView } from '../components/data';
 import { blue100 } from 'react-native-paper/lib/typescript/styles/colors';
 import PressableImage from '../components/PressableImage';
+import MarqueeText from 'react-native-marquee';
+
 
 export const WINDOW_WIDTH = Dimensions.get('window').width;
 export const ITEM_WIDTH = Math.round(WINDOW_WIDTH);
@@ -37,9 +39,12 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
             style={styles.searchbox}
             value={search}
             onChangeText={runSearch}/>
-          <ScrollView contentContainerStyle={{ height: '100%', borderWidth: 2,  }}>            
-              <HorizontalScrollView />    
-              <HorizontalScrollView />                  
+          <ScrollView contentContainerStyle={{flexGrow:1, flexWrap: 'wrap', flexDirection:'row'}}
+           scrollToOverflowEnabled={true}
+           scrollEnabled={true}>
+              {
+                items.map((i)=>(<CardView {...i}/>))
+              }
           </ScrollView>
           <View style={styles.favorites}>
             <ImageBackground 
@@ -47,8 +52,16 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
             source={{
               uri: favorites_uri,
             }}>  
-            <Text style={styles.headerText}>Recently Viewed</Text>
               <CarouselCards />
+              <MarqueeText
+                style={{ fontSize: 10, color: 'red', fontWeight: 'bold', }}
+                speed={.5}
+                marqueeOnStart={true}
+                loop={true}
+                delay={4000}>
+                On SALE now! Tickets to Solana Breakpoint 2022! [Nov 4 - 7]...
+                For those who eat glass, check out the new mouth band aids at the redcross store!
+             </MarqueeText>
             </ImageBackground>
           </View>          
  
@@ -84,10 +97,11 @@ const styles = StyleSheet.create({
   },
   favorites: {
     backgroundColor: 'blue',
-    height: '30%',
+    height: '20%',
     width: '100%',
-    marginTop: .1,
-    borderWidth: 2,
+    marginTop: .5,
+    borderTopWidth: 2,
+    borderTopColor: '#666666'
   },
   headerText: {
     fontSize: 16,
@@ -149,6 +163,19 @@ const styles = StyleSheet.create({
     width:22,
     height:22,
     margin: 2,
+  },
+  scrollingText: {
+    backgroundColor: "red",
+    width: 400,
+    padding: 10,
+    marginBottom: 10,
+  },
+  welcomeText: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    margin: 10,
   },
 });
 

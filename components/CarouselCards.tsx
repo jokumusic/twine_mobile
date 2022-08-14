@@ -26,6 +26,7 @@ const CarouselCards = () => {
         useScrollView={true}
         onSnapToItem={(index) => setIndex(index)}
       />
+      {/*
       <Pagination
   dotsLength={favorites.length}
   activeDotIndex={index}
@@ -41,6 +42,7 @@ const CarouselCards = () => {
   inactiveDotScale={0.6}
   tappableDots={true}
 />
+*/}
     </View>
   )
 }
