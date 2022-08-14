@@ -78,11 +78,15 @@ export const CardView = (item: any) => {
                 source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
                 style={styles.contactIcon}
                 url={item.web}/>
+              <PressableImage
+                source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
+                style={styles.contactIcon}
+                url={item.wiki}/>
             </View>
 
-            <View style={{flex:1, flexDirection: 'column', alignContent: 'flex-end', flexGrow: 1, width: 100, marginTop:3, }}>
-              <Text style={{fontSize:10}}>{item.price ? item.price + ' USDC' : ''}</Text>
-              <Text style={{fontSize:10}}>{item.rating ? item.rating + ' stars' : ''}</Text>
+            <View style={{flexDirection: 'column', alignContent: 'center', width: 100, margin:4}}>
+              <Text style={{fontSize:12}}>{item.price ? item.price + ' USDC' : ''}</Text>
+              <Text style={{fontSize:12}}>{item.rating ? item.rating + ' stars' : ''}</Text>
             </View>            
           </View>
         </View>
@@ -183,23 +187,7 @@ export const favorites = [
       body: 'Hi! Come watch me eat glass!',
       twitter: 'https://twitter.com/aeyakovenko',
       instagram: 'https://www.instagram.com/anatolyyakovenko.sola/',
-    },
-    {
-      id: 1,
-      imgUrl: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
-      title: 'Busy Media Inc.',  
-      body: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
-      twitter:'https://',
-      instagram:'https://',
-      web:'https://',  
-    },
-    {
-      id: 2,
-      imgUrl: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
-      title: 'Trendy Clothing Co.',
-      body: 'All the trendy modern, old, contemporary clothes are here!',
-      twitter: 'https://',
-      web:'https://',  
+      wiki:'https://everipedia.org/wiki/lang_en/anatoly-yakovenko',
     },
     {
       id: 3,
@@ -208,8 +196,22 @@ export const favorites = [
       body: 'This is the official Dua Lipa store!',
       twitter: 'https://twitter.com/DUALIPA',
       instagram: 'https://www.instagram.com/dualipa',
-      facebook: 'https://www.facebook.com/DuaLipa'
+      facebook: 'https://www.facebook.com/DuaLipa',
+      web:'https://www.dualipa.com/',
+      wiki: 'https://en.wikipedia.org/wiki/Dua_Lipa',
     },   
+    {
+      id: 1,
+      imgUrl: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
+      title: 'Busy Media Inc.',  
+      body: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
+    },
+    {
+      id: 2,
+      imgUrl: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
+      title: 'Trendy Clothing Co.',
+      body: 'All the trendy modern, old, contemporary clothes are here!',
+    },
     {
       id: 4,
       imgUrl: 'https://images-na.ssl-images-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png',
@@ -296,6 +298,7 @@ export const mixedItems = [
     twitter: 'https://twitter.com/aeyakovenko',
     instagram: 'https://www.instagram.com/anatolyyakovenko.sola/',
     rating: 5,
+    wiki:'https://everipedia.org/wiki/lang_en/anatoly-yakovenko',
   },
   {
     id: 11,

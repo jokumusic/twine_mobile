@@ -32,12 +32,15 @@ const CarouselCardItem = ({ item, index }) => {
           <PressableImage
             source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
             style={styles.contactIcon}
-            url={item.facebook}/>
-            
+            url={item.facebook}/>            
           <PressableImage
             source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
             style={styles.contactIcon}
             url={item.web}/>
+          <PressableImage
+            source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
+            style={styles.contactIcon}
+            url={item.wiki}/>
         </View>
           
         <Text style={styles.header}>{item.title}</Text>        
@@ -83,8 +86,8 @@ const styles = StyleSheet.create({
     paddingRight: 20
   },
   contactIcon:{
-    width:22,
-    height:22,
+    width:21,
+    height:21,
     margin: 2,
   }
 })

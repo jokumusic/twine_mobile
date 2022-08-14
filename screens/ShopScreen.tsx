@@ -160,8 +160,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   contactIcon:{
-    width:22,
-    height:22,
+    width:20,
+    height:20,
     margin: 2,
   },
   scrollingText: {
