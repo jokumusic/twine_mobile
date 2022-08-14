@@ -1,8 +1,3 @@
-/**
- * If you are not familiar with React Navigation, refer to the "Fundamentals" guide:
- * https://reactnavigation.org/docs/getting-started
- *
- */
 import { FontAwesome5 } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
@@ -138,5 +133,5 @@ function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome5>['name'];
   color: string;
 }) {
-  return <FontAwesome5 size={30} style={{ marginBottom: -3 }} {...props} />;
+  return <FontAwesome5 size={25} style={{ marginBottom: -3}} {...props} />;
 }

@@ -4,7 +4,7 @@ import ImageCarousel from '../components/ImageCarousel';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import CarouselCards from '../components/CarouselCards'
-import { getFavorites, getStores, SearchString, setSearchString } from '../components/data';
+import { getFavorites, getStores, HorizontalScrollView, SearchString, setSearchString } from '../components/data';
 import { blue100 } from 'react-native-paper/lib/typescript/styles/colors';
 import PressableImage from '../components/PressableImage';
 
@@ -22,45 +22,6 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
     updateItems(getStores());
   }
 
-  const keyExtractor = (item) => item.id;
-  
-  const renderItem = ({ item }) => (
-    <View style={[styles.itemContainer]}>
-      <Pressable 
-      onPress={()=>{}}
-      style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
-      <View style={{flex:1, flexDirection: 'column', height:'100%'}}>
-        <Image 
-          source={{uri:item.imgUrl}}
-          style={{width:'30%', height: ITEM_HEIGHT}}/>
-      </View>
-      <View style={{flex:1, flexDirection: 'row', alignContent:'flex-start', flexWrap: 'nowrap', height:30}}>
-        <PressableImage
-          source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
-          style={styles.contactIcon}
-          url={item.twitter}
-        />
-        <PressableImage
-          source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
-          style={styles.contactIcon}
-          url={item.instagram}/>
-        <PressableImage
-          source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
-          style={styles.contactIcon}
-          url={item.facebook}/>          
-        <PressableImage
-          source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
-          style={styles.contactIcon}
-          url={item.web}/>
-      </View>
-      <View style={{flex:1, flexDirection: 'column', alignContent:'center', height: '100%', width:'100%'}}>
-        <Text style={styles.itemHeader}>{item.title}</Text>
-        <Text style={styles.itemBody}>{item.body}</Text>
-      </View>
-
-      </Pressable>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
@@ -76,16 +37,9 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
             style={styles.searchbox}
             value={search}
             onChangeText={runSearch}/>
-          <ScrollView contentContainerStyle={{ height: '100%', borderWidth: 2,  }} scrollEnabled={true}>
-            <View style={{backgroundColor: 'rgba(52, 52, 52, 0)', borderWidth: 2, flex:1, flexDirection: 'column'}}>
-              <FlatList
-              data={items}
-              renderItem={renderItem}
-              keyExtractor={keyExtractor}
-              contentContainerStyle={styles.list}
-              style={{borderWidth: 2, height: '100%'}}
-              />
-            </View>
+          <ScrollView contentContainerStyle={{ height: '100%', borderWidth: 2,  }}>            
+              <HorizontalScrollView />    
+              <HorizontalScrollView />                  
           </ScrollView>
           <View style={styles.favorites}>
             <ImageBackground 
@@ -119,9 +73,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   searchbox: {
-    //backgroundColor: 'purple',
     width: '100%',
-    height: 50,
+    height: 35,
     color: 'white',
     justifyContent: 'center',
     fontWeight: 'bold',
