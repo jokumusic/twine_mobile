@@ -1,6 +1,7 @@
 import React from "react";
 import { View, ScrollView, Pressable, Image, StyleSheet, Dimensions, Text } from "react-native";
 import PressableImage from './PressableImage';
+import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
 
 export const WINDOW_WIDTH = Dimensions.get('window').width;
 export const ITEM_WIDTH = Math.round(WINDOW_WIDTH) * .30;
@@ -49,7 +50,7 @@ export const getStores = ()=>{
 }
 
 
-const colors = ['pink','orange','red','green','blue','purple','white','lime','#22FFFF','#00FFFF','#118681','#4499FF','#125533','#047582'];
+const colors = ['#a2b369']; //['#10898d','#2f416b','#895a88', '#a2b369','#dd93ab'];
 
 export const CardView = (item: any) => {
   return (
@@ -59,7 +60,7 @@ export const CardView = (item: any) => {
           <View style={{flex:1, flexDirection: 'row', alignContent:'flex-start'}}>
             <Image 
               source={{uri:item.imgUrl}}
-              style={{width:50, height: 50}}/>
+              style={{width:80, height: 80}}/>
             <View style={{flex:1, flexDirection: 'row', alignContent: 'flex-end', flexGrow: 1,}}>
               <PressableImage
                 source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
@@ -85,20 +86,23 @@ export const CardView = (item: any) => {
             </View>
 
             <View style={{flexDirection: 'column', alignContent: 'center', width: 100, margin:4}}>
-              <Text style={{fontSize:12}}>{item.price ? item.price + ' USDC' : ''}</Text>
-              <Text style={{fontSize:12}}>{item.rating ? item.rating + ' stars' : ''}</Text>
+              <Text style={{fontSize:10, flexWrap: 'wrap', flex:1}}>{item.price ? '$' + item.price : ''}</Text>              
+                { item.rating &&
+                <View style={{flex:1, flexDirection:'row', alignContent:'flex-start' }}>
+                  <FontAwesome name="star" size={18} color={'gold'} style={{ margin:2 }}/>
+                  <Text style={{fontSize:9, position: 'absolute', left: 8, top: 5}}>{Math.round(item.rating)}</Text>                  
+                </View>
+                }
             </View>            
           </View>
         </View>
-        <View style={styles.cardMiddleRow}>
-          <Text style={styles.itemHeader}>{item.title}</Text>         
+        <View style={styles.cardMiddleRow}>             
         </View>
-        <View style={styles.cardBottomRow}>          
-          <View>
-            <ScrollView>
+        <View style={styles.cardBottomRow}>   
+          <Text style={styles.itemHeader}>{item.title}</Text>  
+          <ScrollView contentContainerStyle={{flexGrow:1, flexDirection:'column'}}>  
               <Text style={{fontSize:12}}>{item.body}</Text>
-            </ScrollView>
-          </View>
+          </ScrollView>
         </View>
         
     </Pressable>
@@ -140,21 +144,21 @@ const styles = new StyleSheet.create ({
     margin: 4,
   },
   cardTopRow:{
-    backgroundColor: 'red',
+    backgroundColor: '#a2b369',
     height: 50,
     width: '100%',
     fontSize: 12,
   },
   cardMiddleRow:{
     //backgroundColor: 'yellow',
-    height: 40,
+    height: 30,
     width: '100%',
     alignSelf: 'baseline',
   },
   cardBottomRow:{
     //backgroundColor: 'blue',
     width: '100%',
-    //height: '60%',
+    height: '50%',
   },
   contactIcon:{
     width:17,
@@ -162,7 +166,7 @@ const styles = new StyleSheet.create ({
     margin: 1,
   },
   itemHeader: {
-    color: "#222",
+    color: "#EEEEEE",
     fontSize: 12,
     fontWeight: "bold",
     paddingLeft: 5,
@@ -236,7 +240,7 @@ export const mixedItems = [
     id: 3,
     imgUrl: 'https://images.indianexpress.com/2017/06/tom-cruise-759.jpg?w=389',
     title: 'Tom Cruise Official',
-    body: 'This is Tom Cruise Missle\'s store',
+    body: 'I am THE CRUISE, not the Cruz...',
     twitter: 'https://twitter.com/tomcruise',
     instagram: 'https://www.instagram.com/tomcruise',
     facebook: 'https://www.facebook.com/officialtomcruise',
