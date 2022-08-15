@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Platform, StyleSheet } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
@@ -36,6 +36,13 @@ export default function CreateProductScreen() {
      cost: 0,
      sku: '',
     });
+  const [logText, setLogText] = useState<string[]>([]);
+  const scrollViewRef = useRef<any>(null);
+
+  const log = useCallback((log: string, toConsole=true) => {
+    toConsole && console.log(log);
+    setLogText((logs) => [...logs, "> " + log])
+  }, []);
 
   function getProgram(connection: Connection, pubkey: PublicKey){
     const wallet = {
@@ -52,7 +59,7 @@ export default function CreateProductScreen() {
 
   async function createProduct() {
     setActivityIndicatorIsVisible(true);
-    console.log('creating product...');
+    log('creating product...');
     const pubkey = Phantom.getWalletPublicKey();
     const network = clusterApiUrl("devnet")
     const connection = new Connection(network);  
@@ -76,15 +83,15 @@ export default function CreateProductScreen() {
 
     const productInfo = await connection.getAccountInfo(productPda);
     if(productInfo){
-      console.log('product already exists');
+      log('product already exists');
       setActivityIndicatorIsVisible(false);
       return;
     }
         
-    console.log('creating mint');
+    log('creating mint');
     const authorityKeypair = Keypair.generate();
     const mintKeypair = Keypair.generate();
-    console.log('funding ', authorityKeypair.publicKey.toBase58());
+    log('funding ', authorityKeypair.publicKey.toBase58());
     const airDropSig = await connection.requestAirdrop(authorityKeypair.publicKey, 100000000);
     await connection.confirmTransaction(airDropSig);
 
@@ -115,7 +122,7 @@ export default function CreateProductScreen() {
     const productCost = productData.cost;
     const productSku = productData.sku;
     
-    console.log('creating product');
+    log('creating product');
     const tx = await program.methods
     .createProduct(storeNumber, productName, productDescription, productCost, productSku)
     .accounts({
@@ -130,23 +137,23 @@ export default function CreateProductScreen() {
       program: program.programId,      
     })
     .transaction()
-    .catch(reason=>console.log(reason));;
+    .catch(reason=>log(reason));;
 
     tx.feePayer = pubkey;  
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
     const trans = await Phantom
     .signAndSendTransaction(tx, false) 
-    .catch(error=>console.log(error));
+    .catch(error=>log(error));
 
     await connection.confirmTransaction(trans.signature); //wait for confirmation before retrieving account data
     
     const createdProduct = await program.account
                                 .product
                                 .fetch(productPda)
-                                .catch(error=>console.log(error));
+                                .catch(error=>log(error));
 
-    console.log('done');
+    log('done');
     setActivityIndicatorIsVisible(false);
   }
 
@@ -167,6 +174,35 @@ export default function CreateProductScreen() {
       </View>
 
       <Text>This is here for testing. Go to the create store screen first to connect to wallet, create company, and create store, before creating a product here.</Text>
+      
+      <View style={{width: '95%', height: '35%', margin:5}}>
+        <ScrollView
+            contentContainerStyle={{
+              backgroundColor: "#111",
+              padding: 20,
+              paddingTop: 100,
+              flexGrow: 1,
+            }}
+            ref={scrollViewRef}
+            onContentSizeChange={() => {
+              scrollViewRef.current.scrollToEnd({ animated: true });
+            }}
+            style={{ flex: 1 }}
+          >
+            {logText.map((log, i) => (
+              <Text
+                key={`t-${i}`}
+                style={{
+                  fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
+                  color: "#fff",
+                  fontSize: 14,
+                }}
+              >
+                {log}
+              </Text>
+            ))}
+        </ScrollView>
+      </View>
       
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>

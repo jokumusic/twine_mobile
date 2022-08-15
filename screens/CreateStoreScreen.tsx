@@ -287,8 +287,8 @@ const updateStore = async() =>{
                 {log}
               </Text>
             ))}
-          </ScrollView>
-        </View>
+        </ScrollView>
+      </View>
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>
   );
