@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Platform, StyleSheet } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSelector, useDispatch, connect } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
@@ -33,22 +33,20 @@ export default function CreateStoreScreen() {
   const dispatch = useDispatch();
   const [storeData, updateStoreData] = useState({name:'', description:''});
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-/*
-  async function showAccountInfo() {
-      Solana
-      .getAccountInfo(settings.masterKey)
-      .then((info)=> {
-        if(info !== null)
-          setAccountInfo(info)
-      });
-  }
-*/
+  const [logText, setLogText] = useState<string[]>([]);
+  const scrollViewRef = useRef<any>(null);
+
+  const log = useCallback((log: string, toConsole=true) => {
+    toConsole && console.log(log);
+    setLogText((logs) => [...logs, "> " + log])
+  }, []);
+
 
 async function connectWallet(){
   Phantom
   .connect()
-  .then(()=>console.log('connected to wallet'))
-  .catch(err=> console.log(err));
+  .then(()=>log('connected to wallet'))
+  .catch(err=> log(err));
 }
 
 
@@ -74,12 +72,12 @@ async function createCompany() {
     .findProgramAddressSync([anchor.utils.bytes.utf8.encode("company"), pubkey.toBuffer()], program.programId);
     const companyInfo = await connection.getAccountInfo(companyPda);
     if(companyInfo) {
-      console.log('company already exists');
+      log('company already exists');
       setActivityIndicatorIsVisible(false);
       return;
     }
   
-    console.log('creating company...');
+    log('creating company...');
     const tx = await program.methods
     .createCompany()
     .accounts({
@@ -87,22 +85,22 @@ async function createCompany() {
       owner: pubkey,
     })    
     .transaction()
-    .catch(reason=>console.log(reason));
+    .catch(reason=>log(reason));
 
     tx.feePayer = pubkey;  
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
     const trans = await Phantom
       .signAndSendTransaction(tx, false)
-      .catch(error=>console.log(error));
+      .catch(error=>log(error));
     
     await connection.confirmTransaction(trans.signature); //wait for confirmation before trying to retrieve account data
     const createdCompany = await program.account
                                 .store
                                 .fetch(companyPda)
-                                .catch(error=>console.log(error));
+                                .catch(error=>log(error));
 
-    console.log('company created');
+    log('company created');
     setActivityIndicatorIsVisible(true);
 }
 
@@ -123,12 +121,12 @@ async function createStore() {
 
   const storeInfo = await connection.getAccountInfo(storePda);
   if(storeInfo){
-    console.log('store already exists');
+    log('store already exists');
     setActivityIndicatorIsVisible(false);
     return;
   }
     
-  console.log('creating store'); 
+  log('creating store'); 
   const storeName = storeData.name;
   const storeDescription = storeData.description;
   
@@ -140,28 +138,28 @@ async function createStore() {
     owner: pubkey,
   })  
   .transaction()
-  .catch(reason=>console.log(reason));
+  .catch(reason=>log(reason));
 
   tx.feePayer = pubkey;  
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
   const trans = await Phantom
   .signAndSendTransaction(tx, false) 
-  .catch(error=>console.log(error));
+  .catch(error=>log(error));
 
   await connection.confirmTransaction(trans.signature); //wait for confirmation before retrieving account data
   
   const createdStore = await program.account
                               .store
                               .fetch(storePda)
-                              .catch(error=>console.log(error));
+                              .catch(error=>log(error));
 
   setActivityIndicatorIsVisible(false);
 }
 
 const readStore = async () => {
   setActivityIndicatorIsVisible(true);
-  console.log('reading store data');
+  log('reading store data');
   const pubkey = Phantom.getWalletPublicKey();
   const network = clusterApiUrl("devnet")
   const connection = new Connection(network);
@@ -178,17 +176,17 @@ const readStore = async () => {
   const store = await program.account
                         .store
                         .fetch(storePda)
-                        .catch(error=>console.log(error));
+                        .catch(error=>log(error));
   
   updateStoreData({name: store.name, description: store.description});
                         
-  console.log('done')
+  log('done')
   setActivityIndicatorIsVisible(false);
 }
 
 const updateStore = async() =>{
   setActivityIndicatorIsVisible(true);
-  console.log('updating store...');
+  log('updating store...');
   const pubkey = Phantom.getWalletPublicKey();
   const network = clusterApiUrl("devnet");
   const connection = new Connection(network);
@@ -214,33 +212,31 @@ const updateStore = async() =>{
                             owner: pubkey,
                           })
                           .transaction()
-                          .catch(reason=>console.log(reason));
+                          .catch(reason=>log(reason));
 
   tx.feePayer = pubkey;  
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
   
   const trans = await Phantom
                 .signAndSendTransaction(tx, false)
-                .catch(err=>console.log(err))
+                .catch(err=>log(err))
 
-  console.log('signed trans:', trans.signature);
-  console.log('waiting for confirmation...');
+  log('signed trans:', trans.signature);
+  log('waiting for confirmation...');
   await connection.confirmTransaction(trans.signature); //wait for confirmation
   const updatedStore = await program
                               .account
                               .store
                               .fetch(storePda)
-                              .catch(error=>console.log(error));  
+                              .catch(error=>log(error));  
 
-  console.log('OnChain store: ', updatedStore);
+  log('OnChain store: ', updatedStore);
   setActivityIndicatorIsVisible(false);
 }
 
   return (
     <View style={styles.container}>      
       <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
-      <Text style={styles.title}>Create Store</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       
       <View style={styles.body}>
         <TextInput 
@@ -261,9 +257,38 @@ const updateStore = async() =>{
         <Button title='Create Company'  onPress={createCompany} />
         <Button title='Create Store' onPress={createStore} />
         <Button title='Read Store Data' onPress={readStore} />
-        <Button title='Update Store Data' onPress={updateStore} />
-      </View>   
+        <Button title='Update Store Data' onPress={updateStore} />  
       
+      </View>
+
+      <View style={{width: '95%', height: '35%', margin:5}}>
+        <ScrollView
+            contentContainerStyle={{
+              backgroundColor: "#111",
+              padding: 20,
+              paddingTop: 100,
+              flexGrow: 1,
+            }}
+            ref={scrollViewRef}
+            onContentSizeChange={() => {
+              scrollViewRef.current.scrollToEnd({ animated: true });
+            }}
+            style={{ flex: 1 }}
+          >
+            {logText.map((log, i) => (
+              <Text
+                key={`t-${i}`}
+                style={{
+                  fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
+                  color: "#fff",
+                  fontSize: 14,
+                }}
+              >
+                {log}
+              </Text>
+            ))}
+          </ScrollView>
+        </View>
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>
   );
