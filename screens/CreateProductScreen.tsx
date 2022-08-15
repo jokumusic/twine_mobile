@@ -194,6 +194,7 @@ export default function CreateProductScreen() {
           >
             {logText.map((log, i) => (
               <Text
+                selectable
                 key={`t-${i}`}
                 style={{
                   fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
