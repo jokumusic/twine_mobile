@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSelector, useDispatch, connect } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
@@ -25,8 +25,6 @@ import {
 } from "@solana/web3.js";
 
 
-const twine_program = new PublicKey("GMfD6UaH9SCYv6xoT7Jb7X14L2TSQaJbtLGpdzU4f88P");
-
 export default function CreateStoreScreen() {
   const [state, updateState] = useState('')
   const settings = useSelector(state => state);
@@ -35,6 +33,14 @@ export default function CreateStoreScreen() {
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
+  const [pubkey, setPubkey] = useState(PublicKey.default);
+  const network = clusterApiUrl("devnet")
+  const isProgramInitialized = useRef(true);
+  const connection = new Connection(network);
+  const [program, setProgram] = useState();
+  const [metadataPda, setMetadataPda] = useState(PublicKey.default);
+  const [metadataAccount, setMetadataAccount] = useState();
+  const [companyNumber, setCompanyNumber] = useState(0);
 
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
@@ -45,10 +51,27 @@ export default function CreateStoreScreen() {
 async function connectWallet(){
   Phantom
   .connect()
-  .then(()=>log('connected to wallet'))
+  .then(()=>{
+    log('connected to wallet');
+    const pk = Phantom.getWalletPublicKey();
+    setPubkey(pk);
+    const prog = getProgram(connection, pubkey);
+    setProgram(prog);
+    let [metaPda,metaPdabump] = PublicKey
+    .findProgramAddressSync([anchor.utils.bytes.utf8.encode("metadata")], prog.programId);
+    setMetadataPda(metaPda);
+    prog
+      .account
+      .metaData
+      .fetch(metaPda)
+      .then(d=>{
+        setMetadataAccount(d);
+        setCompanyNumber(d.companyCount); //this number approach is flawed when there are multiple users. maybe look into creating a lookup account instead
+      })
+      .catch(e=>log(e));    
+  })
   .catch(err=> log(err));
 }
-
 
 function getProgram(connection: Connection, pubkey: PublicKey){
   const wallet = {
@@ -58,18 +81,17 @@ function getProgram(connection: Connection, pubkey: PublicKey){
   };
 
   const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
-  const program = new anchor.Program(idl as anchor.Idl, twine_program, provider) as anchor.Program<Twine>;
+  const program = new anchor.Program(idl as anchor.Idl, new PublicKey(idl.metadata.address), provider) as anchor.Program<Twine>;
   return program;  
 }
 
 async function createCompany() {    
   setActivityIndicatorIsVisible(true);
     const pubkey = Phantom.getWalletPublicKey();
-    const network = clusterApiUrl("devnet")
-    const connection = new Connection(network);    
-    const program = getProgram(connection, pubkey);
-    const [companyPda, companyPdaBump] = PublicKey
-    .findProgramAddressSync([anchor.utils.bytes.utf8.encode("company"), pubkey.toBuffer()], program.programId);
+    const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("company"),
+      new Uint8Array([0,0,0,companyNumber])], program.programId);
+
     const companyInfo = await connection.getAccountInfo(companyPda);
     if(companyInfo) {
       log(`company already exists: ${companyPda.toBase58()}`);
@@ -82,6 +104,7 @@ async function createCompany() {
     .createCompany()
     .accounts({
       company: companyPda,
+      metadata: metadataPda,
       owner: pubkey,
     })    
     .transaction()
@@ -103,21 +126,17 @@ async function createCompany() {
 
     log(`company created: ${companyPda.toBase58()}`);    
     log(JSON.stringify(createdCompany));
-    setActivityIndicatorIsVisible(true);
+    setActivityIndicatorIsVisible(false);
 }
 
 async function createStore() {
   setActivityIndicatorIsVisible(true);
   const pubkey = Phantom.getWalletPublicKey();
-  const network = clusterApiUrl("devnet")
-  const connection = new Connection(network);  
-  const program = getProgram(connection, pubkey);
-  const [companyPda, companyPdaBump] = PublicKey
-  .findProgramAddressSync([anchor.utils.bytes.utf8.encode("company"), pubkey.toBuffer()], program.programId);
-  const [storePda, storePdaBump] = PublicKey
-    .findProgramAddressSync([
+  const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
+    anchor.utils.bytes.utf8.encode("company"),
+    new Uint8Array([0,0,0,companyNumber])], program.programId);
+  const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
         anchor.utils.bytes.utf8.encode("store"),
-        pubkey.toBuffer(),
         companyPda.toBuffer(),
         new Uint8Array([0,0,0,0])], program.programId);
 
@@ -133,7 +152,7 @@ async function createStore() {
   const storeDescription = storeData.description;
   
   const tx = await program.methods
-  .createStore(storeName, storeDescription)
+  .createStore(companyNumber, storeName, storeDescription)
   .accounts({
     company: companyPda,
     store: storePda,    
@@ -165,19 +184,15 @@ async function createStore() {
 const readStore = async () => {
   setActivityIndicatorIsVisible(true);
   log('reading store data');
-  const pubkey = Phantom.getWalletPublicKey();
-  const network = clusterApiUrl("devnet")
-  const connection = new Connection(network);
-  const program = getProgram(connection, pubkey);
   const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
-                                                  anchor.utils.bytes.utf8.encode("company"),
-                                                  pubkey.toBuffer()], program.programId);
+    anchor.utils.bytes.utf8.encode("company"),
+    new Uint8Array([0,0,0,companyNumber])], program.programId);
   const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
-                                                anchor.utils.bytes.utf8.encode("store"),
-                                                pubkey.toBuffer(),
-                                                companyPda.toBuffer(),
-                                                new Uint8Array([0,0,0,0])], program.programId);
+    anchor.utils.bytes.utf8.encode("store"),
+    companyPda.toBuffer(),
+    new Uint8Array([0,0,0,0])], program.programId);
   log(`store account: ${storePda}`);
+
   const store = await program.account
                         .store
                         .fetch(storePda)
@@ -194,24 +209,20 @@ const updateStore = async() =>{
   setActivityIndicatorIsVisible(true);
   log('updating store...');
   const pubkey = Phantom.getWalletPublicKey();
-  const network = clusterApiUrl("devnet");
-  const connection = new Connection(network);
-  const program = getProgram(connection, pubkey);
-
   const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
-                                                  anchor.utils.bytes.utf8.encode("company"),
-                                                  pubkey.toBuffer()], program.programId);
+    anchor.utils.bytes.utf8.encode("company"),
+    new Uint8Array([0,0,0,companyNumber])], program.programId);
   const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
-                                              anchor.utils.bytes.utf8.encode("store"),
-                                              pubkey.toBuffer(),
-                                              companyPda.toBuffer(),
-                                              new Uint8Array([0,0,0,0])], program.programId);
+    anchor.utils.bytes.utf8.encode("store"),
+    companyPda.toBuffer(),
+    new Uint8Array([0,0,0,0])], program.programId);
   const storeName = storeData.name;
   const storeDescription = storeData.description;
   const storeNumber = 0;
 
+
   const tx = await program.methods
-                          .updateStore(storeNumber, storeName, storeDescription)
+                          .updateStore(companyNumber, storeNumber, storeName, storeDescription)
                           .accounts({
                             company: companyPda,
                             store: storePda,

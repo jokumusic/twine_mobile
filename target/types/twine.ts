@@ -1,12 +1,44 @@
 export type Twine = {
   "version": "0.1.0",
   "name": "twine",
+  "docs": [
+    "",
+    "Using the total count of company, store or product as part of the seed for any account is dangerous",
+    "because once those numbers are reached, the program will stop working and new accounts can't be created",
+    "find another solution."
+  ],
   "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "metadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
     {
       "name": "createCompany",
       "accounts": [
         {
           "name": "company",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metadata",
           "isMut": true,
           "isSigner": false
         },
@@ -49,6 +81,10 @@ export type Twine = {
       ],
       "args": [
         {
+          "name": "companyNumber",
+          "type": "u32"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -78,6 +114,10 @@ export type Twine = {
         }
       ],
       "args": [
+        {
+          "name": "companyNumber",
+          "type": "u32"
+        },
         {
           "name": "storeNumber",
           "type": "u32"
@@ -146,12 +186,16 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "program",
+          "name": "twineProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
+        {
+          "name": "companyNumber",
+          "type": "u32"
+        },
         {
           "name": "storeNumber",
           "type": "u32"
@@ -177,6 +221,22 @@ export type Twine = {
   ],
   "accounts": [
     {
+      "name": "metaData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "companyCount",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
       "name": "company",
       "type": {
         "kind": "struct",
@@ -184,6 +244,10 @@ export type Twine = {
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "companyNumber",
+            "type": "u32"
           },
           {
             "name": "owner",
@@ -387,12 +451,44 @@ export type Twine = {
 export const IDL: Twine = {
   "version": "0.1.0",
   "name": "twine",
+  "docs": [
+    "",
+    "Using the total count of company, store or product as part of the seed for any account is dangerous",
+    "because once those numbers are reached, the program will stop working and new accounts can't be created",
+    "find another solution."
+  ],
   "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "metadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
     {
       "name": "createCompany",
       "accounts": [
         {
           "name": "company",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metadata",
           "isMut": true,
           "isSigner": false
         },
@@ -435,6 +531,10 @@ export const IDL: Twine = {
       ],
       "args": [
         {
+          "name": "companyNumber",
+          "type": "u32"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -464,6 +564,10 @@ export const IDL: Twine = {
         }
       ],
       "args": [
+        {
+          "name": "companyNumber",
+          "type": "u32"
+        },
         {
           "name": "storeNumber",
           "type": "u32"
@@ -532,12 +636,16 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "program",
+          "name": "twineProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
+        {
+          "name": "companyNumber",
+          "type": "u32"
+        },
         {
           "name": "storeNumber",
           "type": "u32"
@@ -563,6 +671,22 @@ export const IDL: Twine = {
   ],
   "accounts": [
     {
+      "name": "metaData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "companyCount",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
       "name": "company",
       "type": {
         "kind": "struct",
@@ -570,6 +694,10 @@ export const IDL: Twine = {
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "companyNumber",
+            "type": "u32"
           },
           {
             "name": "owner",

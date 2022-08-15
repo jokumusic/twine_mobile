@@ -21,8 +21,6 @@ import {
 } from "@solana/web3.js";
 import * as web3 from "@solana/web3.js";
 
-const twine_program = new PublicKey("GMfD6UaH9SCYv6xoT7Jb7X14L2TSQaJbtLGpdzU4f88P");
-
 
 export default function CreateProductScreen() {
   const [state, updateState] = useState('')
@@ -52,7 +50,7 @@ export default function CreateProductScreen() {
     };
   
     const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
-    const program = new anchor.Program(idl as anchor.Idl, twine_program, provider) as anchor.Program<Twine>;
+    const program = new anchor.Program(idl as anchor.Idl, new PublicKey(idl.metadata.address), provider) as anchor.Program<Twine>;
     return program;  
   }
 
@@ -65,29 +63,32 @@ export default function CreateProductScreen() {
     const connection = new Connection(network);  
     const program = getProgram(connection, pubkey);
 
+    const [metadataPda, metadataPdaBump] = PublicKey
+      .findProgramAddressSync([anchor.utils.bytes.utf8.encode("metadata")], program.programId);
+    const metadata = await program.account
+        .metaData
+        .fetch(metadataPda)      
+        .catch(e=>log(e));
+    const companyNumber = metadata.companyCount;
     const [companyPda, companyPdaBump] = PublicKey
-    .findProgramAddressSync([anchor.utils.bytes.utf8.encode("company"), pubkey.toBuffer()], program.programId);
-    
-    const [storePda, storePdaBump] = PublicKey
       .findProgramAddressSync([
-          anchor.utils.bytes.utf8.encode("store"),
-          pubkey.toBuffer(),
-          companyPda.toBuffer(),
-          new Uint8Array([0,0,0,0])], program.programId);
-  
+          anchor.utils.bytes.utf8.encode("company"),
+          new Uint8Array([0,0,0,companyNumber])], program.programId);
+    const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
+        anchor.utils.bytes.utf8.encode("store"),                                                
+        companyPda.toBuffer(),
+        new Uint8Array([0,0,0,0])], program.programId);  
     const [productPda, productPdaBump] = PublicKey.findProgramAddressSync([
-      anchor.utils.bytes.utf8.encode("product"),
-      pubkey.toBuffer(),
-      storePda.toBuffer(),
-      new Uint8Array([0,0,0,0,0,0,0,0])], program.programId);
+        anchor.utils.bytes.utf8.encode("product"),
+        storePda.toBuffer(),
+        new Uint8Array([0,0,0,0,0,0,0,0])], program.programId);
 
     const productInfo = await connection.getAccountInfo(productPda);
     if(productInfo){
       log('product already exists');
       setActivityIndicatorIsVisible(false);
       return;
-    }
-        
+    }       
 
     const authorityKeypair = Keypair.generate();
     const mintKeypair = Keypair.generate();
@@ -125,9 +126,9 @@ export default function CreateProductScreen() {
     
     log('creating product accounts');
     const tx = await program.methods
-    .createProduct(storeNumber, productName, productDescription, productCost, productSku)
+    .createProduct(companyNumber, storeNumber, productName, productDescription, productCost, productSku)
     .accounts({
-      mint: mint,
+      mint: mint as Token,
       product: productPda,
       productMint: productMintPda,
       mintProductRef: mintProductRefPda,
@@ -135,7 +136,7 @@ export default function CreateProductScreen() {
       company: companyPda,
       owner: pubkey,
       tokenProgram: TOKEN_PROGRAM_ID,
-      program: program.programId,      
+      twineProgram: program.programId,
     })
     .transaction()
     .catch(reason=>log(reason));;

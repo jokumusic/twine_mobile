@@ -1,12 +1,44 @@
 {
   "version": "0.1.0",
   "name": "twine",
+  "docs": [
+    "",
+    "Using the total count of company, store or product as part of the seed for any account is dangerous",
+    "because once those numbers are reached, the program will stop working and new accounts can't be created",
+    "find another solution."
+  ],
   "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "metadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
     {
       "name": "createCompany",
       "accounts": [
         {
           "name": "company",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "metadata",
           "isMut": true,
           "isSigner": false
         },
@@ -49,6 +81,10 @@
       ],
       "args": [
         {
+          "name": "companyNumber",
+          "type": "u32"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -78,6 +114,10 @@
         }
       ],
       "args": [
+        {
+          "name": "companyNumber",
+          "type": "u32"
+        },
         {
           "name": "storeNumber",
           "type": "u32"
@@ -146,12 +186,16 @@
           "isSigner": false
         },
         {
-          "name": "program",
+          "name": "twineProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
+        {
+          "name": "companyNumber",
+          "type": "u32"
+        },
         {
           "name": "storeNumber",
           "type": "u32"
@@ -177,6 +221,22 @@
   ],
   "accounts": [
     {
+      "name": "MetaData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "companyCount",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
       "name": "Company",
       "type": {
         "kind": "struct",
@@ -184,6 +244,10 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "companyNumber",
+            "type": "u32"
           },
           {
             "name": "owner",
@@ -383,6 +447,6 @@
     }
   ],
   "metadata": {
-    "address": "GMfD6UaH9SCYv6xoT7Jb7X14L2TSQaJbtLGpdzU4f88P"
+    "address": "HsxDAhDzJH5nHtnTz1rk5jzHzygrzduA6wYaYZdmTQ7Z"
   }
 }
