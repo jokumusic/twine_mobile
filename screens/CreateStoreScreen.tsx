@@ -72,7 +72,7 @@ async function createCompany() {
     .findProgramAddressSync([anchor.utils.bytes.utf8.encode("company"), pubkey.toBuffer()], program.programId);
     const companyInfo = await connection.getAccountInfo(companyPda);
     if(companyInfo) {
-      log('company already exists');
+      log(`company already exists: ${companyPda.toBase58()}`);
       setActivityIndicatorIsVisible(false);
       return;
     }
@@ -94,13 +94,15 @@ async function createCompany() {
       .signAndSendTransaction(tx, false)
       .catch(error=>log(error));
     
+    log(`waiting for confirmation on tx: ${trans.signature}`)
     await connection.confirmTransaction(trans.signature); //wait for confirmation before trying to retrieve account data
     const createdCompany = await program.account
                                 .store
                                 .fetch(companyPda)
                                 .catch(error=>log(error));
 
-    log('company created');
+    log(`company created: ${companyPda.toBase58()}`);    
+    log(JSON.stringify(createdCompany));
     setActivityIndicatorIsVisible(true);
 }
 
@@ -121,7 +123,7 @@ async function createStore() {
 
   const storeInfo = await connection.getAccountInfo(storePda);
   if(storeInfo){
-    log('store already exists');
+    log(`store already exists: ${storePda}`);
     setActivityIndicatorIsVisible(false);
     return;
   }
@@ -147,6 +149,7 @@ async function createStore() {
   .signAndSendTransaction(tx, false) 
   .catch(error=>log(error));
 
+  log(`waiting for confirmation on tx: ${trans.signature}`)
   await connection.confirmTransaction(trans.signature); //wait for confirmation before retrieving account data
   
   const createdStore = await program.account
@@ -154,6 +157,8 @@ async function createStore() {
                               .fetch(storePda)
                               .catch(error=>log(error));
 
+  log(`store created: ${storePda.toBase58()}`);    
+  log(JSON.stringify(createdStore));
   setActivityIndicatorIsVisible(false);
 }
 
@@ -172,7 +177,7 @@ const readStore = async () => {
                                                 pubkey.toBuffer(),
                                                 companyPda.toBuffer(),
                                                 new Uint8Array([0,0,0,0])], program.programId);
-    
+  log(`store account: ${storePda}`);
   const store = await program.account
                         .store
                         .fetch(storePda)
@@ -180,7 +185,8 @@ const readStore = async () => {
   
   updateStoreData({name: store.name, description: store.description});
                         
-  log('done')
+  log('done');
+  log(JSON.stringify(store));
   setActivityIndicatorIsVisible(false);
 }
 
@@ -221,8 +227,8 @@ const updateStore = async() =>{
                 .signAndSendTransaction(tx, false)
                 .catch(err=>log(err))
 
-  log('signed trans:', trans.signature);
-  log('waiting for confirmation...');
+
+  log(`waiting for confirmation on tx: ${trans.signature}`)
   await connection.confirmTransaction(trans.signature); //wait for confirmation
   const updatedStore = await program
                               .account
@@ -230,7 +236,8 @@ const updateStore = async() =>{
                               .fetch(storePda)
                               .catch(error=>log(error));  
 
-  log('OnChain store: ', updatedStore);
+  log('done');
+  log(JSON.stringify(updatedStore));
   setActivityIndicatorIsVisible(false);
 }
 

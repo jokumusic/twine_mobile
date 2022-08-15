@@ -88,13 +88,14 @@ export default function CreateProductScreen() {
       return;
     }
         
-    log('creating mint');
+
     const authorityKeypair = Keypair.generate();
     const mintKeypair = Keypair.generate();
-    log('funding ', authorityKeypair.publicKey.toBase58());
+    log(`funding ${authorityKeypair.publicKey.toBase58()}`);
     const airDropSig = await connection.requestAirdrop(authorityKeypair.publicKey, 100000000);
     await connection.confirmTransaction(airDropSig);
 
+    log('creating mint for product');
     const mint = await st.createMint(
       connection,
       authorityKeypair,
@@ -122,7 +123,7 @@ export default function CreateProductScreen() {
     const productCost = productData.cost;
     const productSku = productData.sku;
     
-    log('creating product');
+    log('creating product accounts');
     const tx = await program.methods
     .createProduct(storeNumber, productName, productDescription, productCost, productSku)
     .accounts({
@@ -146,8 +147,10 @@ export default function CreateProductScreen() {
     .signAndSendTransaction(tx, false) 
     .catch(error=>log(error));
 
+    log(`waiting for confirmation on tx: ${trans.signature}`)
     await connection.confirmTransaction(trans.signature); //wait for confirmation before retrieving account data
     
+    log(`retreiving product data from ${productPda.toBase58()}`);
     const createdProduct = await program.account
                                 .product
                                 .fetch(productPda)
