@@ -20,6 +20,7 @@ import {
   AccountInfo,
 } from "@solana/web3.js";
 import * as web3 from "@solana/web3.js";
+import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
 
 
 export default function CreateProductScreen() {
@@ -27,7 +28,7 @@ export default function CreateProductScreen() {
   const settings = useSelector(state => state);
   const dispatch = useDispatch();
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-  const [productData, updateProductData] = useState(
+  const [productData, setProductData] = useState(
     {
      name:'',
      description:'',
@@ -36,6 +37,9 @@ export default function CreateProductScreen() {
     });
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
+  const [companyNumber, setCompanyNumber] = useState(0);
+  const [storeNumber, setStoreNumber] = useState(0);
+  const [productNumber, setProductNumber] = useState(0);
 
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
@@ -67,68 +71,78 @@ export default function CreateProductScreen() {
       .findProgramAddressSync([anchor.utils.bytes.utf8.encode("metadata")], program.programId);
     const metadata = await program.account
         .metaData
-        .fetch(metadataPda)      
+        .fetchNullable(metadataPda)      
         .catch(e=>log(e));
-    const companyNumber = metadata.companyCount;
-    const [companyPda, companyPdaBump] = PublicKey
-      .findProgramAddressSync([
-          anchor.utils.bytes.utf8.encode("company"),
-          new Uint8Array([0,0,0,companyNumber])], program.programId);
+
+    if(!metadata) {
+      log(`failed to retreive metadata from ${metadataPda}`);
+      setActivityIndicatorIsVisible(false);
+      return;
+    }
+
+    setCompanyNumber(metadata.companyCount - 1);
+    const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("company"),
+      new Uint8Array([0,0,0,companyNumber])], program.programId);
+  
+    const company = await program.account.company.fetchNullable(companyPda);
+    if(!company){
+      log(`company #${companyNumber} doesn't exist: ${companyPda.toBase58()}`);
+      setActivityIndicatorIsVisible(false);
+      return;
+    }
+    
+    setStoreNumber(company.storeCount-1);
     const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
-        anchor.utils.bytes.utf8.encode("store"),                                                
-        companyPda.toBuffer(),
-        new Uint8Array([0,0,0,0])], program.programId);  
+          anchor.utils.bytes.utf8.encode("store"),
+          companyPda.toBuffer(),
+          new Uint8Array([0,0,0,storeNumber])], program.programId);
+  
+    const store = await program.account.store.fetchNullable(storePda);
+    if(!store){
+      log(`store #${storeNumber} doesn't exists: ${storePda}`);
+      setActivityIndicatorIsVisible(false);
+      return;
+    }
+
+    const productNumber = store.productCount.toNumber();
     const [productPda, productPdaBump] = PublicKey.findProgramAddressSync([
         anchor.utils.bytes.utf8.encode("product"),
         storePda.toBuffer(),
-        new Uint8Array([0,0,0,0,0,0,0,0])], program.programId);
+        new Uint8Array([0,0,0,0,0,0,0,productNumber])], program.programId);
 
-    const productInfo = await connection.getAccountInfo(productPda);
-    if(productInfo){
-      log('product already exists');
+    const product = await program.account.product.fetchNullable(productPda);
+    if(product){
+      log(`product #${productNumber} already exists: ${productPda.toBase58()}`);
       setActivityIndicatorIsVisible(false);
       return;
     }       
 
-    const authorityKeypair = Keypair.generate();
-    const mintKeypair = Keypair.generate();
-    log(`funding ${authorityKeypair.publicKey.toBase58()}`);
-    const airDropSig = await connection.requestAirdrop(authorityKeypair.publicKey, 100000000);
-    await connection.confirmTransaction(airDropSig);
-
-    log('creating mint for product');
-    const mint = await st.createMint(
-      connection,
-      authorityKeypair,
-      pubkey,
-      null,
-      0,
-      mintKeypair,
-      null,
-      TOKEN_PROGRAM_ID
-    ) as PublicKey;
+    const mintKeypair = Keypair.generate(); 
+    log(`creating product mint: ${mintKeypair.publicKey.toBase58()}`);
 
     const [productMintPda, productMintPdaBump] = PublicKey.findProgramAddressSync([
       anchor.utils.bytes.utf8.encode("product_mint"),
-      mint.toBuffer()
+      mintKeypair.publicKey.toBuffer()
     ], program.programId);
 
     const [mintProductRefPda, mintProductRefPdaBump] = PublicKey.findProgramAddressSync([
       anchor.utils.bytes.utf8.encode("mint_product_ref"),
-      mint.toBuffer()
+      mintKeypair.publicKey.toBuffer()
     ], program.programId);
 
-    const storeNumber = 0;
+
     const productName = productData.name;
     const productDescription = productData.description;
-    const productCost = productData.cost;
+    const productCost = new anchor.BN(productData.cost);
     const productSku = productData.sku;
+    const productMintDecimals = 2;
     
-    log('creating product accounts');
+    log(`creating product ${companyNumber}/${storeNumber}/${productNumber}: ${productPda.toBase58()}`);
     const tx = await program.methods
-    .createProduct(companyNumber, storeNumber, productName, productDescription, productCost, productSku)
+    .createProduct(companyNumber, storeNumber, productMintDecimals, productName, productDescription, productCost, productSku)
     .accounts({
-      mint: mint as Token,
+      mint: mintKeypair.publicKey,
       product: productPda,
       productMint: productMintPda,
       mintProductRef: mintProductRefPda,
@@ -143,38 +157,171 @@ export default function CreateProductScreen() {
 
     tx.feePayer = pubkey;  
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    tx.partialSign(mintKeypair)
 
+    log('sending to Phantom for signing')
     const trans = await Phantom
-    .signAndSendTransaction(tx, false) 
+    .signTransaction(tx, false, true) 
     .catch(error=>log(error));
 
-    log(`waiting for confirmation on tx: ${trans.signature}`)
-    await connection.confirmTransaction(trans.signature); //wait for confirmation before retrieving account data
-    
-    log(`retreiving product data from ${productPda.toBase58()}`);
-    const createdProduct = await program.account
-                                .product
-                                .fetch(productPda)
-                                .catch(error=>log(error));
+    //console.log(trans);
 
+    log('sending transaction...');
+    const txid = await anchor.web3
+      .sendAndConfirmRawTransaction(
+        connection,
+        trans.serialize({
+            requireAllSignatures: true,
+            verifySignatures: true,
+        }),
+        {skipPreflight: true}
+      )
+      .catch(err=>log(err));
+
+    if(txid) {
+      console.log('txid: ', txid);
+
+      log(`waiting for confirmation on tx: ${txid}`)
+      await connection.confirmTransaction(txid, 'finalized'); //wait for confirmation before retrieving account data
+      
+      log(`retreiving product data from ${productPda.toBase58()}`);
+      const createdProduct = await program.account
+                                  .product
+                                  .fetchNullable(productPda)              
+                                  .catch(error=>log(error));
+      if(createdProduct){
+        setProductNumber(productNumber);
+        console.log('success');
+      } else{
+        console.log('failed to fetch product data');
+      }
+
+    } else{
+      log('sending transaction failed.');
+    }
+
+    setActivityIndicatorIsVisible(false);
+  }
+
+  const readProduct = async () => {
+    setActivityIndicatorIsVisible(true);
+    log('reading product data');
+    const pubkey = Phantom.getWalletPublicKey();
+    const network = clusterApiUrl("devnet")
+    const connection = new Connection(network);  
+    const program = getProgram(connection, pubkey);
+   
+    const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("company"),
+      new Uint8Array([0,0,0,companyNumber])], program.programId);
+
+    const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("store"),
+      companyPda.toBuffer(),
+      new Uint8Array([0,0,0,storeNumber])], program.programId);
+
+    const [productPda, productPdaBump] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("product"),
+      storePda.toBuffer(),
+      new Uint8Array([0,0,0,0,0,0,0,productNumber])], program.programId);
+
+    const product = await program.account.product.fetchNullable(productPda);
+    if(!product){
+      log(`product #${productNumber} doesn't exist: ${productPda.toBase58()}`);
+      setActivityIndicatorIsVisible(false);
+      return;
+    }
+    
+    log(JSON.stringify(product));
+
+    setProductData({
+      name: product.name,
+      description: product.description,
+      cost: product.cost.toNumber(),
+      sku: product.sku,
+    });
+                          
     log('done');
     setActivityIndicatorIsVisible(false);
+  }
+
+  const updateProduct = async()=>{
+    log('not implemented yet')
+    return;
+
+    setActivityIndicatorIsVisible(true);
+    log('updating product data');
+    const pubkey = Phantom.getWalletPublicKey();
+    const network = clusterApiUrl("devnet")
+    const connection = new Connection(network);  
+    const program = getProgram(connection, pubkey);
+    
+    const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("company"),
+      new Uint8Array([0,0,0,companyNumber])], program.programId);
+
+    const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("store"),
+      companyPda.toBuffer(),
+      new Uint8Array([0,0,0,storeNumber])], program.programId);
+
+    const [productPda, productPdaBump] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("product"),
+      storePda.toBuffer(),
+      new Uint8Array([0,0,0,0,0,0,0,productNumber])], program.programId);
+
+    const product = await program.account.product.fetchNullable(productPda);
+    if(!product){
+      log(`product #${productNumber} doesn't exist: ${productPda.toBase58()}`);
+      setActivityIndicatorIsVisible(false);
+      return;
+    }
+    
+    log(JSON.stringify(product));
+
+    setProductData({
+      name: product.name,
+      description: product.description,
+      cost: product.cost.toNumber(),
+      sku: product.sku,
+    });
+                          
+    log('done');
+    setActivityIndicatorIsVisible(false);    
   }
 
   return (
     <View style={styles.container}>
       <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>      
       <View style={styles.body}>
-        <TextInput placeholder='Name' style={{margin: 5}}/>
-        <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1, margin: 5}} 
-        placeholder='Description'
-        multiline={true}
-        numberOfLines={4}/>
-        <TextInput placeholder='cost in lamports' style={{borderStyle: 'solid', borderWidth: 1, margin: 5}} />
-        <TextInput placeholder='SKU#' style={{borderStyle: 'solid', borderWidth: 1, margin: 5}} />
+        
+        <TextInput placeholder='Name'
+          style={{margin: 5}}
+          value={productData.name}
+          onChangeText={(t)=>setProductData({...productData,  name: t})}/>
+
+        <TextInput placeholder='Description'
+          style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1, margin: 5}}        
+          multiline={true}
+          numberOfLines={4}
+          value={productData.description}
+          onChangeText={(t)=>setProductData({...productData,  description: t})}/>
+        
+        <TextInput placeholder='cost in lamports'
+          value={productData.cost.toString()}
+          keyboardType='numeric'
+          style={{borderStyle: 'solid', borderWidth: 1, margin: 5}}
+          onChangeText={(t)=>setProductData({...productData,  cost: +t})}/>
+        
+        <TextInput
+          placeholder='SKU#'
+          value={productData.sku}
+          style={{borderStyle: 'solid', borderWidth: 1, margin: 5}} 
+          onChangeText={(t)=>setProductData({...productData,  sku: t})}/>
       </View>
-      <View style={styles.container}> 
+      <View> 
         <Button title='Create Product' onPress={createProduct} />
+        <Button title='Read Product' onPress={readProduct} />
       </View>
 
       <Text>This is here for testing. Go to the create store screen first to connect to wallet, create company, and create store, before creating a product here.</Text>
@@ -216,9 +363,10 @@ export default function CreateProductScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
+    flexDirection: 'column',
     justifyContent: 'flex-start',
+    flexGrow: 1
   },
   title: {
     fontSize: 33,

@@ -137,8 +137,8 @@ export type Twine = {
       "accounts": [
         {
           "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "product",
@@ -199,6 +199,10 @@ export type Twine = {
         {
           "name": "storeNumber",
           "type": "u32"
+        },
+        {
+          "name": "decimals",
+          "type": "u8"
         },
         {
           "name": "name",
@@ -444,6 +448,11 @@ export type Twine = {
       "code": 6004,
       "name": "StoreNumberDoesntMatchCompanyStoreCount",
       "msg": "StoreNumberDoesntMatchCompanyStoreCount"
+    },
+    {
+      "code": 6005,
+      "name": "NotMutable",
+      "msg": "NotMutable"
     }
   ]
 };
@@ -587,8 +596,8 @@ export const IDL: Twine = {
       "accounts": [
         {
           "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "product",
@@ -649,6 +658,10 @@ export const IDL: Twine = {
         {
           "name": "storeNumber",
           "type": "u32"
+        },
+        {
+          "name": "decimals",
+          "type": "u8"
         },
         {
           "name": "name",
@@ -894,6 +907,11 @@ export const IDL: Twine = {
       "code": 6004,
       "name": "StoreNumberDoesntMatchCompanyStoreCount",
       "msg": "StoreNumberDoesntMatchCompanyStoreCount"
+    },
+    {
+      "code": 6005,
+      "name": "NotMutable",
+      "msg": "NotMutable"
     }
   ]
 };

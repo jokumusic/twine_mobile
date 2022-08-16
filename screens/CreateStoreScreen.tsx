@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, findNodeHandle, AccessibilityInfo } from 'react-native';
 import { useSelector, useDispatch, connect } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
@@ -41,6 +41,8 @@ export default function CreateStoreScreen() {
   const [metadataPda, setMetadataPda] = useState(PublicKey.default);
   const [metadataAccount, setMetadataAccount] = useState();
   const [companyNumber, setCompanyNumber] = useState(0);
+  const [storeNumber, setStoreNumber] = useState(0);
+  const focusComponent = useRef();
 
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
@@ -85,21 +87,30 @@ function getProgram(connection: Connection, pubkey: PublicKey){
   return program;  
 }
 
-async function createCompany() {    
+async function createCompany() {
   setActivityIndicatorIsVisible(true);
     const pubkey = Phantom.getWalletPublicKey();
+
+    const metadata = await program.account.metaData.fetchNullable(metadataPda);
+    if(!metadata){
+      log(`metadata doesn't exist: ${metadataPda.toBase58()}`);
+      setActivityIndicatorIsVisible(false);
+      return;
+    }
+
+    const companyNumber = metadata.companyCount;
     const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
       anchor.utils.bytes.utf8.encode("company"),
       new Uint8Array([0,0,0,companyNumber])], program.programId);
 
-    const companyInfo = await connection.getAccountInfo(companyPda);
-    if(companyInfo) {
-      log(`company already exists: ${companyPda.toBase58()}`);
+    const company = await program.account.company.fetchNullable(companyPda).catch(e=>log(e));
+    if(company) {
+      log(`company #${companyNumber} already exists: ${companyPda.toBase58()}`);
       setActivityIndicatorIsVisible(false);
       return;
     }
   
-    log('creating company...');
+    log(`creating company #${companyNumber}: ${companyPda}`);
     const tx = await program.methods
     .createCompany()
     .accounts({
@@ -118,36 +129,52 @@ async function createCompany() {
       .catch(error=>log(error));
     
     log(`waiting for confirmation on tx: ${trans.signature}`)
-    await connection.confirmTransaction(trans.signature); //wait for confirmation before trying to retrieve account data
+    await connection.confirmTransaction(trans.signature, 'finalized'); //wait for confirmation before trying to retrieve account data
     const createdCompany = await program.account
-                                .store
-                                .fetch(companyPda)
+                                .company
+                                .fetchNullable(companyPda)
                                 .catch(error=>log(error));
 
-    log(`company created: ${companyPda.toBase58()}`);    
-    log(JSON.stringify(createdCompany));
+    if(createdCompany){            
+      setCompanyNumber(companyNumber);                    
+      log(`company created: ${companyPda.toBase58()}`);    
+      log(JSON.stringify(createdCompany));
+    } else{
+      log('failed to fetch company data');
+    }
+
     setActivityIndicatorIsVisible(false);
 }
 
 async function createStore() {
   setActivityIndicatorIsVisible(true);
   const pubkey = Phantom.getWalletPublicKey();
+  
   const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
     anchor.utils.bytes.utf8.encode("company"),
     new Uint8Array([0,0,0,companyNumber])], program.programId);
-  const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
-        anchor.utils.bytes.utf8.encode("store"),
-        companyPda.toBuffer(),
-        new Uint8Array([0,0,0,0])], program.programId);
 
-  const storeInfo = await connection.getAccountInfo(storePda);
-  if(storeInfo){
-    log(`store already exists: ${storePda}`);
+  const company = await program.account.company.fetchNullable(companyPda);
+  if(!company){
+    log(`company #${companyNumber} doesn't exist: ${companyPda.toBase58()}`);
     setActivityIndicatorIsVisible(false);
     return;
   }
-    
-  log('creating store'); 
+  
+  const storeNumber = company.storeCount;
+  const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
+        anchor.utils.bytes.utf8.encode("store"),
+        companyPda.toBuffer(),
+        new Uint8Array([0,0,0,storeNumber])], program.programId);
+
+  const store = await program.account.store.fetchNullable(storePda);
+  if(store){
+    log(`store #${storeNumber} already exist: ${storePda}`);
+    setActivityIndicatorIsVisible(false);
+    return;
+  }
+  
+  log('creating store ${companyNumber}/${storeNumber}: ${companyPda}/${storePda}'); 
   const storeName = storeData.name;
   const storeDescription = storeData.description;
   
@@ -165,39 +192,45 @@ async function createStore() {
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
   const trans = await Phantom
-  .signAndSendTransaction(tx, false) 
-  .catch(error=>log(error));
+    .signAndSendTransaction(tx, false) 
+    .catch(error=>log(error));
 
   log(`waiting for confirmation on tx: ${trans.signature}`)
-  await connection.confirmTransaction(trans.signature); //wait for confirmation before retrieving account data
+  await connection.confirmTransaction(trans.signature, 'finalized'); //wait for confirmation before retrieving account data
   
   const createdStore = await program.account
                               .store
-                              .fetch(storePda)
+                              .fetchNullable(storePda)
                               .catch(error=>log(error));
 
-  log(`store created: ${storePda.toBase58()}`);    
-  log(JSON.stringify(createdStore));
+  if(createdStore) {
+    setStoreNumber(storeNumber);
+    log(`store created: ${storePda.toBase58()}`);
+    log(JSON.stringify(createdStore));
+  } else{
+    log('failed to fetch store data');
+  }
+
   setActivityIndicatorIsVisible(false);
 }
 
 const readStore = async () => {
   setActivityIndicatorIsVisible(true);
   log('reading store data');
-  const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
-    anchor.utils.bytes.utf8.encode("company"),
-    new Uint8Array([0,0,0,companyNumber])], program.programId);
+  const pubkey = Phantom.getWalletPublicKey();
+ 
   const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
-    anchor.utils.bytes.utf8.encode("store"),
-    companyPda.toBuffer(),
-    new Uint8Array([0,0,0,0])], program.programId);
-  log(`store account: ${storePda}`);
+        anchor.utils.bytes.utf8.encode("store"),
+        companyPda.toBuffer(),
+        new Uint8Array([0,0,0,storeNumber])], program.programId);
 
-  const store = await program.account
-                        .store
-                        .fetch(storePda)
-                        .catch(error=>log(error));
-  
+  const store = await program.account.store.fetchNullable(storePda);
+  if(!store){
+    log(`store #${storeNumber} doesn't exist: ${storePda}`);
+    setActivityIndicatorIsVisible(false);
+    return;
+  }
+
   updateStoreData({name: store.name, description: store.description});
                         
   log('done');
@@ -209,18 +242,19 @@ const updateStore = async() =>{
   setActivityIndicatorIsVisible(true);
   log('updating store...');
   const pubkey = Phantom.getWalletPublicKey();
+
   const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
     anchor.utils.bytes.utf8.encode("company"),
     new Uint8Array([0,0,0,companyNumber])], program.programId);
+
   const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
     anchor.utils.bytes.utf8.encode("store"),
     companyPda.toBuffer(),
-    new Uint8Array([0,0,0,0])], program.programId);
+    new Uint8Array([0,0,0,storeNumber])], program.programId);
+
   const storeName = storeData.name;
   const storeDescription = storeData.description;
-  const storeNumber = 0;
-
-
+  
   const tx = await program.methods
                           .updateStore(companyNumber, storeNumber, storeName, storeDescription)
                           .accounts({
@@ -231,24 +265,30 @@ const updateStore = async() =>{
                           .transaction()
                           .catch(reason=>log(reason));
 
-  tx.feePayer = pubkey;  
+  tx.feePayer = pubkey;
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
   
+  log('submitting transaction...');
   const trans = await Phantom
                 .signAndSendTransaction(tx, false)
-                .catch(err=>log(err))
+                .catch(err=>log(err));  
 
 
   log(`waiting for confirmation on tx: ${trans.signature}`)
-  await connection.confirmTransaction(trans.signature); //wait for confirmation
+  await connection.confirmTransaction(trans.signature, 'finalized'); //wait for confirmation
   const updatedStore = await program
                               .account
                               .store
-                              .fetch(storePda)
+                              .fetchNullable(storePda)
                               .catch(error=>log(error));  
 
-  log('done');
-  log(JSON.stringify(updatedStore));
+  if(updatedStore) {
+    log('done');
+    log(JSON.stringify(updatedStore));
+  } else{
+    log('failed to fetch store data');
+  }
+
   setActivityIndicatorIsVisible(false);
 }
 
@@ -256,7 +296,7 @@ const updateStore = async() =>{
     <View style={styles.container}>      
       <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
       
-      <View style={styles.body}>
+      <View style={styles.body} >
         <TextInput 
           placeholder='Name'
           value={storeData.name}
@@ -275,8 +315,7 @@ const updateStore = async() =>{
         <Button title='Create Company'  onPress={createCompany} />
         <Button title='Create Store' onPress={createStore} />
         <Button title='Read Store Data' onPress={readStore} />
-        <Button title='Update Store Data' onPress={updateStore} />  
-      
+        <Button title='Update Store Data' onPress={updateStore} />      
       </View>
 
       <View style={{width: '95%', height: '35%', margin:5}}>

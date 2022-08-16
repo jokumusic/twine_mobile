@@ -137,8 +137,8 @@
       "accounts": [
         {
           "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "product",
@@ -199,6 +199,10 @@
         {
           "name": "storeNumber",
           "type": "u32"
+        },
+        {
+          "name": "decimals",
+          "type": "u8"
         },
         {
           "name": "name",
@@ -444,9 +448,14 @@
       "code": 6004,
       "name": "StoreNumberDoesntMatchCompanyStoreCount",
       "msg": "StoreNumberDoesntMatchCompanyStoreCount"
+    },
+    {
+      "code": 6005,
+      "name": "NotMutable",
+      "msg": "NotMutable"
     }
   ],
   "metadata": {
-    "address": "HsxDAhDzJH5nHtnTz1rk5jzHzygrzduA6wYaYZdmTQ7Z"
+    "address": "5MLDaZmz9UUe49AeTxQM9dsRXnWSmVKfhE5aLuAEj61n"
   }
 }
