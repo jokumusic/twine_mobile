@@ -218,6 +218,10 @@ const readStore = async () => {
   setActivityIndicatorIsVisible(true);
   log('reading store data');
   const pubkey = Phantom.getWalletPublicKey();
+
+  const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
+    anchor.utils.bytes.utf8.encode("company"),
+    new Uint8Array([0,0,0,companyNumber])], program.programId);
  
   const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
         anchor.utils.bytes.utf8.encode("store"),
