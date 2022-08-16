@@ -23,6 +23,8 @@ import * as web3 from "@solana/web3.js";
 import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
 
 const SCREEN_DEEPLINK_ROUTE = "create_product";
+const network = clusterApiUrl("devnet")
+const connection = new Connection(network);  
 
 export default function CreateProductScreen() {
   const [state, updateState] = useState('')
@@ -64,8 +66,6 @@ export default function CreateProductScreen() {
     setActivityIndicatorIsVisible(true);
     log('creating product...');
     const pubkey = Phantom.getWalletPublicKey();
-    const network = clusterApiUrl("devnet")
-    const connection = new Connection(network);  
     const program = getProgram(connection, pubkey);
 
     const [metadataPda, metadataPdaBump] = PublicKey
@@ -81,7 +81,8 @@ export default function CreateProductScreen() {
       return;
     }
 
-    setCompanyNumber(metadata.companyCount - 1);
+    const companyNumber = metadata.companyCount - 1;
+    setCompanyNumber(companyNumber);
     const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
       anchor.utils.bytes.utf8.encode("company"),
       new Uint8Array([0,0,0,companyNumber])], program.programId);
@@ -208,8 +209,6 @@ export default function CreateProductScreen() {
     setActivityIndicatorIsVisible(true);
     log('reading product data');
     const pubkey = Phantom.getWalletPublicKey();
-    const network = clusterApiUrl("devnet")
-    const connection = new Connection(network);  
     const program = getProgram(connection, pubkey);
    
     const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
@@ -233,7 +232,7 @@ export default function CreateProductScreen() {
       return;
     }
     
-    log(JSON.stringify(product));
+    //log(JSON.stringify(product));
 
     setProductData({
       name: product.name,
@@ -247,15 +246,10 @@ export default function CreateProductScreen() {
   }
 
   const updateProduct = async()=>{
-    log('not implemented yet')
-    return;
-
     setActivityIndicatorIsVisible(true);
     log('updating product data');
-    const pubkey = Phantom.getWalletPublicKey();
-    const network = clusterApiUrl("devnet")
-    const connection = new Connection(network);  
-    const program = getProgram(connection, pubkey);
+    const ownerPubKey = Phantom.getWalletPublicKey();
+    const program = getProgram(connection, ownerPubKey);
     
     const [companyPda, companyPdaBump] = PublicKey.findProgramAddressSync([
       anchor.utils.bytes.utf8.encode("company"),
@@ -277,16 +271,38 @@ export default function CreateProductScreen() {
       setActivityIndicatorIsVisible(false);
       return;
     }
-    
-    log(JSON.stringify(product));
+
+    const tx = await program.methods
+    .updateProduct(companyNumber, storeNumber, new anchor.BN(productNumber), 
+      productData.name, productData.description, new anchor.BN(productData.cost), productData.sku
+    )
+    .accounts({
+      company: companyPda,
+      store: storePda,
+      product: productPda,
+      owner: ownerPubKey,      
+    })
+    .transaction();
+
+    tx.feePayer = ownerPubKey;  
+    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+    const trans = await Phantom
+      .signAndSendTransaction(tx, false, true, SCREEN_DEEPLINK_ROUTE)
+      .catch(error=>log(error));
+
+    log(`waiting for confirmation on tx: ${trans.signature}`)
+    await connection.confirmTransaction(trans.signature, 'finalized'); //wait for confirmation before trying to retrieve account data
+
+    const updatedProduct = await program.account.product.fetch(productPda);
 
     setProductData({
-      name: product.name,
-      description: product.description,
-      cost: product.cost.toNumber(),
-      sku: product.sku,
+      name: updatedProduct.name,
+      description: updatedProduct.description,
+      cost: updatedProduct.cost.toNumber(),
+      sku: updatedProduct.sku,
     });
-                          
+
     log('done');
     setActivityIndicatorIsVisible(false);    
   }
@@ -323,6 +339,7 @@ export default function CreateProductScreen() {
       <View> 
         <Button title='Create Product' onPress={createProduct} />
         <Button title='Read Product' onPress={readProduct} />
+        <Button title='Update Product' onPress={updateProduct} />
       </View>
 
       <Text>This is here for testing. Go to the create store screen first to connect to wallet, create company, and create store, before creating a product here.</Text>

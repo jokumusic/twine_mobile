@@ -221,6 +221,61 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "updateProduct",
+      "accounts": [
+        {
+          "name": "product",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "store",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "company",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "companyNumber",
+          "type": "u32"
+        },
+        {
+          "name": "storeNumber",
+          "type": "u32"
+        },
+        {
+          "name": "productNumber",
+          "type": "u64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "cost",
+          "type": "u64"
+        },
+        {
+          "name": "sku",
+          "type": "string"
+        }
+      ]
     }
   ],
   "accounts": [
