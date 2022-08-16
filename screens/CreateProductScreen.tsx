@@ -22,6 +22,7 @@ import {
 import * as web3 from "@solana/web3.js";
 import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
 
+const SCREEN_DEEPLINK_ROUTE = "create_product";
 
 export default function CreateProductScreen() {
   const [state, updateState] = useState('')
@@ -48,8 +49,8 @@ export default function CreateProductScreen() {
 
   function getProgram(connection: Connection, pubkey: PublicKey){
     const wallet = {
-      signTransaction: Phantom.signTransaction,
-      signAllTransactions: Phantom.signAllTransactions,
+      signTransaction: (tx: Transaction) => Phantom.signTransaction(tx,false,true,SCREEN_DEEPLINK_ROUTE),
+      signAllTransactions: (txs: Transaction[]) => Phantom.signAllTransactions(txs,false,true,SCREEN_DEEPLINK_ROUTE),
       publicKey: pubkey
     };
   
@@ -161,7 +162,7 @@ export default function CreateProductScreen() {
 
     log('sending to Phantom for signing')
     const trans = await Phantom
-    .signTransaction(tx, false, true) 
+    .signTransaction(tx, false, true, SCREEN_DEEPLINK_ROUTE) 
     .catch(error=>log(error));
 
     //console.log(trans);

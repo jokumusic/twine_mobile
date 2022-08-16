@@ -25,6 +25,8 @@ import {
 } from "@solana/web3.js";
 
 
+const SCREEN_DEEPLINK_ROUTE = "create_store";
+
 export default function CreateStoreScreen() {
   const [state, updateState] = useState('')
   const settings = useSelector(state => state);
@@ -52,7 +54,7 @@ export default function CreateStoreScreen() {
 
 async function connectWallet(){
   Phantom
-  .connect()
+  .connect(true, SCREEN_DEEPLINK_ROUTE)
   .then(()=>{
     log('connected to wallet');
     const pk = Phantom.getWalletPublicKey();
@@ -77,8 +79,8 @@ async function connectWallet(){
 
 function getProgram(connection: Connection, pubkey: PublicKey){
   const wallet = {
-    signTransaction: Phantom.signTransaction,
-    signAllTransactions: Phantom.signAllTransactions,
+    signTransaction: (tx: Transaction) => Phantom.signTransaction(tx,false,true, SCREEN_DEEPLINK_ROUTE),
+    signAllTransactions: (txs: Transaction[]) => Phantom.signAllTransactions(txs,false,true,SCREEN_DEEPLINK_ROUTE),
     publicKey: pubkey
   };
 
@@ -125,7 +127,7 @@ async function createCompany() {
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
     const trans = await Phantom
-      .signAndSendTransaction(tx, false)
+      .signAndSendTransaction(tx, false, true, SCREEN_DEEPLINK_ROUTE)
       .catch(error=>log(error));
     
     log(`waiting for confirmation on tx: ${trans.signature}`)
@@ -174,7 +176,7 @@ async function createStore() {
     return;
   }
   
-  log('creating store ${companyNumber}/${storeNumber}: ${companyPda}/${storePda}'); 
+  log(`creating store ${companyNumber}/${storeNumber}: ${companyPda}/${storePda}`); 
   const storeName = storeData.name;
   const storeDescription = storeData.description;
   
@@ -192,7 +194,7 @@ async function createStore() {
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
   const trans = await Phantom
-    .signAndSendTransaction(tx, false) 
+    .signAndSendTransaction(tx, false, true, SCREEN_DEEPLINK_ROUTE) 
     .catch(error=>log(error));
 
   log(`waiting for confirmation on tx: ${trans.signature}`)
@@ -274,7 +276,7 @@ const updateStore = async() =>{
   
   log('submitting transaction...');
   const trans = await Phantom
-                .signAndSendTransaction(tx, false)
+                .signAndSendTransaction(tx, false, true, SCREEN_DEEPLINK_ROUTE)
                 .catch(err=>log(err));  
 
 

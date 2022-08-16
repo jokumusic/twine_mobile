@@ -10,7 +10,17 @@ import {
     Transaction,
   } from "@solana/web3.js";
 import { Buffer } from "buffer";
+import { Platform } from "react-native";
+
 global.Buffer = global.Buffer || Buffer;
+global.PhantomCallbackMap = new Map<string,any>(); //holds callback functions to be called after each return from a call to a Phantom deep link
+global.PhantomSession = {        
+    token: '',
+    keypair: nacl.box.keyPair(),
+    shared_secret: new Uint8Array(0),
+    wallet_pubkey: PublicKey.default,
+};
+global.PhantomIsAndroid = Platform.OS == 'android';
 
 
 const context = {
@@ -20,16 +30,6 @@ const context = {
 };
 
 
-const phantom_session = {        
-    token: '',
-    keypair: nacl.box.keyPair(),
-    shared_secret: new Uint8Array(0),
-    wallet_pubkey: PublicKey.default,
-};
-
-
-const callback_map = new Map(); //holds callback functions to be called after each return from a call to a Phantom deep link
-
 const enum DeepLinkMethod{
     connect="connect",
     disconnect="disconnect",
@@ -37,7 +37,6 @@ const enum DeepLinkMethod{
     signAllTransactions="signAllTransactions",
     signTransaction="signTransaction",
     signMessage="signMessage",
-    bogus="bogus",
 }
 
 const buildUrl = (path: string, params: URLSearchParams) => `https://phantom.app/ul/v1/${path}?${params.toString()}`;
@@ -45,34 +44,39 @@ const buildUrl = (path: string, params: URLSearchParams) => `https://phantom.app
 const registerDeepLinkHandler  = (handler: Function) : string => {
     unregisterOldDeepLinkHandlers(5); //unregister handlers that have been around longer than 5 minutes
     const callback_id = uuid.v4().toString(); //this will be used to identify that the callback is for this function call
-    callback_map.set(callback_id, {date:new Date(), handler}); //associate id with callback func
+    //console.log('registering ', callback_id);
+    global.PhantomCallbackMap.set(callback_id, {date:new Date(), handler}); //associate id with callback func
     return callback_id;
 }
 
-const unregisterDeepLinkHandler = (id: string) : boolean => callback_map.delete(id);
+const unregisterDeepLinkHandler = (id: string) : boolean => global.PhantomCallbackMap.delete(id);
 
 const getDeepLinkHandler = (id: string) : Function => {
-    const v = callback_map.get(id);
+    const v = global.PhantomCallbackMap.get(id);
     return v?.handler;
 }
 
 const unregisterOldDeepLinkHandlers = (minutes: number=5) =>{
     let keysToDelete = Array<string>();
     const now = new Date();
-    callback_map.forEach((k,v)=>{
+    global.PhantomCallbackMap.forEach((k,v)=>{
         if(Math.abs(now - v.date) > minutes) //delete if more than a x minutes has passed
             keysToDelete.push(k)
     });
 
     if(keysToDelete.length > 0){
-        keysToDelete.forEach(k=> unregisterDeepLinkHandler(k));
+        keysToDelete.forEach(k=>{
+            //console.log('deleting handler ', k);
+            unregisterDeepLinkHandler(k)
+        });
     }
 };
 
-const callDeepLinkMethod = async (method: DeepLinkMethod, payload: any, callback_handler: Function) => {
-    console.log('calling ', method);
+const callDeepLinkMethod = async (method: DeepLinkMethod, payload: any, callback_handler: Function, deepLinkReturnRoute = "") => {
+    console.log('calling phantom ', method);
+    
     const params = new URLSearchParams({
-        dapp_encryption_public_key: bs58.encode(phantom_session.keypair.publicKey),
+        dapp_encryption_public_key: bs58.encode(global.PhantomSession.keypair.publicKey),
     });
 
     if(method === DeepLinkMethod.connect){
@@ -81,81 +85,79 @@ const callDeepLinkMethod = async (method: DeepLinkMethod, payload: any, callback
     } 
     
     if(payload) {
-        const [nonce, encryptedPayload] = encryptPayload(payload, phantom_session.shared_secret);
+        const [nonce, encryptedPayload] = encryptPayload(payload, global.PhantomSession.shared_secret);
         params.append("nonce", bs58.encode(nonce));
         params.append("payload", bs58.encode(encryptedPayload));
-    }    
-        
-    const handler_id = registerDeepLinkHandler(callback_handler);
-    const callbackLink = Linking.createURL(`${handler_id}/${method}`, {queryParams:{ handler_id: handler_id}});
+    }        
+    
+    const handlerId = registerDeepLinkHandler(callback_handler);
+    const callbackLink = Linking.createURL(`${deepLinkReturnRoute}`, {queryParams:{ id: handlerId, method}});
     params.append("redirect_link", callbackLink);
 
     let url = buildUrl(method, params);
+    //console.log('calling phantom deeplink: ', url);
     const result = Linking.openURL(url);
     
     if(!result){
-        unregisterDeepLinkHandler(handler_id);
+        //unregisterDeepLinkHandler(handler_id);
         throw new Error(`Linking.openUrl failed. url=${url}`);
     }
 }
  
 const handleDeepLinkCallback = ({ url }: Linking.EventType) => {
-    //const {hostname, path, queryParams} = Linking.parse(url);
     console.log(`got callback: ${url}`)
     const u = new URL(url);
     let pathname = u.pathname;
     const params = u.searchParams;
     const errorCode = params.get("errorCode");
-    const splitted = pathname.split('/');
-    const handler_id = splitted[2]; //cleaner way to do this?
-    //console.log('callback_id: ', callback_id);
-    //console.log('session: ', phantom_session);
-
+    const handlerId = params.get("id");
+    const method = params.get("method") ?? "";
+ 
     if (errorCode) {
-        if(handler_id)
-            unregisterDeepLinkHandler(handler_id); 
+        if(handlerId)
+            unregisterDeepLinkHandler(handlerId); 
         
         throw new Error(`Phantom deeplink return error: ${errorCode}`);
     }
 
-    if(!handler_id)
+    if(!handlerId)
         throw new Error(`callback_id wasn't found in url: ${url}`);
 
-    const handler = getDeepLinkHandler(handler_id);
+    const handler = getDeepLinkHandler(handlerId);
     if(!handler) {
-        console.log("map: ", callback_map);
-        throw new Error(`a handler was not defined for handler_id ${handler_id}`);    
+        console.log("map: ", global.PhantomCallbackMap);
+        throw new Error(`a handler was not defined for handler_id ${handlerId}`);    
     }
     
-    unregisterDeepLinkHandler(handler_id);
+    //unregisterDeepLinkHandler(handlerId);
 
-    if (pathname.includes(DeepLinkMethod.signTransaction)) {
+    if (method.includes(DeepLinkMethod.signTransaction)) {
         console.log('processing SignTransaction callback');
         const signTransactionData = decryptPayload(
             params.get("data")!,
             params.get("nonce")!,
-            phantom_session.shared_secret
+            global.PhantomSession.shared_secret
         );
 
         const decodedTransaction = Transaction.from(bs58.decode(signTransactionData.transaction));
         handler(decodedTransaction);
     }
-    else if (pathname.includes(DeepLinkMethod.signAndSendTransaction)) {
+    else if (method.includes(DeepLinkMethod.signAndSendTransaction)) {
         console.log('processing SignAndSendTransaction callback');
         const signAndSendTransactionData = decryptPayload(
           params.get("data")!,
           params.get("nonce")!,
-          phantom_session.shared_secret
+          global.PhantomSession.shared_secret
         );
   
         handler(signAndSendTransactionData);
     } 
-    else if (pathname.includes(DeepLinkMethod.signAllTransactions)) {
+    else if (method.includes(DeepLinkMethod.signAllTransactions)) {
         console.log('processing SignAllTransactions callback');
         const signAllTransactionsData = decryptPayload(
           params.get("data")!,
           params.get("nonce")!,
-          phantom_session.shared_secret
+          global.PhantomSession.shared_secret
         );
   
         const decodedTransactions = signAllTransactionsData.transactions.map((t: string) =>
@@ -164,25 +166,25 @@ const handleDeepLinkCallback = ({ url }: Linking.EventType) => {
   
         handler(decodedTransactions);
     }
-    else if (pathname.includes(DeepLinkMethod.signMessage)) {
+    else if (method.includes(DeepLinkMethod.signMessage)) {
         console.log('processing SignMessage callback');
         const signMessageData = decryptPayload(
           params.get("data")!,
           params.get("nonce")!,
-          phantom_session.shared_secret
+          global.PhantomSession.shared_secret
         );
   
         handler(signMessageData);
     }
-    else if (pathname.includes(DeepLinkMethod.disconnect)) {
+    else if (method.includes(DeepLinkMethod.disconnect)) {
         console.log('processing Disconnect callback');
         handler();
     }
-    else if (pathname.includes(DeepLinkMethod.connect)) {
+    else if (method.includes(DeepLinkMethod.connect)) {
         console.log('processing Connect callback');
         const sharedSecretDapp = nacl.box.before(
           bs58.decode(params.get("phantom_encryption_public_key")!),
-          phantom_session.keypair.secretKey
+          global.PhantomSession.keypair.secretKey
         );
   
         const connectData = decryptPayload(
@@ -191,12 +193,12 @@ const handleDeepLinkCallback = ({ url }: Linking.EventType) => {
           sharedSecretDapp
         );
 
-        phantom_session.shared_secret = sharedSecretDapp;
-        phantom_session.token = connectData.session;
-        phantom_session.wallet_pubkey = new PublicKey(connectData.public_key);
+        global.PhantomSession.shared_secret = sharedSecretDapp;
+        global.PhantomSession.token = connectData.session;
+        global.PhantomSession.wallet_pubkey = new PublicKey(connectData.public_key);
         
         handler();
-    }
+    }    
     else {
         throw new Error(`received unknown callback: ${url}`);
     }
@@ -229,69 +231,96 @@ const encryptPayload = (payload: any, sharedSecret?: Uint8Array) => {
 };
 
 
-/*EXPORTED STUFF*/
-export const getWalletPublicKey = (): PublicKey => phantom_session.wallet_pubkey;
 
-export const connect = async () : Promise<void> => {
-    return new Promise<void>(async (resolve, reject) => {    
-        if(phantom_session.token != '') {
-            resolve();
-        }
-        else {        
-            await Linking.getInitialURL();
+/** gets the last retrieved wallet public key*/
+export const getWalletPublicKey = (): PublicKey => global.PhantomSession.wallet_pubkey;
+
+/** connects to phantom wallet
+ * @param deepLinkReturnRoute deeplink route back to the screen you want to display
+*/
+export const connect = async (force=false, deepLinkReturnRoute = "") : Promise<void> => {
+    return new Promise<void>(async (resolve, reject) => {
+        if(!global.PhantomSession.token) {
+            const initialUrl = await Linking.getInitialURL();
+            //console.log("initurl:",initialUrl);
             Linking.addEventListener("url", handleDeepLinkCallback);
-            callDeepLinkMethod(DeepLinkMethod.connect, null, resolve);     
         }
+        
+        if(global.PhantomSession.token && !force) {
+            console.log('already have a phantom session. set force=true to get a new session');
+            resolve();
+            return;
+        }
+        
+
+        callDeepLinkMethod(DeepLinkMethod.connect, null, resolve, deepLinkReturnRoute);             
     });
 }
 
-
-export const signTransaction = async (transaction: Transaction, requireAllSignatures = true, verifySignatures = true) => {
+/** signs a transaction
+ * @param deepLinkReturnRoute deeplink route back to the screen you want to display
+*/
+export const signTransaction = async (transaction: Transaction, requireAllSignatures = true, verifySignatures = true, deepLinkReturnRoute = "") => {
     return new Promise<Transaction>(async (resolve) => {
-        await connect();
+        if(global.PhantomIsAndroid)
+            connect(true, deepLinkReturnRoute);
 
         const serializedTransaction = bs58.encode(
             transaction.serialize({requireAllSignatures, verifySignatures})
         );
 
         const payload = {
-            session: phantom_session.token,
+            session: global.PhantomSession.token,
             transaction: serializedTransaction,
         };
 
-        callDeepLinkMethod(DeepLinkMethod.signTransaction, payload, resolve);     
+        callDeepLinkMethod(DeepLinkMethod.signTransaction, payload, resolve, deepLinkReturnRoute);     
     });
-  }
+}
 
-  export const signMessage = async (message: string) => {
-    return new Promise<any>(async (resolve) => {
-        await connect();
-        
-        const payload = {
-            session: phantom_session.token,
-            message: bs58.encode(Buffer.from(message)),
-        };
+/** signs a message
+* @param deepLinkReturnRoute deeplink route back to the screen you want to display
+*/
+export const signMessage = async (message: string, deepLinkReturnRoute = "") => {
+return new Promise<any>(async (resolve) => {
+    if(global.PhantomIsAndroid)
+        connect(true, deepLinkReturnRoute);
+    
+    const payload = {
+        session: global.PhantomSession.token,
+        message: bs58.encode(Buffer.from(message)),
+    };
 
-        callDeepLinkMethod(DeepLinkMethod.signMessage, payload, resolve); 
-    });
-  };
+    callDeepLinkMethod(DeepLinkMethod.signMessage, payload, resolve, deepLinkReturnRoute); 
+});
+};
 
-  export const signAndSendTransaction = async (transaction: Transaction, requireAllSignatures=true, verifySignatures=true) => {
-    return new Promise<Transaction>(async (resolve) => {
+/** signs and sends a transaction
+* @param deepLinkReturnRoute deeplink route back to the screen you want to display
+*/
+export const signAndSendTransaction = async (transaction: Transaction, requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
+return new Promise<Transaction>(async (resolve) => {
+    if(global.PhantomIsAndroid)
+        connect(true, deepLinkReturnRoute);
 
-        const serializedTransaction = transaction.serialize({requireAllSignatures, verifySignatures});
+    const serializedTransaction = transaction.serialize({requireAllSignatures, verifySignatures});
 
-        const payload = {
-            session: phantom_session.token,
-            transaction: bs58.encode(serializedTransaction),
-        };
+    const payload = {
+        session: global.PhantomSession.token,
+        transaction: bs58.encode(serializedTransaction),
+    };
 
-        callDeepLinkMethod(DeepLinkMethod.signAndSendTransaction, payload, resolve);
-    });
-  };
+    callDeepLinkMethod(DeepLinkMethod.signAndSendTransaction, payload, resolve, deepLinkReturnRoute);
+});
+};
 
-export const signAllTransactions = async (transactions: Transaction[], requireAllSignatures=true, verifySignatures=true) => {
+/** signs all transactions
+* @param deepLinkReturnRoute deeplink route back to the screen you want to display
+*/
+export const signAllTransactions = async (transactions: Transaction[], requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
     return new Promise<Transaction[]>(async (resolve) =>{ 
+        if(global.PhantomIsAndroid)
+            connect(true, deepLinkReturnRoute);
 
         const serializedTransactions = transactions.map((t) =>
             bs58.encode(
@@ -300,20 +329,23 @@ export const signAllTransactions = async (transactions: Transaction[], requireAl
         );
 
         const payload = {
-            session: phantom_session.token,
+            session: global.PhantomSession.token,
             transactions: serializedTransactions,
         };
 
-        callDeepLinkMethod(DeepLinkMethod.signAllTransactions, payload, resolve);
+        callDeepLinkMethod(DeepLinkMethod.signAllTransactions, payload, resolve, deepLinkReturnRoute);
     });
 };
 
-export const disconnect = async () => {
+/** disconnects session from Phantom wallet
+* @param deepLinkReturnRoute deeplink route back to the screen you want to display
+*/
+export const disconnect = async (deepLinkReturnRoute: string, ) => {
     return new Promise<void>(async (resolve) =>{
         const payload = {
-            session: phantom_session.token,
+            session: global.PhantomSession.token,
         };
 
-        callDeepLinkMethod(DeepLinkMethod.disconnect, payload, resolve);
+        callDeepLinkMethod(DeepLinkMethod.disconnect, payload, resolve, deepLinkReturnRoute = "");
     });
   };

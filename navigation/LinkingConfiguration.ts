@@ -33,6 +33,8 @@ const linking: LinkingOptions<RootStackParamList> = {
         },
       },
       Modal: 'modal',
+      CreateStore: 'create_store',
+      CreateProduct: 'create_product',
       NotFound: '*',
     },
   },
