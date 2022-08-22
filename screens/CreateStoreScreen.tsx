@@ -230,6 +230,7 @@ const readStore = async () => {
         companyPda.toBuffer(),
         new Uint8Array([0,0,0,storeNumber])], program.programId);
 
+  log(`store: ${companyNumber}/${storeNumber}: ${storePda.toBase58()}`);
   const store = await program.account.store.fetchNullable(storePda);
   if(!store){
     log(`store #${storeNumber} doesn't exist: ${storePda}`);
@@ -261,6 +262,7 @@ const updateStore = async() =>{
   const storeName = storeData.name;
   const storeDescription = storeData.description;
   
+  log(`store: ${companyNumber}/${storeNumber}: ${companyPda}/${storePda}`); 
   const tx = await program.methods
                           .updateStore(companyNumber, storeNumber, storeName, storeDescription)
                           .accounts({
@@ -306,14 +308,14 @@ const updateStore = async() =>{
         <TextInput 
           placeholder='Name'
           value={storeData.name}
-          onChangeText={(t)=>updateStoreData({name: t, description: storeData.description})}
+          onChangeText={(t)=>updateStoreData({...storeData, name: t})}
           />
         <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1, margin: 5}} 
         placeholder='Description'
         multiline={true}
         numberOfLines={4}
         value={storeData.description}
-        onChangeText={(t)=>updateStoreData({name: storeData.name, description: t})}
+        onChangeText={(t)=>updateStoreData({...storeData, description: t})}
         />
 
         <Text>The following buttons are for testing and to temporarily deal with Phantom only responding on every other call</Text>

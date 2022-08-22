@@ -333,12 +333,16 @@ export type Twine = {
             "type": "publicKey"
           },
           {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
             "name": "storeNumber",
             "type": "u32"
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            "name": "productCount",
+            "type": "u64"
           },
           {
             "name": "name",
@@ -347,10 +351,6 @@ export type Twine = {
           {
             "name": "description",
             "type": "string"
-          },
-          {
-            "name": "productCount",
-            "type": "u64"
           }
         ]
       }
@@ -365,11 +365,11 @@ export type Twine = {
             "type": "u8"
           },
           {
-            "name": "productNumber",
-            "type": "u64"
+            "name": "owner",
+            "type": "publicKey"
           },
           {
-            "name": "owner",
+            "name": "store",
             "type": "publicKey"
           },
           {
@@ -377,8 +377,12 @@ export type Twine = {
             "type": "publicKey"
           },
           {
-            "name": "store",
-            "type": "publicKey"
+            "name": "cost",
+            "type": "u64"
+          },
+          {
+            "name": "productNumber",
+            "type": "u64"
           },
           {
             "name": "name",
@@ -387,10 +391,6 @@ export type Twine = {
           {
             "name": "description",
             "type": "string"
-          },
-          {
-            "name": "cost",
-            "type": "u64"
           },
           {
             "name": "sku",
@@ -847,12 +847,16 @@ export const IDL: Twine = {
             "type": "publicKey"
           },
           {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
             "name": "storeNumber",
             "type": "u32"
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            "name": "productCount",
+            "type": "u64"
           },
           {
             "name": "name",
@@ -861,10 +865,6 @@ export const IDL: Twine = {
           {
             "name": "description",
             "type": "string"
-          },
-          {
-            "name": "productCount",
-            "type": "u64"
           }
         ]
       }
@@ -879,11 +879,11 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
-            "name": "productNumber",
-            "type": "u64"
+            "name": "owner",
+            "type": "publicKey"
           },
           {
-            "name": "owner",
+            "name": "store",
             "type": "publicKey"
           },
           {
@@ -891,8 +891,12 @@ export const IDL: Twine = {
             "type": "publicKey"
           },
           {
-            "name": "store",
-            "type": "publicKey"
+            "name": "cost",
+            "type": "u64"
+          },
+          {
+            "name": "productNumber",
+            "type": "u64"
           },
           {
             "name": "name",
@@ -901,10 +905,6 @@ export const IDL: Twine = {
           {
             "name": "description",
             "type": "string"
-          },
-          {
-            "name": "cost",
-            "type": "u64"
           },
           {
             "name": "sku",

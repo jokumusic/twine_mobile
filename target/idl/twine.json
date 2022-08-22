@@ -333,12 +333,16 @@
             "type": "publicKey"
           },
           {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
             "name": "storeNumber",
             "type": "u32"
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            "name": "productCount",
+            "type": "u64"
           },
           {
             "name": "name",
@@ -347,10 +351,6 @@
           {
             "name": "description",
             "type": "string"
-          },
-          {
-            "name": "productCount",
-            "type": "u64"
           }
         ]
       }
@@ -365,11 +365,11 @@
             "type": "u8"
           },
           {
-            "name": "productNumber",
-            "type": "u64"
+            "name": "owner",
+            "type": "publicKey"
           },
           {
-            "name": "owner",
+            "name": "store",
             "type": "publicKey"
           },
           {
@@ -377,8 +377,12 @@
             "type": "publicKey"
           },
           {
-            "name": "store",
-            "type": "publicKey"
+            "name": "cost",
+            "type": "u64"
+          },
+          {
+            "name": "productNumber",
+            "type": "u64"
           },
           {
             "name": "name",
@@ -387,10 +391,6 @@
           {
             "name": "description",
             "type": "string"
-          },
-          {
-            "name": "cost",
-            "type": "u64"
           },
           {
             "name": "sku",
@@ -511,6 +511,6 @@
     }
   ],
   "metadata": {
-    "address": "5MLDaZmz9UUe49AeTxQM9dsRXnWSmVKfhE5aLuAEj61n"
+    "address": "81U6fENzYDztW9NkpXomSXmGtAAF2bVqh5Z4CNbU7wJ5"
   }
 }
