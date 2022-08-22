@@ -57,7 +57,7 @@ export default function CreateProductScreen() {
     };
   
     const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
-    const program = new anchor.Program(idl as anchor.Idl, new PublicKey(idl.metadata.address), provider) as anchor.Program<Twine>;
+    const program = new anchor.Program(idl as anchor.Idl, new PublicKey(idl.metadata.address), provider, null) as anchor.Program<Twine>;
     return program;  
   }
 

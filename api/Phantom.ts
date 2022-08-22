@@ -20,7 +20,6 @@ global.PhantomSession = {
     shared_secret: new Uint8Array(0),
     wallet_pubkey: PublicKey.default,
 };
-global.PhantomIsAndroid = Platform.OS == 'android';
 
 
 const context = {
@@ -262,9 +261,6 @@ export const connect = async (force=false, deepLinkReturnRoute = "") : Promise<v
 */
 export const signTransaction = async (transaction: Transaction, requireAllSignatures = true, verifySignatures = true, deepLinkReturnRoute = "") => {
     return new Promise<Transaction>(async (resolve) => {
-        if(global.PhantomIsAndroid)
-            connect(true, deepLinkReturnRoute);
-
         const serializedTransaction = bs58.encode(
             transaction.serialize({requireAllSignatures, verifySignatures})
         );
@@ -282,17 +278,14 @@ export const signTransaction = async (transaction: Transaction, requireAllSignat
 * @param deepLinkReturnRoute deeplink route back to the screen you want to display
 */
 export const signMessage = async (message: string, deepLinkReturnRoute = "") => {
-return new Promise<any>(async (resolve) => {
-    if(global.PhantomIsAndroid)
-        connect(true, deepLinkReturnRoute);
-    
-    const payload = {
-        session: global.PhantomSession.token,
-        message: bs58.encode(Buffer.from(message)),
-    };
+    return new Promise<any>(async (resolve) => {       
+        const payload = {
+            session: global.PhantomSession.token,
+            message: bs58.encode(Buffer.from(message)),
+        };
 
-    callDeepLinkMethod(DeepLinkMethod.signMessage, payload, resolve, deepLinkReturnRoute); 
-});
+        callDeepLinkMethod(DeepLinkMethod.signMessage, payload, resolve, deepLinkReturnRoute); 
+    });
 };
 
 /** signs and sends a transaction
@@ -300,9 +293,6 @@ return new Promise<any>(async (resolve) => {
 */
 export const signAndSendTransaction = async (transaction: Transaction, requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
 return new Promise<Transaction>(async (resolve) => {
-    if(global.PhantomIsAndroid)
-        connect(true, deepLinkReturnRoute);
-
     const serializedTransaction = transaction.serialize({requireAllSignatures, verifySignatures});
 
     const payload = {
@@ -319,9 +309,6 @@ return new Promise<Transaction>(async (resolve) => {
 */
 export const signAllTransactions = async (transactions: Transaction[], requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
     return new Promise<Transaction[]>(async (resolve) =>{ 
-        if(global.PhantomIsAndroid)
-            connect(true, deepLinkReturnRoute);
-
         const serializedTransactions = transactions.map((t) =>
             bs58.encode(
                 t.serialize({requireAllSignatures, verifySignatures})
