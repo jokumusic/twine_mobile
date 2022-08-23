@@ -102,7 +102,7 @@ export default function CreateProductScreen() {
     
     log(`creating product ${productPda.toBase58()}`);
     const tx = await program.methods
-    .createProduct(productId, productMintDecimals, productName, productDescription, productCost, productSku)
+    .createProduct(productId, productMintDecimals, productName, productDescription, productCost, productSku,"")
     .accounts({
       mint: mintKeypair.publicKey,
       product: productPda,
@@ -221,7 +221,7 @@ export default function CreateProductScreen() {
     }
 
     const tx = await program.methods
-    .updateProduct(productData.name, productData.description, new anchor.BN(productData.cost), productData.sku)
+    .updateProduct(productData.name, productData.description, new anchor.BN(productData.cost), productData.sku,"")
     .accounts({
       product: productPda,
       owner: ownerPubKey,      

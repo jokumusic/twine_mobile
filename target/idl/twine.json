@@ -33,6 +33,10 @@
         {
           "name": "description",
           "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "string"
         }
       ]
     },
@@ -48,6 +52,11 @@
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -57,6 +66,10 @@
         },
         {
           "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "data",
           "type": "string"
         }
       ]
@@ -133,6 +146,10 @@
         },
         {
           "name": "sku",
+          "type": "string"
+        },
+        {
+          "name": "data",
           "type": "string"
         }
       ]
@@ -215,6 +232,10 @@
         {
           "name": "sku",
           "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "string"
         }
       ]
     },
@@ -230,6 +251,11 @@
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -247,6 +273,10 @@
         },
         {
           "name": "sku",
+          "type": "string"
+        },
+        {
+          "name": "data",
           "type": "string"
         }
       ]
@@ -280,6 +310,10 @@
           },
           {
             "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "data",
             "type": "string"
           }
         ]
@@ -322,6 +356,10 @@
           },
           {
             "name": "sku",
+            "type": "string"
+          },
+          {
+            "name": "data",
             "type": "string"
           }
         ]
@@ -439,6 +477,6 @@
     }
   ],
   "metadata": {
-    "address": "ECUN8sf6PiSxXD5E3rBd9ZSWonoxb6G9HJHuPQB4vfBg"
+    "address": "8vuboQrAS2RDBYs7YoYN9Vik4Kv3JMc7ui4Fnc9VTkAP"
   }
 }

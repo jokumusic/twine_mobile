@@ -97,7 +97,7 @@ async function createStore() {
   const storeDescription = storeData.description;
   
   const tx = await program.methods
-  .createStore(storeId, storeName, storeDescription)
+  .createStore(storeId, storeName, storeDescription,"")
   .accounts({
     store: storePda,    
     owner: pubkey,
@@ -182,7 +182,7 @@ const updateStore = async() =>{
   
   log(`store: ${storePda}`); 
   const tx = await program.methods
-                          .updateStore(storeName, storeDescription)
+                          .updateStore(storeName, storeDescription,"")
                           .accounts({
                             store: storePda,
                             owner: pubkey,
