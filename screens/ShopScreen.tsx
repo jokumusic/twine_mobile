@@ -8,6 +8,7 @@ import { getFavorites, getStores, HorizontalScrollView, SearchString, setSearchS
 import { blue100 } from 'react-native-paper/lib/typescript/styles/colors';
 import PressableImage from '../components/PressableImage';
 import MarqueeText from 'react-native-marquee';
+import { generateRandomString } from '../utils/random';
 
 
 export const WINDOW_WIDTH = Dimensions.get('window').width;
@@ -43,7 +44,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
            scrollToOverflowEnabled={true}
            scrollEnabled={true}>
               {
-                items.map((i)=>(<CardView {...i}/>))
+                items.map((i)=>(<CardView key={generateRandomString(10)} {...i}/>))
               }
           </ScrollView>
           <View style={styles.favorites}>
