@@ -14,6 +14,8 @@ import {
   Transaction,
   AccountInfo,
 } from "@solana/web3.js";
+import {TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token} from "@solana/spl-token";
+import { rejects } from 'assert';
 
 
 export interface WriteableStore{
@@ -38,6 +40,7 @@ export interface WriteableProduct {
     description: string;
     img: string;
     price: number;
+    sku?: string;
 }
 
 export interface Product extends WriteableProduct {
@@ -79,6 +82,13 @@ function getStorePda(storeId: string) {
         anchor.utils.bytes.utf8.encode("store"),
         anchor.utils.bytes.utf8.encode(storeId)
       ],  programId);
+}
+
+function getProductPda(productId: string) {
+    return PublicKey.findProgramAddressSync([
+        anchor.utils.bytes.utf8.encode("product"),
+        anchor.utils.bytes.utf8.encode(productId)
+    ], programId);
 }
 
 function encodeData(data: any) {
@@ -258,6 +268,234 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             reject('failed to fetch store data');
             return;
         }
+    });
+
+    return await promise;
+  }
+
+  export async function createProduct(product: WriteableProduct, deeplinkRoute: string) {
+    const promise = new Promise<Product>(async (resolve,reject) => {
+        const ownerPubkey = getCurrentWalletPublicKey();
+        const program = getProgram(deeplinkRoute);
+        const newProduct = {...product, id: generateRandomString(12) };
+        const [productPda, productPdaBump] = getProductPda(newProduct.id);
+        const existingProduct = await program.account.product.fetchNullable(productPda);
+        if(existingProduct){
+            reject(`product already exists`);
+            return;
+        }       
+
+        const mintKeypair = Keypair.generate(); 
+        const [productMintPda, productMintPdaBump] = PublicKey.findProgramAddressSync([
+        anchor.utils.bytes.utf8.encode("product_mint"),
+        mintKeypair.publicKey.toBuffer()
+        ], program.programId);
+
+        const [mintProductRefPda, mintProductRefPdaBump] = PublicKey.findProgramAddressSync([
+        anchor.utils.bytes.utf8.encode("mint_product_ref"),
+        mintKeypair.publicKey.toBuffer()
+        ], program.programId);
+
+        const productCost = new anchor.BN(newProduct.price);
+        const productMintDecimals = 2;
+        const productData = encodeData(newProduct);
+
+        const errored = false;
+        let tx = null;
+        console.log('product.storeId: ', product.storeId);
+        if(product.storeId) {
+            console.log('creating store product transaction...');
+            const [storePda, storePdaBump] = getStorePda(product.storeId);
+  
+            tx = await program.methods
+                .createStoreProduct(newProduct.id, productMintDecimals, newProduct.name, newProduct.description, productCost, newProduct.sku, productData)
+                .accounts({
+                    mint: mintKeypair.publicKey,
+                    product: productPda,
+                    productMint: productMintPda,
+                    mintProductRef: mintProductRefPda,
+                    store: storePda,
+                    owner: ownerPubkey,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    twineProgram: program.programId,
+                })
+                .transaction()
+                .catch(err=>{errored=true; reject(err);});
+          } 
+          else {
+            console.log('creating lone product transaction...');
+            tx = await program.methods
+                .createProduct(newProduct.id, productMintDecimals, newProduct.name, newProduct.description, productCost, newProduct.sku, productData)
+                .accounts({
+                    mint: mintKeypair.publicKey,
+                    product: productPda,
+                    productMint: productMintPda,
+                    mintProductRef: mintProductRefPda,
+                    owner: ownerPubkey,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    twineProgram: program.programId,
+                })
+                .transaction()
+                .catch(err=>{errored=true; reject(err);});
+          }
+
+        if(errored)
+            return;
+
+        console.log('getting latest blockhash...');
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.feePayer = ownerPubkey;  
+        
+        tx.partialSign(mintKeypair)
+
+        console.log('sending transaction to Phantom for signing...');
+        const trans = await Phantom
+            .signTransaction(tx, false, true, deeplinkRoute) 
+            .catch(err=>{errored=true; reject(err);});
+
+        if(errored)
+            return;
+
+        console.log('sending transaction to network...');
+        const txid = await anchor.web3
+            .sendAndConfirmRawTransaction(
+                connection,
+                trans.serialize({
+                    requireAllSignatures: true,
+                    verifySignatures: true,
+                }),
+                {skipPreflight: true}
+            )
+            .catch(err=>{errored= true; reject(err);});
+
+        if(errored)
+            return;
+
+
+        if(txid) {
+            console.log(`waiting for finalization on tx: ${txid}`)
+            await connection
+                .confirmTransaction(txid, 'finalized')
+                .catch(err=>{errored=true; reject(err);});
+            
+            if(errored)
+                return;
+
+            console.log('retrieving finalized account data...');
+            const createdProduct = await program.account
+                                    .product
+                                    .fetchNullable(productPda)              
+                                    .catch(err=>{errored=true; reject(err);});
+
+            if(errored)
+                return;
+
+            if(createdProduct){
+                const createdProductData = decodeData(createdProduct.data);
+                resolve({...createdProductData, id: createdProduct.productId});
+                return;
+            } else {
+                reject('failed to fetch product data');
+                return;
+            }
+        } 
+        else
+        {
+            reject('sending transaction failed.');
+        }
+    });
+
+    return await promise;
+  }
+
+
+  export async function readProduct(productId: string, deeplinkRoute: string) {
+    const promise = new Promise<Product>(async(resolve,reject) => {
+
+        if(!productId){
+            reject('a productId must be specified');
+            return;
+        }
+
+        const ownerPubkey = getCurrentWalletPublicKey();
+        const program = getProgram(deeplinkRoute);    
+        const [productPda, productPdaBump] = getProductPda(productId);
+        const existingProduct = await program.account.product.fetchNullable(productPda);
+        if(!existingProduct){
+            reject("product doesn't exist");        
+            return;
+        }
+
+        const productData = decodeData(existingProduct.data);
+        resolve({...productData, id: existingProduct.productId});        
+    });
+
+    return await promise;
+  }
+
+
+  export async function updateProduct(product: WriteableProduct, deeplinkRoute: string) {
+    const promise = new Promise<Product>(async (resolve, reject) => {
+        if(!product.id){
+            reject("product doesn't contain an id");
+            return;
+        }
+
+        const ownerPubKey = getCurrentWalletPublicKey();
+        const program = getProgram(deeplinkRoute);
+        const [productPda, productPdaBump] = getProductPda(product.id);
+        const existingProduct = await program.account.product.fetchNullable(productPda);
+        if(!existingProduct){
+            reject(`product doesn't exist: ${productPda.toBase58()}`);            
+            return;
+        }
+
+        let errored=false;
+        const productPrice = new anchor.BN(product.price);
+        const productData = encodeData(product);
+
+        console.log('creating transaction...');
+        const tx = await program.methods
+            .updateProduct(product.name, product.description, productPrice, product.sku, productData)
+            .accounts({
+                product: productPda,
+                owner: ownerPubKey,      
+            })
+            .transaction()
+            .catch(err=>{errored=true; rejects(err);});
+
+        if(errored)
+            return;
+
+
+        console.log('getting latest blockhash...');
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.feePayer = ownerPubKey;  
+        
+
+        console.log('signing and sending transaction...');
+        const trans = await Phantom
+            .signAndSendTransaction(tx, false, true, deeplinkRoute)
+            .catch(err=>{errored=true; reject(err); });
+
+        console.log('waiting for finalization of transaction...');
+        await connection.confirmTransaction(trans.signature, 'finalized'); //wait for confirmation before trying to retrieve account data
+
+        const updatedProduct = await program.account.product
+            .fetchNullable(productPda)
+            .catch(err=>{errored=true; rejects(err);});
+
+        if(errored)
+            return;
+
+         if(updatedProduct) {
+            const updatedProductData = decodeData(updatedProduct.data);
+            resolve({...updatedProductData, id: updatedProduct.productId});
+         }
+         else {
+            reject("didn't received updated product");
+            return;
+         }
     });
 
     return await promise;

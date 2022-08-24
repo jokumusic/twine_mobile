@@ -4,8 +4,10 @@ import { RootTabScreenProps } from '../types';
 import ImageCarousel, {ImageCarouselItem} from '../components/ImageCarousel';
 import { useEffect, useState } from 'react';
 import {getStoresByOwner} from '../components/data';
-import * as Phantom from '../api/Phantom';
+import * as twine from '../api/twine';
 
+
+const SCREEN_DEEPLINK_ROUTE = "stores";
 
 export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresTab'>) {
   const [myStores, setMyStores] = useState([]);
@@ -13,12 +15,12 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
 
   useEffect(()=>{
     getStoresByOwner(myPubkey).then(stores=>{
-      const carouselItems = stores.map((s)=>{
+      const carouselItems = stores.map((store)=>{
         return {
-          id: s.id,
-          uri: s.img,
-          title: s.name,
-          onPress: async () => {navigation.navigate('StoreDetails',{ name: s.name, image_uri: s.img})},
+          id: store.id,
+          uri: store.img,
+          title: store.name,
+          onPress: async () => {navigation.navigate('StoreDetails',{store})},
         };
       });
       
@@ -26,10 +28,18 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     });    
   },[myPubkey])
 
-  const connectPhantom = async () => {
-    await Phantom.connect(false, "stores")
-    setMyPubkey(Phantom.getWalletPublicKey());
-  };
+
+  async function connectWallet(){
+    const walletPubkey = await twine
+      .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>console.log(err));
+    
+    if(walletPubkey){
+      setMyPubkey(walletPubkey);
+    } else {
+      console.log("didn't get wallet public key");
+    }    
+  }
 
   return (  
     <View style={styles.container}>   
@@ -39,7 +49,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
             uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
         }}>  
         <ImageCarousel data={myStores} />  
-        <Button title="Connect to Phantom Wallet" onPress={connectPhantom} />
+        <Button title="Connect Wallet" onPress={connectWallet} />
       </ImageBackground>      
     </View>
   );

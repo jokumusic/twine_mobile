@@ -18,6 +18,7 @@ export type RootStackParamList = {
   Modal: undefined;
   CreateStore: undefined;
   CreateProduct: undefined;
+  EditStore: undefined;
   NotFound: undefined;
 };
 

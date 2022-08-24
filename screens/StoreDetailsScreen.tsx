@@ -9,7 +9,7 @@ import {
   } from 'react-native';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import { Card } from 'react-native-paper';
@@ -45,9 +45,8 @@ const data = [
 ];
 
 export default function StoreDetailsScreen(props) {
-  const params = props.route.params;
-  const navigation = props.navigation;
-
+  const [store, setStore] = useState(props.route.params.store);
+  const navigation = useRef(props.navigation).current;
   const keyExtractor = (item) => item.id;
   
   const renderItem = ({ item }) => (
@@ -68,10 +67,7 @@ export default function StoreDetailsScreen(props) {
         }}>  
         <View style={styles.header}>        
             <Pressable
-              onPress={() => navigation.navigate('EditStore',{
-                name: params.name,
-                image_uri: params.image_uri
-              })}
+              onPress={() => navigation.navigate('EditStore',{store})}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.5 : 1,
               })}>
@@ -82,7 +78,7 @@ export default function StoreDetailsScreen(props) {
               />
             </Pressable>  
             <Pressable
-              onPress={() => navigation.navigate('CreateProduct')}
+              onPress={() => navigation.navigate('CreateProduct',{store})}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.5 : 1,
               })}>
@@ -93,8 +89,8 @@ export default function StoreDetailsScreen(props) {
               />
             </Pressable>     
 
-        <Text style={styles.title}>{params.name} Products</Text>
-        <Image source={{uri:params.image_uri}} style={styles.itemImage}/>
+        <Text style={styles.title}>{store.name} Products</Text>
+        <Image source={{uri:store.img}} style={styles.itemImage}/>
         </View>  
     
 

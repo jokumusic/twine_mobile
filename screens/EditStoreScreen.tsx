@@ -1,50 +1,64 @@
-import { useCallback, useState } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, StyleSheet } from 'react-native';
 import { useSelector, useDispatch, useStore } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
 //import * as Settings from '../reducers/settings'
-import * as Phantom from '../api/Phantom';
+import * as twine from '../api/twine';
 
-
-import {
-  clusterApiUrl,
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  AccountInfo,
-} from "@solana/web3.js";
-import * as web3 from "@solana/web3.js";
-
+const SCREEN_DEEPLINK_ROUTE = "edit_store";
 
 export default function EditStoreScreen(props) {
-  const params = props.route.params;
-  const navigation = props.navigation;
-  const [state, updateState] = useState('')
-  const settings = useSelector(state => state);
-  const dispatch = useDispatch();
-  const [storeName, setStoreName] = useState(params.name);
-
-  const saveStoreInfo = async () =>{
-    console.log('saving store info...');
-  };
+  const [store, setStore] = useState(props.route.params.store);
+  const navigation = useRef(props.navigation).current;
+  const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+  
+  const updateStore = async() =>{
+    console.log('updating store...');
+    setActivityIndicatorIsVisible(true);
+    const data = store;
+    const storeData = await twine
+      .updateStore(data, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>log(err));  
+  
+      if(storeData) {
+        setStore(storeData);
+        console.log(JSON.stringify(storeData));
+      } else {
+        console.log("didn''t receive store data");
+      }  
+  
+    setActivityIndicatorIsVisible(false);
+    console.log('done');
+  }
 
   return (
     <View style={styles.container}>
+      <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
       <Text style={styles.title}>Edit Store</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       
       <View style={styles.body}>
-        <TextInput value={storeName} onChangeText={(t)=>setStoreName(t)}/>
-        <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1}} 
-        placeholder='Description'
-        multiline={true}
-        numberOfLines={4}/>
+        <TextInput 
+          placeholder='Name'
+          value={store.name}
+          onChangeText={(t)=>setStore({...store, name: t})}
+          />
+        <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1, margin: 5}} 
+          placeholder='Description'
+          multiline={true}
+          numberOfLines={3}
+          value={store.description}
+          onChangeText={(t)=>setStore({...store, description: t})}
+        />
+        <TextInput 
+          placeholder='image url'
+          value={store.img}
+          onChangeText={(t)=>setStore({...store, img: t})}
+        />
       </View>
       <View style={styles.container}>       
-        <Button title='Save' onPress={saveStoreInfo} />
+        <Button title='Save' onPress={updateStore} />
       </View>
       
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
