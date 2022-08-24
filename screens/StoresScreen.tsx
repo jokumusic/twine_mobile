@@ -1,38 +1,35 @@
-import { StyleSheet, ImageBackground } from 'react-native';
+import { StyleSheet, ImageBackground, Button } from 'react-native';
 import { Text, View, TextInput } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import ImageCarousel, {ImageCarouselItem} from '../components/ImageCarousel';
+import { useEffect, useState } from 'react';
+import {getStoresByOwner} from '../components/data';
+import * as Phantom from '../api/Phantom';
 
 
 export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresTab'>) {
+  const [myStores, setMyStores] = useState([]);
+  const [myPubkey, setMyPubkey] = useState();
 
+  useEffect(()=>{
+    getStoresByOwner(myPubkey).then(stores=>{
+      const carouselItems = stores.map((s)=>{
+        return {
+          id: s.id,
+          uri: s.img,
+          title: s.name,
+          onPress: async () => {navigation.navigate('StoreDetails',{ name: s.name, image_uri: s.img})},
+        };
+      });
+      
+      setMyStores(carouselItems);
+    });    
+  },[myPubkey])
 
-  const data: ImageCarouselItem[] = [
-    {
-      id: 0,
-      uri: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
-      title: 'Busy Media Inc.',      
-    },
-    {
-      id: 1,
-      uri: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
-      title: 'Trendy Clothing Co.',
-    },
-    {
-      id: 2,
-      uri: 'https://www.dualipa.com/wp-content/uploads/2019/10/DONT_START_NOW.jpg',
-      title: 'Dua Lipa Official',
-    },
-    {
-      id: 3,
-      uri: 'https://images.indianexpress.com/2017/06/tom-cruise-759.jpg?w=389',
-      title: 'Tom Cruise Official',
-    },
-  ];
-
-  data.forEach((d)=>d.onPress= async ()=>{
-    navigation.navigate('StoreDetails',{ name: d.title, image_uri: d.uri});
-  });
+  const connectPhantom = async () => {
+    await Phantom.connect(false, "stores")
+    setMyPubkey(Phantom.getWalletPublicKey());
+  };
 
   return (  
     <View style={styles.container}>   
@@ -41,8 +38,9 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
         source={{
             uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
         }}>  
-        <ImageCarousel data={data} />  
-      </ImageBackground>  
+        <ImageCarousel data={myStores} />  
+        <Button title="Connect to Phantom Wallet" onPress={connectPhantom} />
+      </ImageBackground>      
     </View>
   );
 }

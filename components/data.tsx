@@ -75,6 +75,35 @@ function getProgram(connection: Connection, pubkey: PublicKey){
   return program;  
 }
 
+export async function getStoresByOwner(ownerPubkey: PublicKey) {
+  console.log('getting stores by owner');
+  let items = [];
+  if(!ownerPubkey)
+    return items;
+  
+  const program = getProgram(connection, PublicKey.default);
+  const stores = await program.account.store.all([{
+    memcmp: { offset: 9, bytes: ownerPubkey.toBase58()}
+  }]);
+
+  console.log('store count: ', stores.length);
+  stores.forEach((store,i)=>{  
+    try{   
+      if(store.account.data){
+        const parsedStoreData = JSON.parse(store.account.data);          
+        const decompressedStoreData = decompress(parsedStoreData);
+        items.push({...decompressedStoreData, account_type: "store"});          
+      }
+    }
+    catch(e){
+      //console.log('exception: ', e);
+      //console.log(store.account.data);
+    }
+  });
+
+  return items;
+}
+
 async function getMixedItems() {  
   console.log('loading mixed items');
   let items = [];

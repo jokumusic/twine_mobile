@@ -13,6 +13,7 @@ import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStat
 import { program } from '../dist/browser/types/src/spl/associated-token';
 import { getCustomTabsSupportingBrowsersAsync } from 'expo-web-browser';
 import {generateRandomString} from '../utils/random';
+import { compress, decompress, trimUndefined, trimUndefinedRecursively } from 'compress-json'
 
 
 import {
@@ -32,7 +33,11 @@ export default function CreateStoreScreen() {
   const [state, updateState] = useState('')
   const settings = useSelector(state => state);
   const dispatch = useDispatch();
-  const [storeData, updateStoreData] = useState({name:'', description:''});
+  const [storeData, setStoreData] = useState({
+    name:'', 
+    description:'',
+    img: '',
+  });
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
@@ -41,7 +46,6 @@ export default function CreateStoreScreen() {
   const isProgramInitialized = useRef(true);
   const connection = new Connection(network);
   const [program, setProgram] = useState();
-  const [storeId, setStoreId] = useState("");
   const focusComponent = useRef();
 
   const log = useCallback((log: string, toConsole=true) => {
@@ -78,11 +82,13 @@ function getProgram(connection: Connection, pubkey: PublicKey){
 async function createStore() {
   setActivityIndicatorIsVisible(true);
   const pubkey = Phantom.getWalletPublicKey();
-  const storeId = generateRandomString(12).toString();
-
+  let newStore = {
+    ...storeData,
+    id: generateRandomString(12).toString()
+  };
   const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
         anchor.utils.bytes.utf8.encode("store"),
-        anchor.utils.bytes.utf8.encode(storeId)
+        anchor.utils.bytes.utf8.encode(newStore.id)
       ], program.programId);
 
   const store = await program.account.store.fetchNullable(storePda);
@@ -93,17 +99,17 @@ async function createStore() {
   }
   
   log(`creating store ${storePda}`); 
-  const storeName = storeData.name;
-  const storeDescription = storeData.description;
-  
+  trimUndefined(newStore);
+  const compressedStore = compress(newStore);
+  const dataString = JSON.stringify(compressedStore);
   const tx = await program.methods
-  .createStore(storeId, storeName, storeDescription,"")
-  .accounts({
-    store: storePda,    
-    owner: pubkey,
-  })  
-  .transaction()
-  .catch(reason=>log(reason));
+    .createStore(newStore.id, newStore.name, newStore.description,dataString)
+    .accounts({
+      store: storePda,    
+      owner: pubkey,
+    })  
+    .transaction()
+    .catch(reason=>log(reason));
 
   tx.feePayer = pubkey;  
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -121,9 +127,11 @@ async function createStore() {
                               .catch(error=>log(error));
 
   if(createdStore) {
-    setStoreId(storeId);
+    const parsedStoreData = JSON.parse(createdStore.data);
+    const createdStoreData = decompress(parsedStoreData);
+    setStoreData(createdStoreData);
     log(`store created: ${storePda.toBase58()}`);
-    log(JSON.stringify(createdStore));
+    log(JSON.stringify(createdStoreData));
   } else{
     log('failed to fetch store data');
   }
@@ -132,7 +140,7 @@ async function createStore() {
 }
 
 const readStore = async () => {
-  if(storeId == "") {
+  if(!storeData.id) {
     log("a store hasn't been created yet. Create a store first");
     return;
   }
@@ -144,7 +152,7 @@ const readStore = async () => {
 
   const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
         anchor.utils.bytes.utf8.encode("store"),
-        anchor.utils.bytes.utf8.encode(storeId)
+        anchor.utils.bytes.utf8.encode(storeData.id)
       ], program.programId);
 
   log(`store: ${storePda.toBase58()}`);
@@ -155,15 +163,17 @@ const readStore = async () => {
     return;
   }
 
-  updateStoreData({name: store.name, description: store.description});
+  const parsedStoreData = JSON.parse(store.data);
+  const decompressedStoreData = decompress(parsedStoreData);
+  setStoreData(decompressedStoreData);
                         
   log('done');
-  log(JSON.stringify(store));
+  log(JSON.stringify(decompressedStoreData));
   setActivityIndicatorIsVisible(false);
 }
 
 const updateStore = async() =>{
-  if(storeId == "") {
+  if(!storeData.id) {
     log("a store hasn't been created yet. Create a store first");
     return;
   }
@@ -174,21 +184,21 @@ const updateStore = async() =>{
 
   const [storePda, storePdaBump] = PublicKey.findProgramAddressSync([
       anchor.utils.bytes.utf8.encode("store"),
-      anchor.utils.bytes.utf8.encode(storeId),
+      anchor.utils.bytes.utf8.encode(storeData.id),
     ], program.programId);
-
-  const storeName = storeData.name;
-  const storeDescription = storeData.description;
   
   log(`store: ${storePda}`); 
+  trimUndefined(storeData);
+  const compressedData = compress(storeData);
+  const jsonData = JSON.stringify(compressedData);
   const tx = await program.methods
-                          .updateStore(storeName, storeDescription,"")
-                          .accounts({
-                            store: storePda,
-                            owner: pubkey,
-                          })
-                          .transaction()
-                          .catch(reason=>log(reason));
+    .updateStore(storeData.name, storeData.description, jsonData)
+    .accounts({
+      store: storePda,
+      owner: pubkey,
+    })
+    .transaction()
+    .catch(reason=>log(reason));
 
   tx.feePayer = pubkey;
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -202,14 +212,16 @@ const updateStore = async() =>{
   log(`waiting for confirmation on tx: ${trans.signature}`)
   await connection.confirmTransaction(trans.signature, 'finalized'); //wait for confirmation
   const updatedStore = await program
-                              .account
-                              .store
-                              .fetchNullable(storePda)
-                              .catch(error=>log(error));  
+    .account
+    .store
+    .fetchNullable(storePda)
+    .catch(error=>log(error));  
 
   if(updatedStore) {
+    const parsedData = JSON.parse(updatedStore.data);
+    const decompressedData = decompress(parsedData);
     log('done');
-    log(JSON.stringify(updatedStore));
+    log(JSON.stringify(decompressedData));
   } else{
     log('failed to fetch store data');
   }
@@ -222,18 +234,25 @@ const updateStore = async() =>{
       <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
       
       <View style={styles.body} >
+        <View style={{margin: 5}}>
         <TextInput 
           placeholder='Name'
           value={storeData.name}
-          onChangeText={(t)=>updateStoreData({...storeData, name: t})}
+          onChangeText={(t)=>setStoreData({...storeData, name: t})}
           />
         <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1, margin: 5}} 
-        placeholder='Description'
-        multiline={true}
-        numberOfLines={4}
-        value={storeData.description}
-        onChangeText={(t)=>updateStoreData({...storeData, description: t})}
+          placeholder='Description'
+          multiline={true}
+          numberOfLines={3}
+          value={storeData.description}
+          onChangeText={(t)=>setStoreData({...storeData, description: t})}
         />
+        <TextInput 
+          placeholder='image url'
+          value={storeData.img}
+          onChangeText={(t)=>setStoreData({...storeData, img: t})}
+        />
+        </View>
 
         <Button title='Connect Wallet' onPress={connectWallet}/>
         <Button title='Create Store' onPress={createStore} />

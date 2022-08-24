@@ -293,10 +293,6 @@
             "type": "u8"
           },
           {
-            "name": "storeId",
-            "type": "string"
-          },
-          {
             "name": "owner",
             "type": "publicKey"
           },
@@ -310,6 +306,10 @@
           },
           {
             "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "storeId",
             "type": "string"
           },
           {
@@ -327,10 +327,6 @@
           {
             "name": "bump",
             "type": "u8"
-          },
-          {
-            "name": "productId",
-            "type": "string"
           },
           {
             "name": "owner",
@@ -356,6 +352,10 @@
           },
           {
             "name": "sku",
+            "type": "string"
+          },
+          {
+            "name": "productId",
             "type": "string"
           },
           {
@@ -477,6 +477,6 @@
     }
   ],
   "metadata": {
-    "address": "As7y8WMHdrfqmBLkTxKVNDLrY6oEHsuh7HNQZb5LwpQm"
+    "address": "DyQg7GpUX5Ev62eHk7j6qAUka2eMJWiedjE7YPfN9yRZ"
   }
 }

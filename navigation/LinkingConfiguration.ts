@@ -17,17 +17,17 @@ const linking: LinkingOptions<RootStackParamList> = {
         screens: {
           ShopTab: {
             screens: {
-              ShopScreen: 'one',
+              ShopScreen: 'shop',
             },
           },
           StoresTab: {
             screens: {
-              StoresScreen: 'two',
+              StoresScreen: 'stores',
             },
           },
           SettingsTab: {
             screens: {
-              SettingsScreen: 'three',
+              SettingsScreen: 'settings',
             },
           },
         },

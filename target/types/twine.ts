@@ -293,10 +293,6 @@ export type Twine = {
             "type": "u8"
           },
           {
-            "name": "storeId",
-            "type": "string"
-          },
-          {
             "name": "owner",
             "type": "publicKey"
           },
@@ -310,6 +306,10 @@ export type Twine = {
           },
           {
             "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "storeId",
             "type": "string"
           },
           {
@@ -327,10 +327,6 @@ export type Twine = {
           {
             "name": "bump",
             "type": "u8"
-          },
-          {
-            "name": "productId",
-            "type": "string"
           },
           {
             "name": "owner",
@@ -356,6 +352,10 @@ export type Twine = {
           },
           {
             "name": "sku",
+            "type": "string"
+          },
+          {
+            "name": "productId",
             "type": "string"
           },
           {
@@ -773,10 +773,6 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
-            "name": "storeId",
-            "type": "string"
-          },
-          {
             "name": "owner",
             "type": "publicKey"
           },
@@ -790,6 +786,10 @@ export const IDL: Twine = {
           },
           {
             "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "storeId",
             "type": "string"
           },
           {
@@ -807,10 +807,6 @@ export const IDL: Twine = {
           {
             "name": "bump",
             "type": "u8"
-          },
-          {
-            "name": "productId",
-            "type": "string"
           },
           {
             "name": "owner",
@@ -836,6 +832,10 @@ export const IDL: Twine = {
           },
           {
             "name": "sku",
+            "type": "string"
+          },
+          {
+            "name": "productId",
             "type": "string"
           },
           {

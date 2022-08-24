@@ -35,6 +35,7 @@ const ImageCarousel: FC<ImageCarouselProps> = ({data}) => {
   >([]);
   const currentIndex = useRef<number>(0);
   const flatListRef = useRef<FlatList<any>>(null);
+  const viewConfigRef = useRef({ itemVisiblePercentThreshold: 100 })
   const [isNextDisabled, setIsNextDisabled] = useState<boolean>(false);
   const [isPrevDisabled, setIsPrevDisabled] = useState<boolean>(false);
 
@@ -58,9 +59,7 @@ const ImageCarousel: FC<ImageCarouselProps> = ({data}) => {
 
       setIsNextDisabled(currentIndex.current === data.length);
       setIsPrevDisabled(currentIndex.current === 1);
-    },
-    [data],
-  );
+    }, [data]);
 
   const handleOnPrev = () => {
     if (currentIndex.current === 1) {
@@ -160,11 +159,10 @@ const ImageCarousel: FC<ImageCarouselProps> = ({data}) => {
           {useNativeDriver: false},
         )}
         scrollEventThrottle={16}
-        onViewableItemsChanged={handleOnViewableItemsChanged}
-        viewabilityConfig={{
-          itemVisiblePercentThreshold: 100,
-        }}
+        onViewableItemsChanged={handleOnViewableItemsChanged.current}
+        viewabilityConfig={viewConfigRef.current}
       />
+      {/* 
       <View style={styles.footer}>
         <Pressable
           onPress={handleOnPrev}
@@ -198,6 +196,7 @@ const ImageCarousel: FC<ImageCarouselProps> = ({data}) => {
           </Text>
         </Pressable>
       </View>
+      */}
     </View>
   );
 };
