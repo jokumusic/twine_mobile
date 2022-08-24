@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, ImageBackground, FlatList, Image, ScrollView, Pressable, Dimensions } from 'react-native';
 import ImageCarousel from '../components/ImageCarousel';
 import { Text, View, TextInput, Button} from '../components/Themed';
@@ -17,13 +17,18 @@ export const ITEM_HEIGHT = Math.round(ITEM_WIDTH/4);
 
 export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>) {
   const [search, updateSearch] = useState(SearchString);
-  const [items, updateItems] = useState(getStores());
+  const [items, updateItems] = useState([]);
 
   const runSearch = async (s)=>{
     updateSearch(s)
     setSearchString(s);
-    updateItems(getStores());
+    const stores = await getStores();
+    updateItems(stores);
   }
+
+  useEffect(()=>{
+    runSearch("");
+  },[]);
 
 
   return (

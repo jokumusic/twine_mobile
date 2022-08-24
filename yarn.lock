@@ -3559,6 +3559,11 @@ component-type@^1.2.1:
   resolved "https://registry.yarnpkg.com/component-type/-/component-type-1.2.1.tgz#8a47901700238e4fc32269771230226f24b415a9"
   integrity sha512-Kgy+2+Uwr75vAi6ChWXgHuLvd+QLD7ssgpaRq2zCvt80ptvAfMc/hijcJxXkBa2wMlEZcJvC2H8Ubo+A9ATHIg==
 
+compress-json@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/compress-json/-/compress-json-2.1.1.tgz#8b29890e6bb606eb7992edd5bdeafe8a445a48da"
+  integrity sha512-ahSe5zh23mQoOA9kYtttXIRQDETKJ/u3+myRCNLsY1mOg+7pa72RHs/CjJ2n3q5Q3XJMYMHyXP+dEAapmWfYFQ==
+
 compressible@~2.0.16:
   version "2.0.18"
   resolved "https://registry.yarnpkg.com/compressible/-/compressible-2.0.18.tgz#af53cca6b070d4c3c0750fbd77286a6d7cc46fba"

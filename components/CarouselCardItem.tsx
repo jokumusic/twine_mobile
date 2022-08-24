@@ -17,7 +17,7 @@ const CarouselCardItem = ({ item, index }) => {
       <ScrollView>
         <View style={{flex:1, flexDirection:'row'}}>
           <Image
-            source={{ uri: item.imgUrl }}
+            source={{ uri: item.img }}
             style={styles.image}
           />
           <PressableImage
@@ -43,8 +43,8 @@ const CarouselCardItem = ({ item, index }) => {
             url={item.wiki}/>
         </View>
           
-        <Text style={styles.header}>{item.title}</Text>        
-        <Text style={styles.body}>{item.body}</Text>
+        <Text style={styles.header}>{item.name}</Text>        
+        <Text style={styles.body}>{item.description}</Text>
       </ScrollView>
     </View>
 

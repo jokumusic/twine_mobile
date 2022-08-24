@@ -2,12 +2,21 @@ import React from "react";
 import { View, ScrollView, Pressable, Image, StyleSheet, Dimensions, Text } from "react-native";
 import PressableImage from './PressableImage';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
+import {clusterApiUrl, Connection, PublicKey} from "@solana/web3.js";
+import * as anchor from "../dist/browser/index";
+import * as idl from "../target/idl/twine.json";
+import type { Twine } from '../target/types/twine';
+import { compress, decompress, trimUndefined, trimUndefinedRecursively } from 'compress-json'
+
 
 export const WINDOW_WIDTH = Dimensions.get('window').width;
 export const ITEM_WIDTH = Math.round(WINDOW_WIDTH) * .30;
 export const ITEM_HEIGHT = ITEM_WIDTH + 35; //Math.round(ITEM_WIDTH/4);
 
-
+const network = clusterApiUrl("devnet")
+const connection = new Connection(network);
+const programId = new PublicKey(idl.metadata.address);
+let mixedItems = [];
 
 export let SearchString: string ="";
 
@@ -20,7 +29,7 @@ export const getFavorites = ()=>{
   if(SearchString) {
     const regex = new RegExp(SearchString, 'i');
     favorites.forEach((d)=>{
-      if(regex.test(d.title) || regex.test(d.body))
+      if(regex.test(d.name) || regex.test(d.description))
         list.push(d);
     });
   }
@@ -31,22 +40,76 @@ export const getFavorites = ()=>{
   return list;
 }
 
-export const getStores = ()=>{
-  let list =[]
+export const getStores = async ()=>{
+  const items = await getMixedItems();
+  let list = [];
   if(SearchString) {
+    console.log('searching');
     const regex = new RegExp(SearchString, 'i');
-    let list = [];
-    mixedItems.forEach((d)=>{
-      if(regex.test(d.title) || regex.test(d.body))
+    for(let d of items) {
+      if(regex.test(d.name) || regex.test(d.description))
         list.push(d);
-    });
+    }
   }
   else {
-    Object.assign(list, mixedItems);
+    Object.assign(list, items);
   }
 
   list.sort(() => 0.5 - Math.random())
   return list;
+}
+
+function getProgram(connection: Connection, pubkey: PublicKey){
+  const wallet = {
+    signTransaction: (tx: Transaction) => true,
+    signAllTransactions: (txs: Transaction[]) => true,
+    publicKey: pubkey
+  };
+
+  const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
+  const program = new anchor.Program(idl as anchor.Idl, new PublicKey(idl.metadata.address), provider) as anchor.Program<Twine>;
+  program.acc
+  return program;  
+}
+
+async function getMixedItems() {
+  if(mixedItems.length == 0) {
+    console.log('loading mixed items');
+    const program = getProgram(connection, PublicKey.default);
+    const stores = await program.account.store.all();
+
+    stores.forEach((store,i)=>{  
+      try{   
+        if(store.account.data){
+          const parsedStoreData = JSON.parse(store.account.data);  
+          //console.log(parsedStoreData); 
+          const decompressedStoreData = decompress(parsedStoreData);
+          //console.log(decompressedStoreData);
+          mixedItems.push(decompressedStoreData);
+        }
+      }
+      catch(e){
+        console.log('exception: ', e);
+        console.log(store);
+      }  
+    });
+
+    const products = await program.account.product.all();
+    products.forEach((product,i)=>{  
+      try{      
+        if(product.account.data){
+          const parsedProductData = JSON.parse(product.account.data);
+          const decompressedProductData = decompress(parsedProductData);      
+          mixedItems.push(decompressedProductData);
+        }
+      }
+      catch(e){
+        console.log('exception: ', e);
+      }  
+    });
+  }
+
+  return mixedItems;
 }
 
 
@@ -59,7 +122,7 @@ export const CardView = (item: any) => {
         <View style={styles.cardTopRow}>
           <View style={{flex:1, flexDirection: 'row', alignContent:'flex-start'}}>
             <Image 
-              source={{uri:item.imgUrl}}
+              source={{uri:item.img}}
               style={{width:80, height: 80}}/>
             <View >
               <PressableImage
@@ -99,9 +162,9 @@ export const CardView = (item: any) => {
         <View style={styles.cardMiddleRow}>             
         </View>
         <View style={styles.cardBottomRow}>   
-          <Text style={styles.itemHeader}>{item.title}</Text>  
+          <Text style={styles.itemHeader}>{item.name}</Text>  
           <ScrollView>  
-              <Text style={styles.itemBody}>{item.body}</Text>
+              <Text style={styles.itemBody}>{item.description}</Text>
           </ScrollView>
         </View>
         
@@ -180,21 +243,21 @@ const styles = new StyleSheet.create ({
   },
 });
 
-export const favorites = [
+const favorites = [
     {
       id: 0,
-      imgUrl: 'https://cryptosrus.com/wp-content/uploads/2021/12/Anatoly-Yakovenko-of-Solana-Reveals-Why-Were-Not-in-a-Crypto-Bubble.jpg',
-      title: 'Anatoly Yakovenko Official',  
-      body: 'Hi! Come watch me eat glass!',
+      img: 'https://cryptosrus.com/wp-content/uploads/2021/12/Anatoly-Yakovenko-of-Solana-Reveals-Why-Were-Not-in-a-Crypto-Bubble.jpg',
+      name: 'Anatoly Yakovenko Official',  
+      description: 'Hi! Come watch me eat glass!',
       twitter: 'https://twitter.com/aeyakovenko',
       instagram: 'https://www.instagram.com/anatolyyakovenko.sola/',
       wiki:'https://everipedia.org/wiki/lang_en/anatoly-yakovenko',
     },
     {
       id: 1,
-      imgUrl: 'https://www.dualipa.com/wp-content/uploads/2019/10/DONT_START_NOW.jpg',
-      title: 'Dua Lipa Official',
-      body: 'This is the official Dua Lipa store!',
+      img: 'https://www.dualipa.com/wp-content/uploads/2019/10/DONT_START_NOW.jpg',
+      name: 'Dua Lipa Official',
+      description: 'This is the official Dua Lipa store!',
       twitter: 'https://twitter.com/DUALIPA',
       instagram: 'https://www.instagram.com/dualipa',
       facebook: 'https://www.facebook.com/DuaLipa',
@@ -203,41 +266,41 @@ export const favorites = [
     },   
     {
       id: 2,
-      imgUrl: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
-      title: 'Busy Media Inc.',  
-      body: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
+      img: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
+      name: 'Busy Media Inc.',  
+      description: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
     },
     {
       id: 3,
-      imgUrl: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
-      title: 'Trendy Clothing Co.',
-      body: 'All the trendy modern, old, contemporary clothes are here!',
+      img: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
+      name: 'Trendy Clothing Co.',
+      description: 'All the trendy modern, old, contemporary clothes are here!',
     },
     {
       id: 4,
-      imgUrl: 'https://images-na.ssl-images-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png',
-      title: 'Amazon',
-      body: 'Official Amazon Store',
+      img: 'https://images-na.ssl-images-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png',
+      name: 'Amazon',
+      description: 'Official Amazon Store',
       twitter: 'https://twitter.com/amazon',
       web: 'https://amazon.com'
     },
   ];
-
-export const mixedItems = [
+/*
+const mixedItems = [
   {
     id: 2,
-    imgUrl: 'https://m.media-amazon.com/images/M/MV5BNDVkYjU0MzctMWRmZi00NTkxLTgwZWEtOWVhYjZlYjllYmU4XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_.jpg',
-    title: 'Friends Official',
-    body: 'Your F.R.I.E.N.D.S store',
+    img: 'https://m.media-amazon.com/images/M/MV5BNDVkYjU0MzctMWRmZi00NTkxLTgwZWEtOWVhYjZlYjllYmU4XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_.jpg',
+    name: 'Friends Official',
+    description: 'Your F.R.I.E.N.D.S store',
     web: 'https://www.warnerbros.com/tv/friends',
     instagram: 'https://www.instagram.com/friends/',
     rating: 5,
   },
   {
     id: 3,
-    imgUrl: 'https://images.indianexpress.com/2017/06/tom-cruise-759.jpg?w=389',
-    title: 'Tom Cruise Official',
-    body: 'I am THE CRUISE, not the Cruz...',
+    img: 'https://images.indianexpress.com/2017/06/tom-cruise-759.jpg?w=389',
+    name: 'Tom Cruise Official',
+    description: 'I am THE CRUISE, not the Cruz...',
     twitter: 'https://twitter.com/tomcruise',
     instagram: 'https://www.instagram.com/tomcruise',
     facebook: 'https://www.facebook.com/officialtomcruise',
@@ -245,57 +308,57 @@ export const mixedItems = [
   },
   {
     id: 4,
-    imgUrl: 'https://cdn.mos.cms.futurecdn.net/5StAbRHLA4ZdyzQZVivm2c-1200-80.jpg.webp',
-    title: 'Walmart',
-    body: 'Save money. Live better.',
+    img: 'https://cdn.mos.cms.futurecdn.net/5StAbRHLA4ZdyzQZVivm2c-1200-80.jpg.webp',
+    name: 'Walmart',
+    description: 'Save money. Live better.',
     twitter: 'https://twitter.com/Walmart', 
     web: 'https://walmart.com',
     rating: 2,
   },
   {
     id: 5,
-    imgUrl: 'https://i.etsystatic.com/25894060/r/il/749abc/3333286358/il_794xN.3333286358_o0jb.jpg',
-    title: 'Solana Baseball Cap',
-    body: 'SOL|Cryptocurrency HAT|Investor Gift - Adult Unisex Size',
+    img: 'https://i.etsystatic.com/25894060/r/il/749abc/3333286358/il_794xN.3333286358_o0jb.jpg',
+    name: 'Solana Baseball Cap',
+    description: 'SOL|Cryptocurrency HAT|Investor Gift - Adult Unisex Size',
     price: 12.58,
     rating: 5,
   },
   {
     id: 6,
-    imgUrl: 'https://www.liveabout.com/thmb/x-CXuH3y_cVVUTonmcWcgLomtXI=/700x700/filters:no_upscale():max_bytes(150000):strip_icc()/katy-perry-i-kissed-a-girl-57bb6a105f9b58cdfd3bb8ff.jpg',
-    title: 'Katie Perry - I Kissed A Girl',
-    body: 'Purchase song from official Katy Perry Store',
+    img: 'https://www.liveabout.com/thmb/x-CXuH3y_cVVUTonmcWcgLomtXI=/700x700/filters:no_upscale():max_bytes(150000):strip_icc()/katy-perry-i-kissed-a-girl-57bb6a105f9b58cdfd3bb8ff.jpg',
+    name: 'Katie Perry - I Kissed A Girl',
+    description: 'Purchase song from official Katy Perry Store',
     price: 1.20,
     rating: 3,
   },
   {
     id: 7,
-    imgUrl: 'https://www.producemarketguide.com/sites/default/files/Commodities.tar/Commodities/carrots_commodity-page.png',
-    title: 'A Carrot',
-    body: 'Buy this carrot!',
+    img: 'https://www.producemarketguide.com/sites/default/files/Commodities.tar/Commodities/carrots_commodity-page.png',
+    name: 'A Carrot',
+    description: 'Buy this carrot!',
     price: 3.50,
     rating: 5,
   },
   {
     id: 8,
-    imgUrl: 'https://res.cloudinary.com/bizzaboprod/image/upload/c_crop,g_custom,f_auto/v1633703800/fpxdwrdnd6wan7opc15f.png',
-    title: 'Solana Breakpoint 2022 Ticket',
-    body: 'This ticket is good for entry at Solana Breakpoint 2022!',
+    img: 'https://res.cloudinary.com/bizzaboprod/image/upload/c_crop,g_custom,f_auto/v1633703800/fpxdwrdnd6wan7opc15f.png',
+    name: 'Solana Breakpoint 2022 Ticket',
+    description: 'This ticket is good for entry at Solana Breakpoint 2022!',
     price: 1000,
   },
   {
     id: 9,
-    imgUrl: 'https://images.albertsons-media.com/is/image/ABS/123050070?$ecom-pdp-desktop$&defaultImage=Not_Available',
-    title: 'SPAM Classic 25% Less Sodium - 12 Oz',
-    body: 'The real stuff just tastes better...',
+    img: 'https://images.albertsons-media.com/is/image/ABS/123050070?$ecom-pdp-desktop$&defaultImage=Not_Available',
+    name: 'SPAM Classic 25% Less Sodium - 12 Oz',
+    description: 'The real stuff just tastes better...',
     price: 3.5,
     rating: 5,
   },
   {
     id: 10,
-    imgUrl: 'https://cryptosrus.com/wp-content/uploads/2021/12/Anatoly-Yakovenko-of-Solana-Reveals-Why-Were-Not-in-a-Crypto-Bubble.jpg',
-    title: 'Anatoly Yakovenko Official',  
-    body: 'Hi! Come watch me eat glass!',
+    img: 'https://cryptosrus.com/wp-content/uploads/2021/12/Anatoly-Yakovenko-of-Solana-Reveals-Why-Were-Not-in-a-Crypto-Bubble.jpg',
+    name: 'Anatoly Yakovenko Official',  
+    description: 'Hi! Come watch me eat glass!',
     twitter: 'https://twitter.com/aeyakovenko',
     instagram: 'https://www.instagram.com/anatolyyakovenko.sola/',
     rating: 5,
@@ -303,9 +366,9 @@ export const mixedItems = [
   },
   {
     id: 11,
-    imgUrl: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
-    title: 'Busy Media Inc.',  
-    body: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
+    img: 'https://theworldunplugged.files.wordpress.com/2010/11/screen-shot-2010-12-07-at-1-35-48-pm.png',
+    name: 'Busy Media Inc.',  
+    description: 'Busy Media Inc. is the leading distributor of music, videos, books and art!',
     twitter:'https://',
     instagram:'https://',
     web:'https://',
@@ -313,18 +376,18 @@ export const mixedItems = [
   },
   {
     id: 12,
-    imgUrl: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
-    title: 'Trendy Clothing Co.',
-    body: 'All the trendy modern, old, contemporary clothes are here!',
+    img: 'https://media.gettyimages.com/vectors/clothes-and-accessories-related-vector-banner-design-concept-modern-vector-id1341159950?k=20&m=1341159950&s=612x612&w=0&h=JQiJzyVQEH8vtbGM4LCVbW2bC6yqJRu3vDM6Bws6qp8=',
+    name: 'Trendy Clothing Co.',
+    description: 'All the trendy modern, old, contemporary clothes are here!',
     twitter: 'https://',
     web:'https://',
     rating: 3.5,
   },
   {
     id: 13,
-    imgUrl: 'https://www.dualipa.com/wp-content/uploads/2019/10/DONT_START_NOW.jpg',
-    title: 'Dua Lipa Official',
-    body: 'This is the official Dua Lipa store!',
+    img: 'https://www.dualipa.com/wp-content/uploads/2019/10/DONT_START_NOW.jpg',
+    name: 'Dua Lipa Official',
+    description: 'This is the official Dua Lipa store!',
     twitter: 'https://twitter.com/DUALIPA',
     instagram: 'https://www.instagram.com/dualipa',
     facebook: 'https://www.facebook.com/DuaLipa',
@@ -332,12 +395,12 @@ export const mixedItems = [
   },   
   {
     id: 14,
-    imgUrl: 'https://images-na.ssl-images-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png',
-    title: 'Amazon',
-    body: 'Official Amazon Store',
+    img: 'https://images-na.ssl-images-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png',
+    name: 'Amazon',
+    description: 'Official Amazon Store',
     twitter: 'https://twitter.com/amazon',
     web: 'https://amazon.com',
     rating: 3.8
   },
 ];
-  
+  */
