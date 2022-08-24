@@ -7,9 +7,11 @@ import { getFavorites, SearchString } from '../components/data';
 const CarouselCards = () => {
   const isCarousel = React.useRef(null)
   const [index, setIndex] = React.useState(0)
-  const [favorites, updateFavorites] = useState(getFavorites());
+  const [favorites, updateFavorites] = useState([]);
   useEffect(()=>{
-    updateFavorites(getFavorites());
+    getFavorites()
+    .then(items=> updateFavorites(items))
+    .catch(e=>log(e));
   }, [SearchString])
 
   return (
