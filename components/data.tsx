@@ -104,6 +104,36 @@ export async function getStoresByOwner(ownerPubkey: PublicKey) {
   return items;
 }
 
+export async function getProductsByStore(storeId: string) {
+  console.log('getting products by store');
+  let items = [];
+  const [storePda] = PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("store"),
+      anchor.utils.bytes.utf8.encode(storeId)
+    ],  programId);
+  const program = getProgram(connection, PublicKey.default);
+  const products = await program.account.product.all([{
+    memcmp: { offset: 42, bytes: storePda.toBase58()}
+  }]);
+
+  console.log('product count: ', products.length);
+  products.forEach((product,i)=>{  
+    try{   
+      if(product.account.data){
+        const parsedProductData = JSON.parse(product.account.data);          
+        const decompressedProductData = decompress(parsedProductData);
+        items.push({...decompressedProductData, account_type: "product"});          
+      }
+    }
+    catch(e){
+      //console.log('exception: ', e);
+      //console.log(store.account.data);
+    }
+  });
+
+  return items;
+}
+
 async function getMixedItems() {  
   console.log('loading mixed items');
   let items = [];

@@ -9,55 +9,39 @@ import {
   } from 'react-native';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import { Card } from 'react-native-paper';
+import {getProductsByStore} from '../components/data';
 
 const spacing = 10;
-const width = (Dimensions.get('window').width - 4 * 10) / 2;
+const width = Dimensions.get('window').width / 2;
 const height = width;
-const data = [
-  {
-    id: '1',
-    text: 'OneRepublic - Human',
-    img: 'https://westernnews.media.clients.ellingtoncms.com/img/photos/2020/12/29/OneRepublic_t715.jpg?529764a1de2bdd0f74a9fb4f856b01a9d617b3e9',
-    height: 100,
-  },
-  {
-    id: '2',
-    text: '311 - Music',
-    img: 'https://upload.wikimedia.org/wikipedia/en/c/cb/311_-_Music_album_cover.jpg',
-    height: 200,
-  },
-  {
-    id: '3',
-    text: 'Camila Cabello - Havana',
-    img: 'https://i.pinimg.com/originals/4e/b4/f8/4eb4f8a7e04b57e74914fc46e013ac40.jpg',
-    height: 200,
-  },
-  {
-    id: '4',
-    text: 'HBO\'s Mosaic Soundtrack',
-    img: 'http://filmmusicreporter.com/wp-content/uploads/2018/05/mosaic.jpg',
-    height: 200,
-  },
-];
 
 export default function StoreDetailsScreen(props) {
   const [store, setStore] = useState(props.route.params.store);
+  const [products, setProducts] = useState([]);
   const navigation = useRef(props.navigation).current;
   const keyExtractor = (item) => item.id;
   
+  useEffect(()=>{
+    getProductsByStore(store.id).then(products=>{
+      setProducts(products);
+    });    
+  },[store.id]);
+      
+
   const renderItem = ({ item }) => (
     <View style={styles.row}>
       <Image source={{uri:item.img}} style={{width:'100%', height: '100%'}}/>
       <Text style={{margin: 10}}>
-        {item.text}
+        {item.name}
       </Text>
     </View>
   );
-      
+
+  
     return (    
       <View style={styles.container}>
          <ImageBackground 
@@ -95,7 +79,7 @@ export default function StoreDetailsScreen(props) {
     
 
         <FlatList
-        data={data}
+        data={products}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.list}
