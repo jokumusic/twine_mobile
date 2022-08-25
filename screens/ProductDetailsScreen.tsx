@@ -5,7 +5,8 @@ import {
     Pressable,
     ColorSchemeName,
     ImageBackground,
-   FlatList
+   FlatList,
+   ScrollView
    } from 'react-native';
  import { Text, View, TextInput, Button} from '../components/Themed';
  import { FontAwesome5 } from '@expo/vector-icons';
@@ -13,6 +14,7 @@ import {
  import Colors from '../constants/Colors';
  import useColorScheme from '../hooks/useColorScheme';
 
+ export const WINDOW_WIDTH = Dimensions.get('window').width;
 
 
  export default function ProductDetailsScreen(props) {
@@ -37,11 +39,16 @@ import {
             />
             </Pressable> 
             <Text style={styles.title}>{product.name}</Text>
-            <Image source={{uri:product.img}} style={styles.itemImage}/>
+        </View>
+        <View style={{backgroundColor: 'rgba(52, 52, 52, .025)'}}>
+          <ScrollView horizontal={false}>
+            <Image source={{uri:product.img}} style={styles.productImage}/>
             <Text>{product.description}</Text>
             <Text>Price: {product.price}</Text>
             <Text>Sku: {product.sku}</Text>
-        </View>  
+            <Button title="Add To Cart"/>
+          </ScrollView>
+        </View>
     </ImageBackground>
     </View>    
     );
@@ -55,9 +62,11 @@ import {
      header: {
        alignItems: 'center',
        flexDirection: 'row-reverse',
-       backgroundColor: 'gray',
-       height: '10%',
+       backgroundColor: '#5DBF9B',
+       height: '5%',
        marginBottom: 10,
+       alignContent: 'center',
+       justifyContent: 'space-between'
      },
      rowContainer: {
        /*flex: 1,
@@ -65,13 +74,11 @@ import {
        justifyContent: 'space-evenly',
        flexDirection: 'column',*/
      },
-     row:{
-       
+     row:{       
        flex: 1,
        alignItems: 'center',
        justifyContent: 'space-evenly',   
-       flexDirection: 'column',
-       
+       flexDirection: 'column',       
        backgroundColor: 'yellow',
        margin: 10,
        flexShrink: 1,
@@ -95,6 +102,10 @@ import {
          height: '100%',
          borderRadius: 8,
          resizeMode: 'cover',
-       }
+      },
+      productImage: {
+        width: WINDOW_WIDTH /2,
+        height: WINDOW_WIDTH /2
+      }
    });
    

@@ -19,6 +19,7 @@ import CreateProductScreen from '../screens/CreateProductScreen';
 import EditStoreScreen from '../screens/EditStoreScreen';
 import ProductDetailsScreen from '../screens/ProductDetailsScreen';
 import EditProductScreen from '../screens/EditProductScreen';
+import CartScreen from '../screens/CartScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -118,12 +119,12 @@ function BottomTabNavigator() {
       />
 
       <BottomTab.Screen
-        name="SettingsTab"
-        component={SettingsScreen}
-        options={({ navigation }: RootTabScreenProps<'SettingsTab'>) => ({
-          title: 'Settings',
+        name="CartTab"
+        component={CartScreen}
+        options={({ navigation }: RootTabScreenProps<'CartTab'>) => ({
+          title: 'Cart',
           headerShown: true,
-          tabBarIcon: ({ color }) => <TabBarIcon name='cog' color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name='shopping-cart' color={color} />,
         })}
       />
     </BottomTab.Navigator>

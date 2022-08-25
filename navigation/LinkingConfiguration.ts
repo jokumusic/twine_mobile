@@ -24,10 +24,10 @@ const linking: LinkingOptions<RootStackParamList> = {
             screens: {
               StoresScreen: 'stores',
             },
-          },
-          SettingsTab: {
+          },          
+          CartTab: {
             screens: {
-              SettingsScreen: 'settings',
+              CartScreen: 'cart',
             },
           },
         },

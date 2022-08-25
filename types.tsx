@@ -34,6 +34,7 @@ export type RootStackScreenProps<Screen extends keyof RootStackParamList> = Nati
 export type RootTabParamList = {
   ShopTab: undefined;
   StoresTab: undefined;
+  CartTab: undefined;
   SettingsTab: undefined;
 };
 
