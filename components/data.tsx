@@ -1,5 +1,5 @@
 import React from "react";
-import { View, ScrollView, Pressable, Image, StyleSheet, Dimensions, Text } from "react-native";
+import { View, ScrollView, Pressable, Image, StyleSheet, Dimensions, Text, Linking } from "react-native";
 import PressableImage from './PressableImage';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import {clusterApiUrl, Connection, PublicKey} from "@solana/web3.js";
@@ -188,24 +188,28 @@ export const CardView = (item: any) => {
               <PressableImage
                 source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
                 style={styles.contactIcon}
-                url={item.twitter}
-              />
+                show={item.twitter}
+                onPress={()=>Linking.openURL(item.twitter)}/>              
               <PressableImage
                 source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
                 style={styles.contactIcon}
-                url={item.instagram}/>
+                show={item.instagram}
+                onPress={()=>Linking.openURL(item.instagram)}/>
               <PressableImage
                 source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
                 style={styles.contactIcon}
-                url={item.facebook}/>          
+                show={item.facebook}
+                onPress={()=>Linking.openURL(item.facebook)}/>         
               <PressableImage
                 source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
                 style={styles.contactIcon}
-                url={item.web}/>
+                show={item.web}
+                onPress={()=>Linking.openURL(item.web)}/>
               <PressableImage
                 source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
                 style={styles.contactIcon}
-                url={item.wiki}/>
+                show={item.wiki}
+                onPress={()=>Linking.openURL(item.wiki)}/>
             </View>
 
             <View style={{flexDirection: 'column', alignContent: 'center', width: 100, margin:4}}>                          
@@ -215,7 +219,7 @@ export const CardView = (item: any) => {
                   <Text style={{fontSize:9, position: 'absolute', left: 8, top: 5}}>{Math.round(item.rating)}</Text>                  
                 </View>
               }
-              <Text style={{fontSize:12, flexWrap: 'wrap', flex:1}}>{item.price ? '$' + item.price.toFixed(2) : ''}</Text>  
+              <Text style={{fontSize:12, flexWrap: 'wrap', flex:1}}>{item.price ? '$' + item.price: ''}</Text>  
             </View>            
           </View>
         </View>

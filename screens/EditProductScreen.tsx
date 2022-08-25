@@ -8,21 +8,13 @@ import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStat
 import * as twine from '../api/twine';
 
 
-const SCREEN_DEEPLINK_ROUTE = "create_product";
+const SCREEN_DEEPLINK_ROUTE = "edit_product";
 
 
-export default function CreateProductScreen(props) {
-  const [store, setStore] = useState(props.route.params.store);
+export default function EditProductScreen(props) {
+  const [product, setProduct] = useState(props.route.params.product);
   const navigation = useRef(props.navigation).current;
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-  const [product, setProduct] = useState(
-    {
-     name:'',
-     description:'',
-     img:'',
-     price: 0,
-     sku: '',
-    });
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
 
@@ -33,31 +25,13 @@ export default function CreateProductScreen(props) {
 
 
   async function connectWallet(){
-    twine.connectWallet(true, SCREEN_DEEPLINK_ROUTE)
+    twine.connectWallet(false, SCREEN_DEEPLINK_ROUTE)
     .then(()=>{
       log('connected to wallet');
     })
     .catch(err=> log(err));
   }
 
-  async function createProduct() {
-    setActivityIndicatorIsVisible(true);
-    log('creating product...');
-    
-    const data = await twine
-      .createProduct({...product, storeId: store.id}, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>log(err));
-
-      if(data){
-        setProduct(data);
-        log(JSON.stringify(data));
-      } else{
-        log('no product was returned');
-      }
-
-    setActivityIndicatorIsVisible(false);
-    log('done');
-  }
 
   const readProduct = async () => {
     setActivityIndicatorIsVisible(true);
@@ -138,11 +112,11 @@ export default function CreateProductScreen(props) {
           style={{borderStyle: 'solid', borderWidth: 1, margin: 5}} 
           onChangeText={(t)=>setProduct({...product,  sku: t})}/>
       </View>
-      <View> 
-        <Button title='Create Product' onPress={createProduct} />
+      <View>
         <Button title='Read Product' onPress={readProduct} />
         <Button title='Update Product' onPress={updateProduct} />
       </View>
+
       
       <View style={{width: '95%', height: '35%', margin:5}}>
         <ScrollView

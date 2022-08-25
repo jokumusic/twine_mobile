@@ -17,6 +17,8 @@ import SettingsScreen from '../screens/SettingsScreen';
 import StoreDetailsScreen from '../screens/StoreDetailsScreen';
 import CreateProductScreen from '../screens/CreateProductScreen';
 import EditStoreScreen from '../screens/EditStoreScreen';
+import ProductDetailsScreen from '../screens/ProductDetailsScreen';
+import EditProductScreen from '../screens/EditProductScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -44,8 +46,10 @@ function RootNavigator() {
         <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen name="CreateStore" component={CreateStoreScreen} />
         <Stack.Screen name="StoreDetails" component={StoreDetailsScreen} />
-        <Stack.Screen name="CreateProduct" component={CreateProductScreen} />
         <Stack.Screen name="EditStore" component={EditStoreScreen} />
+        <Stack.Screen name="CreateProduct" component={CreateProductScreen} />
+        <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} />
+        <Stack.Screen name="EditProduct" component={EditProductScreen} />
       </Stack.Group>
     </Stack.Navigator>
   );

@@ -6,7 +6,6 @@ import { RootTabScreenProps } from '../types';
 import CarouselCards from '../components/CarouselCards'
 import { getFavorites, getStores, HorizontalScrollView, SearchString, setSearchString, CardView } from '../components/data';
 import { blue100 } from 'react-native-paper/lib/typescript/styles/colors';
-import PressableImage from '../components/PressableImage';
 import MarqueeText from 'react-native-marquee';
 import { generateRandomString } from '../utils/random';
 
@@ -49,7 +48,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
            scrollToOverflowEnabled={true}
            scrollEnabled={true}>
               {
-                items.map((i)=>(<CardView key={generateRandomString(10)} {...i}/>))
+                items.map((i)=>(<CardView key={i.id} {...i}/>))
               }
           </ScrollView>
           <View style={styles.favorites}>

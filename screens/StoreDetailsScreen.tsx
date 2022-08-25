@@ -14,9 +14,10 @@ import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import { Card } from 'react-native-paper';
 import {getProductsByStore} from '../components/data';
+import PressableImage from '../components/PressableImage';
 
 const spacing = 10;
-const width = Dimensions.get('window').width / 2;
+const width = (Dimensions.get('window').width) / 2;
 const height = width;
 
 export default function StoreDetailsScreen(props) {
@@ -32,12 +33,18 @@ export default function StoreDetailsScreen(props) {
   },[store.id]);
       
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }) => (  
     <View style={styles.row}>
-      <Image source={{uri:item.img}} style={{width:'100%', height: '100%'}}/>
-      <Text style={{margin: 10}}>
+      <View style={styles.card}>
+      <PressableImage
+        show={true}
+        source={{uri:item.img}}
+        onPress={() => navigation.navigate('ProductDetails',{product: item})}
+        style={styles.itemImage} />      
+      <Text style={styles.productCaption}>
         {item.name}
       </Text>
+      </View>          
     </View>
   );
 
@@ -74,18 +81,18 @@ export default function StoreDetailsScreen(props) {
             </Pressable>     
 
         <Text style={styles.title}>{store.name} Products</Text>
-        <Image source={{uri:store.img}} style={styles.itemImage}/>
+        <Image source={{uri:store.img}} style={styles.headerImage}/>
         </View>  
     
 
         <FlatList
-        data={products}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        contentContainerStyle={styles.list}
-        numColumns={2}
-        columnWrapperStyle={styles.column}
-      />
+          data={products}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          contentContainerStyle={styles.list}
+          numColumns={2}
+          columnWrapperStyle={styles.column}
+        />
       </ImageBackground>
       </View>    
     );
@@ -109,16 +116,20 @@ const styles = StyleSheet.create({
       justifyContent: 'space-evenly',
       flexDirection: 'column',*/
     },
-    row:{
-      
+    row:{      
       flex: 1,
-      alignItems: 'center',
+      //alignItems: 'center',
       justifyContent: 'space-evenly',   
-      flexDirection: 'column',
-      
+      flexDirection: 'column',    
+      flexShrink: 1,
+      backgroundColor: 'rgba(52, 52, 52, 0)',
+    },
+    card:{
       backgroundColor: 'yellow',
       margin: 10,
-      flexShrink: 1,
+      borderRadius: 4,
+      shadowRadius: 2,
+      justifyContent: 'space-around' 
     },
     title: {
       fontSize: 20,
@@ -135,21 +146,34 @@ const styles = StyleSheet.create({
       width: '90%',
     },
     itemImage: {
-        width: '20%',
+        width: '95%',
         height: '100%',
         borderRadius: 8,
-        resizeMode: 'cover',
-      },
-      
-      list: {
-        justifyContent: 'space-around',
-        flexDirection: 'row'
-      },
-      column: {
-        flexShrink: 1,
-        flexDirection: 'column',
-        width: width,
-        height: height,
-      }
+        resizeMode: 'cover',        
+    },
+    headerImage:{
+      width: '20%',
+      height: '100%',
+      borderRadius: 8,
+      resizeMode: 'cover',  
+    },
+    list: {
+      justifyContent: 'space-around',
+      flexDirection: 'row'
+    },
+    column: {
+      flexShrink: 1,
+      flexDirection: 'column',
+      width: width,
+      height: height,
+    },
+    productCaption: {
+      color: "#222",
+      fontSize: 14,
+      fontWeight: "bold",
+      paddingLeft: 5,
+      paddingTop: 3,
+      margin: 5,
+    },
   });
   

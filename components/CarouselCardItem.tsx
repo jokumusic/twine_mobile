@@ -21,26 +21,31 @@ const CarouselCardItem = ({ item, index }) => {
             style={styles.image}
           />
           <PressableImage
+            show={item.twitter}
             source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
             style={styles.contactIcon}
-            url={item.twitter}
+            onPress={()=>Linking.openURL(item.twitter)}
             />
           <PressableImage
+            show={item.instagram}
             source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
             style={styles.contactIcon}
-            url={item.instagram}/>
+            onPress={()=>Linking.openURL(item.instagram)} />
           <PressableImage
+            show={item.facebook}
             source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
-            style={styles.contactIcon}
-            url={item.facebook}/>            
+            style={styles.contactIcon}            
+            onPress={()=>Linking.openURL(item.facebook)}/>            
           <PressableImage
+            show={item.web}
             source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
-            style={styles.contactIcon}
-            url={item.web}/>
+            style={styles.contactIcon}            
+            onPress={()=>Linking.openURL(item.web)}/>
           <PressableImage
+            show={item.wiki}
             source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
-            style={styles.contactIcon}
-            url={item.wiki}/>
+            style={styles.contactIcon}            
+            onPress={()=>Linking.openURL(item.wiki)}/>
         </View>
           
         <Text style={styles.header}>{item.name}</Text>        
