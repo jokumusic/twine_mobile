@@ -1,42 +1,55 @@
-import { useState, useContext, useEffect } from "react";
-import { Button, FlatList, StyleSheet, Text, View } from "react-native";
+import { useState, useContext, useEffect, useRef } from "react";
+import { Button, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { CartContext } from "../components/CartProvider";
-import * as data from '../components/data';
+
 
 export default function CartScreen(props) {
-    const [products, setProducts] = useState([{name:"ididi"}]);
-    //const [map, action, getItemsCount] = useContext(CartContext);
+    const navigation = useRef(props.navigation).current;
+    const [products, setProducts] = useState([]);
+    let [total, setTotal] = useState(0);
+    const {map, action, getItemsCount, getItemsResolved, getChangeCount} = useContext(CartContext);
 
     useEffect(() =>{
-        const items = [];
-        /*map.keys().foreach(async (productId) =>{
-            const product = data.getProductById(productId);
-            if(product) {
-                items.push(product);
-            }
-        });*/
-        console.log('setting products');
-        setProducts(items);
-    },[]);
+        console.log('refreshing product list');
+        getItemsResolved()
+            .then(items=>{                
+                setProducts(items)
+                setTotal(items.reduce((total,item)=>total + (item.count * item.price), 0));
+            })
+            .catch(err=>console.log(err));    
+    },[getChangeCount]);
 
-    function Totals() {
-        let [total, setTotal] = useState(0);
-        useEffect(() => {
-          //setTotal(getTotalPrice());
-        });
+    async function checkOut(){
+        console.log('checking out');
+    }
+
+    function renderTotal() {        
         return (
-           <View style={styles.cartLineTotal}>
-              <Text style={[styles.lineLeft, styles.lineTotal]}>Total</Text>
-              <Text style={styles.lineRight}>$ {total}</Text>
-           </View>
+            <View>
+                <View style={styles.cartLineTotal}>
+                    <Text style={[styles.lineLeft, styles.lineTotal]}>Total</Text>
+                    <Text style={styles.lineRight}>$ {total}</Text>
+                </View>
+           
+                <Button title="Checkout" onPress={checkOut}/>
+            </View>
         );
     }
 
     function renderItem({item}) {
         return (
-            <View style={styles.cartLine}>
+            <View key={item.id} style={styles.cartLine}>                    
+                <Pressable
+                    onPress={() => navigation.navigate('ProductDetails',{product:item})}
+                    style={({ pressed }) => ({
+                    opacity: pressed ? 0.5 : 1,
+                })}>
+                    <Image source={{uri:item.img}} style={styles.lineImage} />
+                </Pressable>
+                
                 <Text style={styles.lineLeft}>{item.name}</Text>
-                <Text style={styles.lineRight}>$ </Text>
+                <Text style={styles.lineMiddle}>X {item.count}</Text>
+                <Text style={styles.lineRight}>$ {item.price}</Text>
             </View>
         );
         }
@@ -48,7 +61,7 @@ export default function CartScreen(props) {
             data={products}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
-            ListFooterComponent={Totals}
+            ListHeaderComponent={renderTotal}
         />
     );
 }
@@ -66,23 +79,36 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',    
     },
     lineLeft: {
+      flex:1,
       fontSize: 20, 
-      lineHeight: 40, 
+      lineHeight: 50, 
+      color:'#333333' 
+    },
+    lineMiddle: {
+      marginLeft: 15,
+      fontSize: 16, 
+      lineHeight: 50, 
       color:'#333333' 
     },
     lineRight: { 
       flex: 1,
-      fontSize: 20, 
+      fontSize: 18, 
       fontWeight: 'bold',
-      lineHeight: 40, 
+      lineHeight: 50, 
       color:'#333333', 
       textAlign:'right',
+    },
+    lineImage:{
+        width: 75,
+        height: 75,
+        borderRadius: 10,
+        margin: 8,
     },
     itemsList: {
       backgroundColor: '#eeeeee',
     },
     itemsListContainer: {
-      backgroundColor: '#eeeeee',
+      backgroundColor: '#FFFFFF',
       paddingVertical: 8,
       marginHorizontal: 8,
     },

@@ -71,7 +71,7 @@ function getProgram(connection: Connection, pubkey: PublicKey){
 
   const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
   const program = new anchor.Program(idl as anchor.Idl, new PublicKey(idl.metadata.address), provider) as anchor.Program<Twine>;
-  program.acc
+
   return program;  
 }
 
@@ -116,7 +116,6 @@ export async function getProductsByStore(storeId: string) {
     memcmp: { offset: 42, bytes: storePda.toBase58()}
   }]);
 
-  console.log('product count: ', products.length);
   products.forEach((product,i)=>{  
     try{   
       if(product.account.data){
@@ -136,7 +135,6 @@ export async function getProductsByStore(storeId: string) {
 
 
 export async function getProductById(productId: string) {
-  console.log(`getProductById(${productId})`);
   let item = null;
 
   try
@@ -148,11 +146,11 @@ export async function getProductById(productId: string) {
 
     const program = getProgram(connection, PublicKey.default);
     const product = await program.account.product.fetchNullable(productPda);
-   
-    if(product?.account?.data){
-      const parsedProductData = JSON.parse(product.account.data);          
+  
+    if(product?.data){
+      const parsedProductData = JSON.parse(product.data);          
       const decompressedProductData = decompress(parsedProductData);
-      item = {...decompressedProductData, account_type: "product"};
+      item = {...decompressedProductData, account_type: "product", price: product.cost.toNumber(), id: product.productId};
     }
   }
   catch(e){
