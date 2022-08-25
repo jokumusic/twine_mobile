@@ -44,9 +44,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
             style={styles.searchbox}
             value={search}
             onChangeText={runSearch}/>
-          <ScrollView contentContainerStyle={{flexGrow:1, flexWrap: 'wrap', flexDirection:'row'}}
-           scrollToOverflowEnabled={true}
-           scrollEnabled={true}>
+          <ScrollView  contentContainerStyle={{flexGrow:1, flexWrap: 'wrap', flexDirection:'row', alignContent: 'space-around'}}>
               {
                 items.map((i)=>(<CardView key={i.id} {...i}/>))
               }
@@ -78,8 +76,8 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    //alignItems: 'center',
+    //justifyContent: 'center',
   },
   title: {
     fontSize: 20,
@@ -102,7 +100,7 @@ const styles = StyleSheet.create({
   },
   favorites: {
     backgroundColor: 'blue',
-    height: '20%',
+    height: '18%',
     width: '100%',
     marginTop: .5,
     borderTopWidth: 2,

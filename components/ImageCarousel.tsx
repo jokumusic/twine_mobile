@@ -162,7 +162,7 @@ const ImageCarousel: FC<ImageCarouselProps> = ({data}) => {
         onViewableItemsChanged={handleOnViewableItemsChanged.current}
         viewabilityConfig={viewConfigRef.current}
       />
-      {/* 
+     
       <View style={styles.footer}>
         <Pressable
           onPress={handleOnPrev}
@@ -196,7 +196,7 @@ const ImageCarousel: FC<ImageCarouselProps> = ({data}) => {
           </Text>
         </Pressable>
       </View>
-      */}
+      
     </View>
   );
 };

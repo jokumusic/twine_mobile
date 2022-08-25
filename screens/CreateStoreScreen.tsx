@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, findNodeHandle, AccessibilityInfo } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, findNodeHandle, AccessibilityInfo, KeyboardAvoidingView } from 'react-native';
 import { useSelector, useDispatch, connect } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
@@ -96,37 +96,46 @@ const updateStore = async() =>{
 }
 
   return (
-    <View style={styles.container}>      
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}>
       <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
       
-      <View style={styles.body} >
-        <View style={{margin: 5}}>
+      <View style={styles.inputSection}>
+
+        <Text style={styles.inputLabel}>Name</Text>
         <TextInput 
-          placeholder='Name'
+          style={styles.inputBox}
           value={storeData.name}
           onChangeText={(t)=>setStoreData({...storeData, name: t})}
           />
-        <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1, margin: 5}} 
-          placeholder='Description'
+
+        <Text style={styles.inputLabel}>Description</Text> 
+        <TextInput
+          style={styles.inputBox}          
           multiline={true}
           numberOfLines={3}
           value={storeData.description}
           onChangeText={(t)=>setStoreData({...storeData, description: t})}
         />
+
+        <Text style={styles.inputLabel}>Image URL</Text>
         <TextInput 
-          placeholder='image url'
+          style={styles.inputBox}
           value={storeData.img}
           onChangeText={(t)=>setStoreData({...storeData, img: t})}
         />
-        </View>
 
+      </View>
+    
+      <View>
         <Button title='Connect Wallet' onPress={connectWallet}/>
         <Button title='Create Store' onPress={createStore} />
         <Button title='Read Store Data' onPress={readStore} />
         <Button title='Update Store Data' onPress={updateStore} />      
       </View>
 
-      <View style={{width: '95%', height: '35%', margin:5}}>
+      <View style={{width: '95%', height: '20%', margin:5}}>
         <ScrollView
             contentContainerStyle={{
               backgroundColor: "#111",
@@ -155,50 +164,32 @@ const updateStore = async() =>{
             ))}
         </ScrollView>
       </View>
+
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
+    flexDirection: 'column',
     justifyContent: 'flex-start',
+    flexGrow: 1
   },
-  subcontainer: {
+  inputSection: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    alignContent: 'flex-start',
+    padding: 10,
   },
-  title: {
-    fontSize: 33,
+  inputLabel:{
     fontWeight: 'bold',
+    fontSize: 12,
+    alignContent:'flex-start'
   },
-  body: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-  description: {
-    fontSize: 17,
-  },
-  accountInfo: {
-    width: '90%',
-    height: 75,
-  },
-  activityIndicatorContainer: {
-    flex: 1,
-    justifyContent: "center"
-  },
-  horizontal: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 10
+  inputBox:{
+    borderWidth: 1,
+    alignContent: 'flex-start',
+    height: 40,
+    marginBottom: 10,
   }
 });

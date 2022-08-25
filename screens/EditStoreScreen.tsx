@@ -35,29 +35,35 @@ export default function EditStoreScreen(props) {
   return (
     <View style={styles.container}>
       <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
-      <Text style={styles.title}>Edit Store</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       
-      <View style={styles.body}>
-        <TextInput 
-          placeholder='Name'
+      <View style={styles.inputSection}>
+
+        <Text style={styles.inputLabel}>Name</Text>
+        <TextInput
+          style={styles.inputBox}
           value={store.name}
           onChangeText={(t)=>setStore({...store, name: t})}
           />
-        <TextInput style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1, margin: 5}} 
-          placeholder='Description'
+        
+        <Text style={styles.inputLabel}>Description</Text>
+        <TextInput 
+          style={styles.inputBox}
           multiline={true}
           numberOfLines={3}
           value={store.description}
           onChangeText={(t)=>setStore({...store, description: t})}
         />
+        
+        <Text style={styles.inputLabel}>Image URL</Text>
         <TextInput 
-          placeholder='image url'
+          style={styles.inputBox}
+          placeholder='http://'
           value={store.img}
           onChangeText={(t)=>setStore({...store, img: t})}
         />
       </View>
-      <View style={styles.container}>       
+      
+      <View>
         <Button title='Save' onPress={updateStore} />
       </View>
       
@@ -68,29 +74,25 @@ export default function EditStoreScreen(props) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
-    //justifyContent: 'center',
+    //alignItems: 'center',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    flexGrow: 1
   },
-  title: {
-    fontSize: 33,
+  inputSection: {
+    flex: 1,
+    alignContent: 'flex-start',
+    padding: 10,
+  },
+  inputLabel:{
     fontWeight: 'bold',
+    fontSize: 12,
+    alignContent:'flex-start'
   },
-  body: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-  description: {
-    fontSize: 17,
-  },
-  accountInfo: {
-    width: '90%',
-    height: 75,
-  },
+  inputBox:{
+    borderWidth: 1,
+    alignContent: 'flex-start',
+    height: 40,
+    marginBottom: 10,
+  }
 });

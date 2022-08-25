@@ -66,8 +66,6 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    //alignItems: 'center',
-    //justifyContent: 'top'
   },
   separator: {
     marginVertical: 30,

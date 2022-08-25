@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
@@ -73,52 +73,59 @@ export default function EditProductScreen(props) {
     log('done');
   }
 
-  return (
-    <View style={styles.container}>
-      <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>      
-      <View style={styles.body}>
+  return (          
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}>
+      <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+
+      <View style={styles.inputSection}>
         
-        <TextInput placeholder='Name'
-          style={{margin: 5}}
+        <Text style={styles.inputLabel}>Name</Text>
+        <TextInput
+          style={styles.inputBox}
           value={product.name}
           onChangeText={(t)=>setProduct({...product,  name: t})}
         />
 
-        <TextInput placeholder='Description'
-          style={{width: 250, borderStyle: 'solid', borderColor: 'black', borderWidth: 1, margin: 5}}        
+        <Text style={styles.inputLabel}>Description</Text>
+        <TextInput
+          style={styles.inputBox}
           multiline={true}
           numberOfLines={4}
           value={product.description}
           onChangeText={(t)=>setProduct({...product,  description: t})}
         />
 
-        <TextInput 
-          placeholder='image url'
+        <Text style={styles.inputLabel}>Image URL</Text>
+        <TextInput
+          style={styles.inputBox}
           value={product.img}
           onChangeText={(t)=>setProduct({...product, img: t})} 
         />
-        
-        <Text>lamports:</Text>
-        <TextInput placeholder='cost in lamports'
+   
+        <Text style={styles.inputLabel}>USDC:</Text>
+        <TextInput
+          style={styles.inputBox}
           value={product.price}
-          keyboardType='numeric'
-          style={{borderStyle: 'solid', borderWidth: 1, margin: 5}}
+          keyboardType='numeric'       
           onChangeText={(t)=>setProduct({...product,  price: t})}
         />
         
+        <Text style={styles.inputLabel}>SKU#</Text>
         <TextInput
-          placeholder='SKU#'
+          style={styles.inputBox}
           value={product.sku}
-          style={{borderStyle: 'solid', borderWidth: 1, margin: 5}} 
           onChangeText={(t)=>setProduct({...product,  sku: t})}/>
       </View>
+
       <View>
         <Button title='Read Product' onPress={readProduct} />
         <Button title='Update Product' onPress={updateProduct} />
       </View>
 
       
-      <View style={{width: '95%', height: '35%', margin:5}}>
+      <View style={{width: '95%', height: '20%', margin:5}}>
         <ScrollView
             contentContainerStyle={{
               backgroundColor: "#111",
@@ -147,38 +154,34 @@ export default function EditProductScreen(props) {
             ))}
         </ScrollView>
       </View>
-      
+     
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-    </View>
+    </KeyboardAvoidingView> 
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
+    //alignItems: 'center',
     flexDirection: 'column',
     justifyContent: 'flex-start',
     flexGrow: 1
   },
-  title: {
-    fontSize: 33,
-    fontWeight: 'bold',
-  },
-  body: {
+  inputSection: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignContent: 'flex-start',
+    padding: 10,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  inputLabel:{
+    fontWeight: 'bold',
+    fontSize: 12,
+    alignContent:'flex-start'
   },
-  description: {
-    fontSize: 17,
-  },
-  accountInfo: {
-    width: '90%',
-    height: 75,
-  },
+  inputBox:{
+    borderWidth: 1,
+    alignContent: 'flex-start',
+    height: 40,
+    marginBottom: 10,
+  }
+
 });
