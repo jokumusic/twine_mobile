@@ -6,13 +6,16 @@ import {
     ColorSchemeName,
     ImageBackground,
    FlatList,
-   ScrollView
+   ScrollView,
+   SafeAreaView
    } from 'react-native';
  import { Text, View, TextInput, Button} from '../components/Themed';
  import { FontAwesome5 } from '@expo/vector-icons';
- import React, { useEffect, useRef, useState } from 'react';
+ import React, { useEffect, useRef, useState, useContext } from 'react';
  import Colors from '../constants/Colors';
  import useColorScheme from '../hooks/useColorScheme';
+ import { CartContext } from '../components/CartProvider';
+ 
 
  export const WINDOW_WIDTH = Dimensions.get('window').width;
 
@@ -20,9 +23,14 @@ import {
  export default function ProductDetailsScreen(props) {
    const [product, setProduct] = useState(props.route.params.product);
    const navigation = useRef(props.navigation).current;
+   const { addItemToCart } = useContext(CartContext);
+
+   async function addToCart(){
+      addItemToCart(product.id);
+   }
 
     return (    
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
         <ImageBackground 
             style={{width: '100%', height: '100%'}} 
             source={{uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg'}}>  
@@ -46,11 +54,11 @@ import {
             <Text>{product.description}</Text>
             <Text>Price: {product.price}</Text>
             <Text>Sku: {product.sku}</Text>
-            <Button title="Add To Cart"/>
+            <Button title="Add To Cart" onPress={addToCart}/>
           </ScrollView>
         </View>
     </ImageBackground>
-    </View>    
+    </SafeAreaView>    
     );
  }
  

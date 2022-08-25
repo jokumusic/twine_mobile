@@ -4,37 +4,15 @@ import { ColorSchemeName, AppRegistry, Text,View, StyleSheet } from 'react-nativ
 import { Provider } from 'react-redux';
 import {store,persistor} from './reducers/store';
 import { PersistGate } from 'redux-persist/integration/react';
-
-
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
 import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
-
 import {ActivityIndicator, DarkTheme as PaperDarkTheme, DefaultTheme as PaperDefaultTheme, Provider as PaperProvider } from 'react-native-paper';
-
-import { clusterApiUrl, Keypair } from '@solana/web3.js';
-import { useMemo } from 'react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-
-const DEVNET_ENDPOINT = /*#__PURE__*/ clusterApiUrl('devnet');
+import { CartProvider } from './components/CartProvider';
 
 
-/*const wallets = useMemo(() => [
-  new SolanaMobileWalletAdapter({
-      addressSelector: createDefaultAddressSelector(),
-      appIdentity: {
-          name: 'twine',
-          uri: 'https://twine.io',
-          icon: './assets/images/adaptive-icon.png',
-     },
-      authorizationResultCache: createDefaultAuthorizationResultCache(),
-  }),
-  //new PhantomWalletAdapter()
-]);
-*/
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
@@ -44,6 +22,7 @@ export default function App() {
   } else {
     return (
       <Provider store={store}>
+        
         <PersistGate loading={<Text>Loading...</Text>} persistor={persistor}>
           <SafeAreaProvider>
             <PaperProvider theme={PaperDarkTheme}>
@@ -56,7 +35,9 @@ export default function App() {
                   />
                 </View>
               }>
+                <CartProvider>
               <Navigation colorScheme={colorScheme}/>
+              </CartProvider>
               <StatusBar />
               </Suspense>
             </PaperProvider>

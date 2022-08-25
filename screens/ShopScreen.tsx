@@ -46,7 +46,18 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
             onChangeText={runSearch}/>
           <ScrollView  contentContainerStyle={{flexGrow:1, flexWrap: 'wrap', flexDirection:'row', alignContent: 'space-around'}}>
               {
-                items.map((i)=>(<CardView key={i.id} {...i}/>))
+                items.map((item)=>(
+                <CardView 
+                  key={item.id} 
+                  onPress={()=>{
+                    if(item.account_type == "product")
+                      navigation.navigate('ProductDetails',{product: item});
+                    else if (item.account_type == "store")
+                      navigation.navigate('StoreDetails', {store: item})
+                  }}
+                  {...item}
+                />
+                ))
               }
           </ScrollView>
           <View style={styles.favorites}>

@@ -134,6 +134,35 @@ export async function getProductsByStore(storeId: string) {
   return items;
 }
 
+
+export async function getProductById(productId: string) {
+  console.log(`getProductById(${productId})`);
+  let item = null;
+
+  try
+  {  
+    const [productPda] = PublicKey.findProgramAddressSync([
+        anchor.utils.bytes.utf8.encode("product"),
+        anchor.utils.bytes.utf8.encode(productId)
+      ],  programId);
+
+    const program = getProgram(connection, PublicKey.default);
+    const product = await program.account.product.fetchNullable(productPda);
+   
+    if(product?.account?.data){
+      const parsedProductData = JSON.parse(product.account.data);          
+      const decompressedProductData = decompress(parsedProductData);
+      item = {...decompressedProductData, account_type: "product"};
+    }
+  }
+  catch(e){
+    console.log('exception: ', e);
+    //console.log(store.account.data);
+  }
+ 
+  return item;
+}
+
 async function getMixedItems() {  
   console.log('loading mixed items');
   let items = [];
@@ -178,7 +207,7 @@ const colors = ['#a2b369']; //['#10898d','#2f416b','#895a88', '#a2b369','#dd93ab
 export const CardView = (item: any) => {
   return (
     <View style={[styles.card,{backgroundColor: colors[Math.floor(Math.random() * colors.length)],}]}>
-      <Pressable onPress={()=>{}} style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
+      <Pressable onPress={item.onPress} style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
         <View style={styles.cardTopRow}>
           <View style={{flex:1, flexDirection: 'row', alignContent:'flex-start'}}>
             <Image 
