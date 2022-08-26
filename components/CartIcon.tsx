@@ -3,13 +3,13 @@ import { View, Text, StyleSheet } from 'react-native';
 import { CartContext } from './CartProvider';
 
 export function CartIcon({navigation}) {
-  const {getItemsCount} = useContext(CartContext);
+  const {itemCount} = useContext(CartContext);
   return (
     <View style={styles.container}>
       <Text style={styles.text} 
         onPress={() => {
           navigation.navigate('CartTab');
-        }}> Cart ({getItemsCount()})</Text>
+        }}> Cart ({itemCount})</Text>
     </View>
   );
 }

@@ -8,29 +8,35 @@ export const CartContext = createContext();
 
 export function CartProvider(props) {
     const [map, actions] = useMap<String, number>();
-    const [changeCount, setChangeCount] = useState(0);
+    const [itemCount, setItemCount] = useState(0);
   
     function addItemToCart(id) {
         let count = map.get(id);
-        if(!count){
-            actions.set(id, 1);
-            setChangeCount(changeCount+1);
-        } else {
-            actions.set(id, count + 1);
-            setChangeCount(changeCount+1);
+        if(count == undefined)
+            count = 0;
+ 
+        actions.set(id, count+1);
+        setItemCount(itemCount+1);
+    }
+
+    function removeItemFromCart(id, all=false) {
+        const count = map.get(id);
+        if(count){
+            if(all) {
+                actions.remove(id);
+                setItemCount(itemCount - count);
+            } 
+            else {
+                if(count < 2)
+                    actions.remove(id);
+                else
+                    actions.set(id, count - 1);
+                    
+                setItemCount(itemCount-1);
+            }
         }
     }
 
-
-    function getItemsCount() {
-        console.log('getItemsCount');
-        let sum = 0;
-        map.forEach(value => {
-            sum += value;
-        });
-
-        return sum;
-    }
 
     async function getItemsResolved() {
         const promises = [];
@@ -47,10 +53,8 @@ export function CartProvider(props) {
         return cartProducts;
     }
 
-    const getChangeCount = async () => changeCount;
-
     return (
-        <CartContext.Provider value={{map, actions, getItemsCount, addItemToCart, getItemsResolved, getChangeCount}}>
+        <CartContext.Provider value={{map, itemCount, addItemToCart, removeItemFromCart, getItemsResolved}}>
         {props.children}
         </CartContext.Provider>
     );

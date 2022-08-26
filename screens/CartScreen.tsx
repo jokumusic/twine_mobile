@@ -7,20 +7,26 @@ export default function CartScreen(props) {
     const navigation = useRef(props.navigation).current;
     const [products, setProducts] = useState([]);
     let [total, setTotal] = useState(0);
-    const {map, action, getItemsCount, getItemsResolved, getChangeCount} = useContext(CartContext);
+    const {map, itemCount, removeItemFromCart, getItemsResolved} = useContext(CartContext);
 
     useEffect(() =>{
         console.log('refreshing product list');
+        console.log('before: ', itemCount);
         getItemsResolved()
-            .then(items=>{                
+            .then(items=>{         
+                console.log('after: ', itemCount);       
                 setProducts(items)
                 setTotal(items.reduce((total,item)=>total + (item.count * item.price), 0));
             })
             .catch(err=>console.log(err));    
-    },[getChangeCount]);
+    },[itemCount]);
 
     async function checkOut(){
         console.log('checking out');
+    }
+
+    async function deleteItem(itemId) {
+        removeItemFromCart(itemId);
     }
 
     function renderTotal() {        
@@ -46,8 +52,10 @@ export default function CartScreen(props) {
                 })}>
                     <Image source={{uri:item.img}} style={styles.lineImage} />
                 </Pressable>
-                
-                <Text style={styles.lineLeft}>{item.name}</Text>
+                <View style={{flexDirection: 'column'}}>
+                    <Text style={styles.lineLeft}>{item.name}</Text>
+                    <Button title="delete" onPress={()=>deleteItem(item.id)}/>
+                </View>
                 <Text style={styles.lineMiddle}>X {item.count}</Text>
                 <Text style={styles.lineRight}>$ {item.price}</Text>
             </View>
