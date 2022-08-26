@@ -10,29 +10,29 @@ export function CartProvider(props) {
     const [map, actions] = useMap<String, number>();
     const [itemCount, setItemCount] = useState(0);
   
-    function addItemToCart(id) {
+    function addItemToCart(id, cnt = 1) {
         let count = map.get(id);
         if(count == undefined)
             count = 0;
  
-        actions.set(id, count+1);
-        setItemCount(itemCount+1);
+        actions.set(id, count+cnt);
+        setItemCount(itemCount+cnt);
     }
 
-    function removeItemFromCart(id, all=false) {
+    function removeItemFromCart(id, cnt: number|boolean = 1) {
         const count = map.get(id);
         if(count){
-            if(all) {
+            if(cnt === true) {
                 actions.remove(id);
                 setItemCount(itemCount - count);
             } 
             else {
-                if(count < 2)
+                if(cnt >= count)
                     actions.remove(id);
                 else
-                    actions.set(id, count - 1);
+                    actions.set(id, count - cnt);
                     
-                setItemCount(itemCount-1);
+                setItemCount(itemCount - cnt);
             }
         }
     }
