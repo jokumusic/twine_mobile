@@ -59,19 +59,20 @@ export default function CartScreen(props) {
                     <Image source={{uri:item.img}} style={styles.lineImage} />
                 </Pressable>
                 
-                <View style={{flexDirection: 'column'}}>
-                    <Text style={styles.lineLeft}>{item.name}</Text>
-                    <View style={{width: '40%'}}>
-                        <Button title="delete" onPress={()=>removeItemFromCart(item.id)}/>
-                    </View>
+                <View style={{flexDirection: 'column', width:'35%'}}>
+                    <Text style={styles.lineLeft}>{item.name}</Text>                    
+                    <Button title="delete" onPress={()=>removeItemFromCart(item.id)}/>                  
                 </View>
                 
+                <View style={{flexDirection: 'column', width: '10%', paddingLeft: 30, alignContent:'center', justifyContent:'center'}}>
+
                 <TextInput
-                    style={{width: 40, height: 40, fontSize: 18, borderWidth:1, alignContent: 'center', justifyContent: 'center'}}
+                    style={{width: 40, height: 40, fontSize: 18, borderWidth:1, alignContent: 'center', justifyContent: 'center', backgroundColor:'#eeeeee'}}
                     value={item.count.toString()}
                     keyboardType='numeric'
                     editable={false}
                 />
+                </View>
 
                 <Text style={styles.lineRight}>$ {item.price}</Text>
             </View>
