@@ -9,8 +9,6 @@ export const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .4)
 export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * .4);
 
 
-
-
 const CarouselCardItem = ({ item, index }) => {
   return ( 
     <View style={styles.container} key={index}>  

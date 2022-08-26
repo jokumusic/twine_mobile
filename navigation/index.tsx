@@ -21,6 +21,7 @@ import ProductDetailsScreen from '../screens/ProductDetailsScreen';
 import EditProductScreen from '../screens/EditProductScreen';
 import CartScreen from '../screens/CartScreen';
 import { CartIcon } from '../components/CartIcon';
+import { ScreenProps } from 'react-native-screens';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -47,10 +48,30 @@ function RootNavigator() {
       <Stack.Group screenOptions={{ presentation: 'modal' }}>
         <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen name="CreateStore" component={CreateStoreScreen} />
-        <Stack.Screen name="StoreDetails" component={StoreDetailsScreen} />
+        <Stack.Screen name="StoreDetails" component={StoreDetailsScreen} 
+          options={({ navigation }: ScreenProps<'StoreDetails'>) => (
+            {
+              headerRight: ()=> (
+                <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+                  <CartIcon navigation={navigation} />
+                </View>
+              )
+            })
+          } 
+        />
         <Stack.Screen name="EditStore" component={EditStoreScreen} />
         <Stack.Screen name="CreateProduct" component={CreateProductScreen} />
-        <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} />
+        <Stack.Screen name="ProductDetails" component={ProductDetailsScreen}
+          options={({ navigation }: ScreenProps<'ProductDetails'>) => (
+            {
+              headerRight: ()=> (
+                <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+                  <CartIcon navigation={navigation} />
+                </View>
+              )
+            })
+          } 
+        />
         <Stack.Screen name="EditProduct" component={EditProductScreen} />
       </Stack.Group>
     </Stack.Navigator>
@@ -106,6 +127,8 @@ function BottomTabNavigator() {
           headerShown: true,
           tabBarIcon: ({ color }) => <TabBarIcon name='store' color={color} />,
           headerRight: () => (
+            <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+            <CartIcon navigation={navigation} />
             <Pressable
               onPress={() => navigation.navigate('CreateStore')}
               style={({ pressed }) => ({
@@ -118,6 +141,7 @@ function BottomTabNavigator() {
                 style={{ marginRight: 15 }}
               />
             </Pressable>
+            </View>
           ),
         })}
       />

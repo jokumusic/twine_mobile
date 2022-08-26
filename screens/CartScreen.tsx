@@ -31,7 +31,7 @@ export default function CartScreen(props) {
 
     function renderTotal() {        
         return (
-            <View>
+            <View style={{marginBottom: 10}}>
                 <View style={styles.cartLineTotal}>
                     <Text style={[styles.lineLeft, styles.lineTotal]}>Total</Text>
                     <Text style={styles.lineRight}>$ {total}</Text>
@@ -88,19 +88,21 @@ const styles = StyleSheet.create({
     },
     lineLeft: {
       flex:1,
-      fontSize: 20, 
-      lineHeight: 50, 
-      color:'#333333' 
+      fontSize: 17, 
+      lineHeight: 22, 
+      color:'#333333',
+      flexWrap: 'wrap',
+      width: '90%'
     },
     lineMiddle: {
       marginLeft: 15,
       fontSize: 16, 
       lineHeight: 50, 
-      color:'#333333' 
+      color:'#333333' ,
     },
     lineRight: { 
       flex: 1,
-      fontSize: 18, 
+      fontSize: 17, 
       fontWeight: 'bold',
       lineHeight: 50, 
       color:'#333333', 
