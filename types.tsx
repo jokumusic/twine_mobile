@@ -22,6 +22,8 @@ export type RootStackParamList = {
   CreateProduct: undefined;
   ProductDetails: undefined;
   EditProduct: undefined;
+  AddContact: undefined;
+  EditContact: undefined;
   About: undefined;
   NotFound: undefined;
 };
@@ -35,6 +37,7 @@ export type RootTabParamList = {
   ShopTab: undefined;
   StoresTab: undefined;
   CartTab: undefined;
+  ContactTab: undefined;
   SettingsTab: undefined;
 };
 

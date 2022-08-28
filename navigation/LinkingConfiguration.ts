@@ -23,7 +23,12 @@ const linking: LinkingOptions<RootStackParamList> = {
             screens: {
               StoresScreen: 'stores',
             },
-          },          
+          },
+          ContactTab: {
+            screens: {
+              CartScreen: 'contact',
+            },
+          },        
           CartTab: {
             screens: {
               CartScreen: 'cart',
@@ -38,6 +43,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       CreateProduct: 'create_product',
       ProductDetails: 'product_details',
       EditProduct: 'edit_product',
+      AddContact: 'add_contact',
+      EditContact: 'edit_contact',
       NotFound: '*',
     },
   },

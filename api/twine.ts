@@ -117,7 +117,7 @@ export async function createStore(store: WriteableStore, deeplinkRoute: string) 
 
         const existingStore = await program.account.store.fetchNullable(storePda);
         if(existingStore){
-            reject(`store already exist: ${storePda}`);
+            reject(`store already exist: ${storePda.toBase58()}`);
             return;
         }
 

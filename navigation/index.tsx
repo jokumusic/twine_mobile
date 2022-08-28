@@ -22,6 +22,8 @@ import EditProductScreen from '../screens/EditProductScreen';
 import CartScreen from '../screens/CartScreen';
 import { CartIcon } from '../components/CartIcon';
 import { ScreenProps } from 'react-native-screens';
+import ContactScreen from '../screens/ContactScreen';
+import EditContactScreen from '../screens/EditContactScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -73,6 +75,7 @@ function RootNavigator() {
           } 
         />
         <Stack.Screen name="EditProduct" component={EditProductScreen} />
+        <Stack.Screen name="EditContact" component={EditContactScreen} />
       </Stack.Group>
     </Stack.Navigator>
   );
@@ -119,6 +122,34 @@ function BottomTabNavigator() {
           ),
         })}
       />
+
+      <BottomTab.Screen
+        name="ContactTab"
+        component={ContactScreen}
+        options={({ navigation }: RootTabScreenProps<'ContactTab'>) => ({
+          title: 'Contacts',
+          headerShown: true,
+          tabBarIcon: ({ color }) => <TabBarIcon name='address-book' color={color} />,
+          headerRight: () => (
+            <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+            <CartIcon navigation={navigation} />
+            <Pressable
+              onPress={() => navigation.navigate('EditContact')}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.5 : 1,
+              })}>
+              <FontAwesome5
+                name="address-card"
+                size={25}
+                color={Colors[colorScheme].text}
+                style={{ marginRight: 15 }}
+              />
+            </Pressable>
+            </View>
+          ),  
+        })}
+      />
+
       <BottomTab.Screen
         name="StoresTab"
         component={StoresScreen}
