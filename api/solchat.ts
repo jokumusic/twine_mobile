@@ -12,6 +12,7 @@ import {
     PublicKey,
     Transaction,
   } from "@solana/web3.js";
+import { rejects } from 'assert';
 
 const network = clusterApiUrl("devnet")
 const connection = new Connection(network);
@@ -245,5 +246,71 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
 
   });
 
+  return await promise;
+}
+
+export async function sendMessage(message: string, contact1Pda: PublicKey, contact2Pda: PublicKey, deeplinkRoute: string){
+  const promise = new Promise<Transaction>(async (resolve,reject) => {
+    const currentWalletKey = getCurrentWalletPublicKey();
+    const program = getProgram(deeplinkRoute);
+    let [directConversationPda, directConversationPdaBump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode("direct_conversation"), 
+        contact2Pda.toBuffer(),    
+        contact1Pda.toBuffer(),         
+      ], programId);
+    
+
+    let conversation = program.account.directConversation.fetchNullable(directConversationPda);
+    if(!conversation){
+      [directConversationPda, directConversationPdaBump] = PublicKey.findProgramAddressSync(
+        [
+          anchor.utils.bytes.utf8.encode("direct_conversation"), 
+          contact1Pda.toBuffer(),            
+          contact2Pda.toBuffer(),
+        ], programId);
+
+        let conversation = program.account.directConversation.fetchNullable(directConversationPda);  
+    }
+
+    let errored = false;
+    let tx = null;
+    if(!conversation) {
+      tx = await program.methods
+        .startDirectConversation(message)
+        .accounts({
+          conversation: directConversationPda,
+          payer: currentWalletKey,
+          from: contact1Pda,
+          to: contact2Pda,
+        })
+        .transaction()
+        .catch(err=>{errored=true; reject(err);});
+    }
+    else {
+      tx = await program.methods
+        .sendDirectMessage(message)
+        .accounts({
+          conversation: directConversationPda,
+          payer: currentWalletKey,
+          contactA: contact1Pda,
+          contactB: contact2Pda,
+        })
+        .transaction()
+        .catch(err=>{errored=true; reject(err);});
+    }
+    
+    console.log('getting latest blockhash...');
+    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = currentWalletKey;  
+
+    console.log('signing and sending transaction...');
+    const trans = await Phantom
+      .signAndSendTransaction(tx, false, true, deeplinkRoute) 
+      .catch(err=>{errored=true; reject(err);});
+
+    resolve(trans);
+  });
+  
   return await promise;
 }

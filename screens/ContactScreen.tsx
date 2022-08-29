@@ -1,9 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, Button, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Button, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text, View } from '../components/Themed';
 import PressableImage from '../components/PressableImage';
 import { AntDesign, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as solchat from '../api/solchat';
 import { PublicKey } from '@solana/web3.js';
 import { useFocusEffect } from '@react-navigation/native';
@@ -34,9 +34,16 @@ export default function ContactScreen(props) {
   const [addContactKey,setAddContactKey]= useState("");
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [allowedContacts, setAllowedContacts] = useState([] as solchat.Contact[]);
-  const [focustContact, setFocustContact] = useState({} as solchat.Contact);
+  const [focusedContact, setFocusedContact] = useState({} as solchat.Contact);
   const [sendAsset, setSendAsset] = useState({type: AssetType.SOL, amount:0} as SendAsset);
   const [sendAssetErrorMessage, setSendAssetErrorMessage] = useState('');
+  const [chatMessage, setChatMessage] = useState('');
+  const [logText, setLogText] = useState<string[]>([]);
+  const scrollViewRef = useRef<any>(null);
+
+  const log = useCallback((log: string) => { 
+    setLogText((logs) => [...logs, log])
+  }, []);
  
   useEffect(()=>{
    updateWalletContact();
@@ -57,9 +64,9 @@ export default function ContactScreen(props) {
       .then(contacts=>{
         console.log('gotAllowedContacts: ', contacts); 
         setAllowedContacts(contacts);
-        if(!contacts.some(c=>c.address == focustContact.address))
+        if(!contacts.some(c=>c.address == focusedContact.address))
         {
-          setFocustContact({} as solchat.Contact);
+          setFocusedContact({} as solchat.Contact);
         }
       })
       .catch(err=>console.log(err));
@@ -100,7 +107,7 @@ export default function ContactScreen(props) {
         <PressableText 
           text={item.name}
           style={{fontSize: 20}}
-          onPress={()=>setFocustContact(item)} />       
+          onPress={()=>setFocusedContact(item)} />       
       </View>
     );
   }
@@ -131,7 +138,7 @@ export default function ContactScreen(props) {
     setActivityIndicatorIsVisible(true);
 
     twine
-    .sendAsset(sendAsset.type, focustContact.receiver, sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
+    .sendAsset(sendAsset.type, focusedContact.receiver, sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
     .catch(err=>setSendAssetErrorMessage(err))
     .then((tx)=>{
       setSendAsset({type: AssetType.SOL, amount: 0});
@@ -147,6 +154,29 @@ export default function ContactScreen(props) {
     setSendAsset({type: AssetType.SOL, amount: 0});
     setSendAssetErrorMessage("");
     setActivityIndicatorIsVisible(false);
+  }
+
+  async function sendChatMessage(){
+    log(`${contact.name || contact.address.toBase58()}> ${chatMessage}`);
+    setChatMessage("");
+
+    log("[not functional yet...]");
+    return;
+
+    if(!chatMessage)
+      return;
+
+    solchat
+      .sendMessage(chatMessage, contact.address, focusedContact.address, SCREEN_DEEPLINK_ROUTE)
+      .then(transaction=>{
+          log(chatMessage);
+      })
+      .catch(err=>{
+        log(err);
+      })
+      .finally(()=>{
+        setChatMessage("");
+      });
   }
 
    return (
@@ -200,11 +230,11 @@ export default function ContactScreen(props) {
                 <Text style={{color: 'red', fontStyle: 'italic'}}>{sendAssetErrorMessage}</Text>
                 <View style={{flexDirection: 'row', alignContent: 'center', justifyContent: 'center'}}>
                   <Text>Send to:</Text>
-                  <Text style={{fontSize: 18, fontWeight: 'bold'}}>{focustContact.name}</Text>
+                  <Text style={{fontSize: 18, fontWeight: 'bold'}}>{focusedContact.name}</Text>
                 </View>
                 <View style={{flexDirection: 'row'}}>
                   <Text>Address:</Text>
-                  <Text style={{fontSize: 10, fontStyle: 'italic'}}>{focustContact.receiver?.toBase58()}</Text>
+                  <Text style={{fontSize: 10, fontStyle: 'italic'}}>{focusedContact.receiver?.toBase58()}</Text>
                 </View>
     
                 <SelectDropdown 
@@ -236,40 +266,40 @@ export default function ContactScreen(props) {
       </View>
       <View style={styles.rightPanel}>
         <View style={styles.contentHeader}>
-          { focustContact.data && 
+          { focusedContact.data && 
           <>
-          <Image source={{uri:focustContact.data.img}} style={{width: '30%', height: '100%'}}/>
+          <Image source={{uri:focusedContact.data.img}} style={{width: '30%', height: '100%'}}/>
           <View style={{flexDirection: 'column', width: '100%'}}>
-            <Text style={{fontSize: 16, fontWeight: 'bold'}}>{focustContact.name}</Text>
+            <Text style={{fontSize: 16, fontWeight: 'bold'}}>{focusedContact.name}</Text>
          
-            <Text style={{fontStyle: 'italic', flexWrap: 'wrap', width:'100%'}}>{focustContact.data.description}</Text>
+            <Text style={{fontStyle: 'italic', flexWrap: 'wrap', width:'100%'}}>{focusedContact.data.description}</Text>
          
             <View style={{flexDirection: 'row'}}>
             <PressableImage
                 source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
                 style={styles.contactIcon}
-                show={focustContact.data.twitter}
-                onPress={()=>Linking.openURL(focustContact.data.twitter)}/>              
+                show={focusedContact.data.twitter}
+                onPress={()=>Linking.openURL(focusedContact.data.twitter)}/>              
               <PressableImage
                 source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
                 style={styles.contactIcon}
-                show={focustContact.data.instagram}
-                onPress={()=>Linking.openURL(focustContact.data.instagram)}/>
+                show={focusedContact.data.instagram}
+                onPress={()=>Linking.openURL(focusedContact.data.instagram)}/>
               <PressableImage
                 source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
                 style={styles.contactIcon}
-                show={focustContact.data.facebook}
-                onPress={()=>Linking.openURL(focustContact.data.facebook)}/>         
+                show={focusedContact.data.facebook}
+                onPress={()=>Linking.openURL(focusedContact.data.facebook)}/>         
               <PressableImage
                 source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
                 style={styles.contactIcon}
-                show={focustContact.data.web}
-                onPress={()=>Linking.openURL(focustContact.data.web)}/>
+                show={focusedContact.data.web}
+                onPress={()=>Linking.openURL(focusedContact.data.web)}/>
               <PressableImage
                 source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
                 style={styles.contactIcon}
-                show={focustContact.data.wiki}
-                onPress={()=>Linking.openURL(focustContact.data.wiki)}/>
+                show={focusedContact.data.wiki}
+                onPress={()=>Linking.openURL(focusedContact.data.wiki)}/>
           </View>
 
 
@@ -284,6 +314,54 @@ export default function ContactScreen(props) {
           }
 
         </View>
+        <View style={{flexDirection: 'column'}}>
+          <View style={{height: '83.5%'}}>
+            <ScrollView
+              contentContainerStyle={{
+                backgroundColor: "#111",
+                padding: 20,
+                paddingTop: 20,
+                flexGrow: 1,
+              }}
+              ref={scrollViewRef}
+              onContentSizeChange={() => {
+                scrollViewRef.current.scrollToEnd({ animated: true });
+              }}
+              style={{ flex: 1 }}
+            >
+              {logText.map((log, i) => (
+                <Text
+                  selectable
+                  key={`t-${i}`}
+                  style={{
+                  fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
+                  color: "#fff",
+                  fontSize: 14,}}
+                >
+                  {log}
+                </Text>
+              ))}
+            </ScrollView>
+          </View>
+          <View style={{flexDirection: 'row', alignContent: 'flex-start', backgroundColor: "#111"}}>
+          <TextInput 
+            value={chatMessage}
+            style={{backgroundColor: 'gray', borderWidth: 2, fontSize: 14,width:'60%', borderRadius: 10, justifyContent: 'flex-start', paddingLeft:10}}
+            multiline={true}
+            numberOfLines={3}
+            onChangeText={setChatMessage}
+          />
+          <View style={{flexDirection: 'column', alignContent:'center', backgroundColor: "#111"}}>
+            <PressableIcon
+              name="md-arrow-redo-circle"
+              color='lime'
+              size={32}
+              onPress={sendChatMessage}
+            />
+          </View>
+        </View>
+      </View>
+        
       </View>
     </View>
    )

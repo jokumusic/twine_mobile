@@ -1,11 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheetProperties, Text } from "react-native";
+import { Pressable, StyleSheet, StyleSheetProperties, Text } from "react-native";
+import NamespaceFactory from "../dist/browser/types/src/program/namespace";
 
 export function PressableIcon(props: {
     name: React.ComponentProps<typeof Ionicons>['name'];
-    color: string;
+    color?: string;
     onPress: any;
+    size?: number;
 }) {
+    const {name,onPress,size, ...extraProps} = props;
     return (
       <Pressable
         onPress={props.onPress}
@@ -13,7 +16,7 @@ export function PressableIcon(props: {
         opacity: pressed ? 0.5 : 1,
         })}
       >
-        <Ionicons size={25} style={{ marginBottom: -3}} {...props} />
+        <Ionicons name={props.name} size={props.size ?? 25} style={{paddingBottom: -8}} {...extraProps} />
       </Pressable>
     );
 }
