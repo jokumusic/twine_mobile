@@ -1,36 +1,87 @@
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, Button, Dimensions, Modal, Platform, Pressable, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Button, Dimensions, FlatList, Modal, Platform, Pressable, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text, View } from '../components/Themed';
 import PressableImage from '../components/PressableImage';
 import { AntDesign, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as solchat from '../api/solchat';
 import { PublicKey } from '@solana/web3.js';
+import { useFocusEffect } from '@react-navigation/native';
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
-export const WINDOW_WIDTH = Dimensions.get('window').width;
+const {height, width} = Dimensions.get('window');
+const WINDOW_HEIGHT = height;
+const WINDOW_WIDTH = width;
+
 
 export default function ContactScreen(props) {
   const navigation = useRef(props.navigation).current;
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [contact, setContact] = useState({} as solchat.Contact);
   const [addContactKey,setAddContactKey]= useState("");
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+  const [allowedContacts, setAllowedContacts] = useState([] as solchat.Contact[]);
+
+
+  useEffect(()=>{
+    console.log('getCurrentWalletContact...');
+    solchat
+      .getCurrentWalletContact(SCREEN_DEEPLINK_ROUTE)
+      .then((c)=>setContact(c))
+      .catch(err=>console.log(err));
+  },[]);
+
+  useEffect(()=>{
+    console.log('getAllowedContacts...');
+    solchat
+      .getAllowedContacts(contact, SCREEN_DEEPLINK_ROUTE)
+      .then(contacts=>{console.log('gotAllowedContacts: ', contacts); setAllowedContacts(contacts);})
+      .catch(err=>console.log(err));
+
+ }, [contact]);
+
 
     
   async function toggleModalVisibility() {
     setIsModalVisible(!isModalVisible);
   };
 
-  async function allowContact() {
+  function allowContact() {
+    if(!addContactKey)
+      return;
+
     setActivityIndicatorIsVisible(true);
-    console.log('adding contact...');
+    console.log('allowing contact...');
 
-    const allowedContact = await solchat
+    solchat
       .addAllow(new PublicKey(addContactKey), {directMessage: true}, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>console.log(err));
+      .then(updatedContact=>setContact(updatedContact))
+      .catch(err=>console.log(err))
+      .finally(()=>{
+        console.log('done');
+        setIsModalVisible(false)
+        setActivityIndicatorIsVisible(false);
+        setAddContactKey("");
+      });    
+  }
 
-    console.log('done');
-    setActivityIndicatorIsVisible(false);
+  function renderContactListItem({item}){
+    return (
+        <Text style={{fontSize: 20}}>{item.name}</Text>
+    );
+  }
+
+  function renderContactListSummary(){
+    return (
+      <Pressable
+            onPress={() => setIsModalVisible(true)}
+            style={[{margin: 5},
+              ({ pressed }) => ({ opacity: pressed ? 0.5 : 1,})
+            ]}
+            >
+          <Text>{allowedContacts.length} contacts</Text>      
+      </Pressable>
+    );
   }
 
    return (
@@ -40,18 +91,19 @@ export default function ContactScreen(props) {
 
           <Pressable
             onPress={() => setIsModalVisible(true)}
-            style={({ pressed }) => ({
-              opacity: pressed ? 0.5 : 1,
-            })}>
+            style={[{margin: 5},
+              ({ pressed }) => ({ opacity: pressed ? 0.5 : 1,})
+            ]}
+            >
             <FontAwesome5
               name="plus-circle"
               size={25}
               color={'purple'}
-              style={{ marginRight: 15 }}
             />
           </Pressable>
           <Modal animationType="slide" 
-                   transparent visible={isModalVisible} 
+                   transparent 
+                   visible={isModalVisible} 
                    presentationStyle="overFullScreen" 
                    onDismiss={toggleModalVisibility}>
                 <View style={styles.viewWrapper}>
@@ -68,6 +120,17 @@ export default function ContactScreen(props) {
                     </View>
                 </View>
             </Modal>
+
+            <View style={styles.contactList}>
+            <FlatList
+              contentContainerStyle={styles.contactListContainer}
+              data={allowedContacts}
+              renderItem={renderContactListItem}
+              keyExtractor={(item) => item.address.toBase58()}
+              ListHeaderComponent={renderContactListSummary}
+              ListHeaderComponentStyle={styles.contactListHeader}
+            />
+            </View>
         </View>
       </View>
       <View style={styles.rightPanel}>
@@ -136,5 +199,35 @@ const styles = StyleSheet.create({
       borderColor: "rgba(0, 0, 0, 0.2)",
       borderWidth: 1,
       marginBottom: 8,
+  },
+  contactList: {
+    backgroundColor: 'pink',
+    borderWidth:1,
+    flexDirection: 'column',
+    height: WINDOW_HEIGHT,
+    width: '100%',
+  },
+  contactListContainer: {
+    backgroundColor: 'green',
+    paddingVertical: 8,
+    marginHorizontal: 8,
+    borderWidth:1,
+  },
+  contactListHeader: {
+    backgroundColor: 'yellow',
+    marginBottom: 5,
+    borderBottomWidth: 2,
+  },
+  contactLine: {
+    flex: 1,
+    fontSize: 17, 
+    fontWeight: 'bold',
+    lineHeight: 50, 
+    color:'#333333', 
+    textAlign:'right',
+    flexDirection: 'row',
+    height:50,
+    borderWidth: 1,
+
   },
 });

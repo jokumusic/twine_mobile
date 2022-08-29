@@ -48,8 +48,13 @@ export type Solchat = {
         },
         {
           "name": "creator",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -268,8 +273,13 @@ export const IDL: Solchat = {
         },
         {
           "name": "creator",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [

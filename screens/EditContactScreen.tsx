@@ -28,6 +28,7 @@ export default function EditContactScreen(props) {
           .catch(err=>console.log(err));
     
         if(updatedContact) {
+            console.log('got updated contact');
           setContact(updatedContact);
           console.log(JSON.stringify(updatedContact));
         }

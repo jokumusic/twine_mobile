@@ -23,7 +23,7 @@ export interface ContactProfile {
   twitter?: string;
   facebook?: string;
   instagram?: string;
-  allows?: Map<PublicKey,Allow>;
+  allows?: [string]; //use base58strings. serializing/deserialzing PublicKey has been giving issues
 }
 
 export interface WriteableContact {
@@ -113,36 +113,67 @@ export function getCurrentWalletContactPda() {
   return getContactPda(getCurrentWalletPublicKey())
 }
 
-export async function addAllow(key: PublicKey, allow: Allow, deeplinkRoute: string) {
+export async function addAllow(contactPda: PublicKey, allow: Allow, deeplinkRoute: string) {
   const promise = new Promise<Contact>(async (resolve,reject) =>{
-    const contact = await getCurrentWalletContact(deeplinkRoute);
+    const contact = await getCurrentWalletContact(deeplinkRoute).catch(err=>{reject(err);});
+    const contactPdaString = contactPda.toBase58();
 
-    if(!contact.data.allows) 
-      contact.data.allows = new Map<PublicKey, Allow>();
+    if(!contact){
+      reject('unable to current wallet contact');
+      return;
+    }
 
-    if(!contact.data.allows.has(key)) {
-      const allowContact = await getContactByPubKey(key, deeplinkRoute);
+    console.log('contactPdaString: ', contactPdaString);
+    console.log(contact.data);
+
+
+
+    if(contact.data.allows.includes(contactPdaString)) {
+      const allowContact = await getContactByPda(contactPda, deeplinkRoute);
       if(!allowContact) {
         reject('the specified key does not belong to a registered contact. Ask them to create a contact in the system');
+      } else {
+        reject('contact is already allowed');
       }
-
-      contact.data.allows.set(key, allow);
     }
     else{
-      contact.data.allows.set(key,allow);
+      contact.data.allows.push(contactPdaString);
+      const updatedContact = await updateContact(contact, deeplinkRoute).catch(err=>reject(err));
+      if(updatedContact)
+        resolve(updatedContact);
+      else
+        reject("didn't receive an updated contact from updateContact()");
     }
   });
 
   return await promise;
 }
 
-export async function getContacts(keys: PublicKey[]) {
+export async function getContacts(contactPdas: Iterable<PublicKey>, deeplinkRoute: string) {
+  const program = getProgram(deeplinkRoute);
+  let promises = [];
+  for(const contactPda of contactPdas) {
+    promises.push(getContactByPda(contactPda, deeplinkRoute));
+  }
 
+  const contacts = await Promise.all(promises)
+  return contacts;
 }
 
+export async function getAllowedContacts(contact: Contact, deeplinkRoute: string) : Promise<Contact[]> {
+  const allows = contact?.data?.allows;
+  if(allows) {
+    const allowPdas = allows.map((a)=>new PublicKey(a));
+    const contacts = await getContacts(allowPdas, deeplinkRoute);
+    return contacts;
+  }
+
+  return [];
+}
 
 export async function updateContact(contact: WriteableContact, deeplinkRoute: string) {
   const promise = new Promise<Contact>(async (resolve,reject)=>{
+      console.log('upateContact() contact: ', contact);
     const creatorPubkey = getCurrentWalletPublicKey();  
     const program = getProgram(deeplinkRoute);
     let [contactPda, contactPdaBump] = getContactPda(creatorPubkey);
@@ -181,11 +212,12 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
     console.log('getting latest blockhash...');
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     tx.feePayer = creatorPubkey;  
-  
+
     console.log('signing and sending transaction...');
     const trans = await Phantom
       .signAndSendTransaction(tx, false, true, deeplinkRoute) 
       .catch(err=>{errored=true; reject(err);});
+
 
     if(errored)
       return;
@@ -199,11 +231,11 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
         return;
 
     console.log('retrieving finalized data...');
-    const latestContact = getContactByPda(contactPda)
+    const latestContact = await getContactByPda(contactPda, deeplinkRoute)
       .catch(err=>{errored=true; reject(err);});
    
     if(latestContact) {
-      console.log('got it!');
+      console.log('got it! ', latestContact);
       resolve(latestContact);
       return;
     } 
