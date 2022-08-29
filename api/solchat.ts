@@ -23,6 +23,7 @@ export interface ContactProfile {
   twitter?: string;
   facebook?: string;
   instagram?: string;
+  allows?: Map<PublicKey,Allow>;
 }
 
 export interface WriteableContact {
@@ -32,12 +33,16 @@ export interface WriteableContact {
 }
 
 export interface Contact extends WriteableContact {
+  readonly address: PublicKey;
   readonly bump: number;  
   readonly creator: PublicKey;
 }
 
+export interface Allow {
+  directMessage: true,
+}
 
-export const getCurrentWalletPublicKey = () => Phantom.getWalletPublicKey();
+const getCurrentWalletPublicKey = () => Phantom.getWalletPublicKey();
 
 export async function connectWallet(force=false, deeplinkRoute: string) {
   return new Promise<PublicKey>(async (resolve,reject) =>{
@@ -62,13 +67,11 @@ function getProgram(deeplinkRoute: string){
   return program;  
 }
 
-function getContactPda() {
-  const currentPubkey = getCurrentWalletPublicKey();
-  console.log('currentkey: ',  currentPubkey);
+function getContactPda(pubkey: PublicKey) {
   return PublicKey.findProgramAddressSync(
     [
       anchor.utils.bytes.utf8.encode("contact"), 
-      currentPubkey.toBuffer(),             
+      pubkey.toBuffer(),             
     ], programId);
 }
 
@@ -85,25 +88,67 @@ function decodeData(data: any) {
   return decompressed;
 }
 
-export async function getCurrentWalletContact(deeplinkRoute: string) {
-  const creatorPubkey = getCurrentWalletPublicKey();  
+export async function getContactByPubKey(key: PublicKey, deeplinkRoute: string) {
+  const [contactPda, contactAPdaBump] = await getContactPda(key);
+  return await getContactByPda(contactPda, deeplinkRoute);  
+}
+
+export async function getContactByPda(contactPda: PublicKey, deeplinkRoute: string) {
   const program = getProgram(deeplinkRoute);
-  let [contactPda, contactAPdaBump] = getContactPda();
   const contact = await program.account.contact.fetchNullable(contactPda);
   if(!contact)
     return null;
 
   const contactData = decodeData(contact.data);
-  return contactData;
+
+  return {...contact, data:contactData, address: contactPda};
 }
+
+export async function getCurrentWalletContact(deeplinkRoute: string) {
+  const creatorPubkey = getCurrentWalletPublicKey();
+  return await getContactByPubKey(creatorPubkey, deeplinkRoute);
+}
+
+export function getCurrentWalletContactPda() {
+  return getContactPda(getCurrentWalletPublicKey())
+}
+
+export async function addAllow(key: PublicKey, allow: Allow, deeplinkRoute: string) {
+  const promise = new Promise<Contact>(async (resolve,reject) =>{
+    const contact = await getCurrentWalletContact(deeplinkRoute);
+
+    if(!contact.data.allows) 
+      contact.data.allows = new Map<PublicKey, Allow>();
+
+    if(!contact.data.allows.has(key)) {
+      const allowContact = await getContactByPubKey(key, deeplinkRoute);
+      if(!allowContact) {
+        reject('the specified key does not belong to a registered contact. Ask them to create a contact in the system');
+      }
+
+      contact.data.allows.set(key, allow);
+    }
+    else{
+      contact.data.allows.set(key,allow);
+    }
+  });
+
+  return await promise;
+}
+
+export async function getContacts(keys: PublicKey[]) {
+
+}
+
 
 export async function updateContact(contact: WriteableContact, deeplinkRoute: string) {
   const promise = new Promise<Contact>(async (resolve,reject)=>{
     const creatorPubkey = getCurrentWalletPublicKey();  
     const program = getProgram(deeplinkRoute);
-    let [contactPda, contactAPdaBump] = getContactPda();
+    let [contactPda, contactPdaBump] = getContactPda(creatorPubkey);
     const existingContact = await program.account.contact.fetchNullable(contactPda);
-    const contactData = encodeData(contact);
+    const contactData = encodeData(contact.data);
+    console.log(contact.data);
     let errored=false;
     let tx = null;
 
@@ -130,7 +175,7 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
         .catch(err=>{errored=true; reject(err); });
     }
 
-    if(errored)
+    if(errored)  
       return;
 
     console.log('getting latest blockhash...');
@@ -154,14 +199,12 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
         return;
 
     console.log('retrieving finalized data...');
-    const latestContact = await program.account
-                                .contact
-                                .fetchNullable(contactPda)
-                                .catch(err=>{errored=true; reject(err);});
+    const latestContact = getContactByPda(contactPda)
+      .catch(err=>{errored=true; reject(err);});
+   
     if(latestContact) {
       console.log('got it!');
-      const latestContactData = decodeData(latestContact.data);
-      resolve(latestContactData);
+      resolve(latestContact);
       return;
     } 
     else {

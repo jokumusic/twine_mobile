@@ -24,6 +24,7 @@ import { CartIcon } from '../components/CartIcon';
 import { ScreenProps } from 'react-native-screens';
 import ContactScreen from '../screens/ContactScreen';
 import EditContactScreen from '../screens/EditContactScreen';
+import AddContactScreen from '../screens/AddContactScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -76,6 +77,8 @@ function RootNavigator() {
         />
         <Stack.Screen name="EditProduct" component={EditProductScreen} />
         <Stack.Screen name="EditContact" component={EditContactScreen} />
+        <Stack.Screen name="AddContact" component={AddContactScreen} />
+
       </Stack.Group>
     </Stack.Navigator>
   );

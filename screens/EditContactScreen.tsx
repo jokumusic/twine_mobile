@@ -1,13 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Button, Platform, StyleSheet, TextInput } from 'react-native';
+import { ActivityIndicator, Button, Platform, Pressable, StyleSheet, TextInput, Clipboard} from 'react-native';
 import { Text, View } from '../components/Themed';
+import { FontAwesome5 } from '@expo/vector-icons';
 import * as solchat from '../api/solchat';
 
 const SCREEN_DEEPLINK_ROUTE = "edit_contact";
 
 export default function EditContactScreen(props) {
-    const [contact, setContact] = useState({} as solchat.Contact);
+    const [contact, setContact] = useState({data:{}} as solchat.Contact);
     const navigation = useRef(props.navigation).current;
     const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
    
@@ -22,13 +23,13 @@ export default function EditContactScreen(props) {
         setActivityIndicatorIsVisible(true);
         console.log('submitting contact data...');
         
-        const contactData = await solchat
+        const updatedContact = await solchat
           .updateContact(contact, SCREEN_DEEPLINK_ROUTE)
           .catch(err=>console.log(err));
     
-        if(contactData) {
-          setContact(contactData);
-          console.log(JSON.stringify(contactData));
+        if(updatedContact) {
+          setContact(updatedContact);
+          console.log(JSON.stringify(updatedContact));
         }
         else {
           console.log("a contact wasn't returned")
@@ -43,6 +44,25 @@ export default function EditContactScreen(props) {
         <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
         <View style={styles.inputSection}>
             
+            <View style={{flexDirection: 'row'}}>
+                <Text style={styles.inputLabel}>Address</Text>
+                <Pressable
+                    onPress={() =>Clipboard.setString(contact?.address?.toBase58())}
+                    style={[{marginLeft: 5}, 
+                        ({ pressed }) => ({opacity: pressed ? 0.5 : 1,})
+                    ]}
+                >
+                    <FontAwesome5
+                        name="copy"
+                        size={20}
+                        color={'black'}
+                        style={{ marginRight: 15 }}
+                    />
+                </Pressable>
+            </View>
+            <Text style={{fontSize: 10, marginBottom:8,}}>{contact?.address?.toBase58()}</Text>
+
+
             <Text style={styles.inputLabel}>Name</Text>
             <TextInput
             style={styles.inputBox}
@@ -55,29 +75,29 @@ export default function EditContactScreen(props) {
             style={styles.inputBox}
             multiline={true}
             numberOfLines={4}
-            value={contact.description}
-            onChangeText={(t)=>setContact({...contact,  description: t})}
+            value={contact.data.description}
+            onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, description: t}})}
             />
 
             <Text style={styles.inputLabel}>Image URL</Text>
             <TextInput
             style={styles.inputBox}
-            value={contact.img}
-            onChangeText={(t)=>setContact({...contact, img: t})} 
+            value={contact.data.img}
+            onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, img: t}})} 
             />
 
             <Text style={styles.inputLabel}>twitter URL</Text>
             <TextInput
             style={styles.inputBox}
-            value={contact.twitter}
-            onChangeText={(t)=>setContact({...contact,  twitter: t})}
+            value={contact.data.twitter}
+            onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, twitter: t}})}
             />
 
             <Text style={styles.inputLabel}>instagram URL</Text>
             <TextInput
             style={styles.inputBox}
-            value={contact.instagram}
-            onChangeText={(t)=>setContact({...contact,  instagram: t})}
+            value={contact.data.instagram}
+            onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, instagram: t}})}
             />
         </View>
 
