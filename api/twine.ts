@@ -16,6 +16,9 @@ import {
 } from "@solana/web3.js";
 import {TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token} from "@solana/spl-token";
 import { rejects } from 'assert';
+import { Asset } from 'expo-asset';
+
+if (typeof BigInt === 'undefined') global.BigInt = require('big-integer') //fixes an issue with react native not supporting bigint. added package big-integer to project and then added this
 
 
 export interface WriteableStore{
@@ -47,6 +50,13 @@ export interface Product extends WriteableProduct {
     readonly id: string;
     readonly rating: number;
 }
+
+export enum AssetType{
+    SOL,
+    LAMPORT,
+    USDC,
+}
+
 
 const network = clusterApiUrl("devnet")
 const connection = new Connection(network);
@@ -496,6 +506,63 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             reject("didn't received updated product");
             return;
          }
+    });
+
+    return await promise;
+  }
+
+  export async function sendAsset(assetType: AssetType, to: PublicKey, amount: number, deeplinkRoute: string) {
+    const promise = new Promise<Transaction>(async (resolve,reject) => {
+        const currentWalletKey = getCurrentWalletPublicKey();
+        if(assetType == AssetType.LAMPORT || assetType == AssetType.SOL){
+            let lamports: number = 0;
+            if(assetType == AssetType.LAMPORT) {
+                lamports = amount;
+            }
+            else if(assetType == AssetType.SOL){
+                lamports = web3.LAMPORTS_PER_SOL * amount;
+            }
+            else {
+                reject(`unknown assetType: ${assetType}`);
+                return;
+            }
+
+            let errored = false;
+            const tx = new web3.Transaction().add(
+                web3.SystemProgram.transfer({
+                    fromPubkey: currentWalletKey,
+                    toPubkey: to,
+                    lamports: BigInt(lamports)
+                }),
+            );
+
+            console.log('getting latest blockhash...');
+            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            tx.feePayer = currentWalletKey;            
+    
+            console.log('signing and sending transaction...');
+            const trans = await Phantom
+                .signAndSendTransaction(tx, false, true, deeplinkRoute)
+                .catch(err=>{errored=true; reject(err); });
+    
+            if(errored)
+                return;
+
+            console.log('waiting for finalization of transaction...');
+            await connection
+                .confirmTransaction(trans.signature, 'finalized')
+                .catch(err=>{errored = true, reject(err);});
+
+            if(errored)
+                return;
+
+            resolve(trans);
+            return;
+        }
+        else {
+            reject(`sending of assetType ${assetType} is not supported`);
+            return;
+        }
     });
 
     return await promise;

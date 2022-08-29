@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, Button, Dimensions, FlatList, Modal, Platform, Pressable, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Button, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text, View } from '../components/Themed';
 import PressableImage from '../components/PressableImage';
 import { AntDesign, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
@@ -7,6 +7,13 @@ import { useEffect, useRef, useState } from 'react';
 import * as solchat from '../api/solchat';
 import { PublicKey } from '@solana/web3.js';
 import { useFocusEffect } from '@react-navigation/native';
+import { Colors } from 'react-native-paper';
+import { PressableIcon, PressableText } from '../components/Pressables';
+import { AssetType } from '../api/twine';
+import SelectDropdown from 'react-native-select-dropdown'
+import { Asset } from 'expo-asset/build/Asset';
+import * as twine from '../api/twine';
+
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
 const {height, width} = Dimensions.get('window');
@@ -14,37 +21,57 @@ const WINDOW_HEIGHT = height;
 const WINDOW_WIDTH = width;
 
 
+interface SendAsset {
+  type: AssetType;
+  amount: number;
+}
+
 export default function ContactScreen(props) {
   const navigation = useRef(props.navigation).current;
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [addContactModalVisible, setAddContactModalVisible] = useState(false);
+  const [sendAssetModalVisible, setSendAssetModalVisible] = useState(false);
   const [contact, setContact] = useState({} as solchat.Contact);
   const [addContactKey,setAddContactKey]= useState("");
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [allowedContacts, setAllowedContacts] = useState([] as solchat.Contact[]);
-
-
+  const [focustContact, setFocustContact] = useState({} as solchat.Contact);
+  const [sendAsset, setSendAsset] = useState({type: AssetType.SOL, amount:0} as SendAsset);
+  const [sendAssetErrorMessage, setSendAssetErrorMessage] = useState('');
+ 
   useEffect(()=>{
+   updateWalletContact();
+  },[]);
+
+  function updateWalletContact(){
     console.log('getCurrentWalletContact...');
     solchat
       .getCurrentWalletContact(SCREEN_DEEPLINK_ROUTE)
       .then((c)=>setContact(c))
       .catch(err=>console.log(err));
-  },[]);
+  }
 
   useEffect(()=>{
     console.log('getAllowedContacts...');
     solchat
       .getAllowedContacts(contact, SCREEN_DEEPLINK_ROUTE)
-      .then(contacts=>{console.log('gotAllowedContacts: ', contacts); setAllowedContacts(contacts);})
+      .then(contacts=>{
+        console.log('gotAllowedContacts: ', contacts); 
+        setAllowedContacts(contacts);
+        if(!contacts.some(c=>c.address == focustContact.address))
+        {
+          setFocustContact({} as solchat.Contact);
+        }
+      })
       .catch(err=>console.log(err));
-
  }, [contact]);
 
-
-    
-  async function toggleModalVisibility() {
-    setIsModalVisible(!isModalVisible);
+  async function toggleAddContactModalVisibility() {
+    setAddContactModalVisible(!addContactModalVisible);
   };
+
+  async function toggleSendAssetModalVisibility() {
+    setSendAssetModalVisible(!sendAssetModalVisible);
+  }
 
   function allowContact() {
     if(!addContactKey)
@@ -59,15 +86,22 @@ export default function ContactScreen(props) {
       .catch(err=>console.log(err))
       .finally(()=>{
         console.log('done');
-        setIsModalVisible(false)
+        toggleAddContactModalVisibility();
         setActivityIndicatorIsVisible(false);
         setAddContactKey("");
       });    
   }
 
+
+
   function renderContactListItem({item}){
     return (
-        <Text style={{fontSize: 20}}>{item.name}</Text>
+      <View style={styles.renderContactListItem}>
+        <PressableText 
+          text={item.name}
+          style={{fontSize: 20}}
+          onPress={()=>setFocustContact(item)} />       
+      </View>
     );
   }
 
@@ -84,57 +118,172 @@ export default function ContactScreen(props) {
     );
   }
 
+
+  async function sendAssetToFocusedContact(){
+    console.log('sending= type: ', sendAsset.type, ', amount: ', sendAsset.amount);
+
+    if(sendAsset.amount <= 0)
+    {
+      setSendAssetErrorMessage('an amount must be specified');
+      return;
+    }
+
+    setActivityIndicatorIsVisible(true);
+
+    twine
+    .sendAsset(sendAsset.type, focustContact.receiver, sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
+    .catch(err=>setSendAssetErrorMessage(err))
+    .then((tx)=>{
+      setSendAsset({type: AssetType.SOL, amount: 0});
+      toggleSendAssetModalVisibility();
+    })
+    .finally(()=>{
+      setActivityIndicatorIsVisible(true);
+    });
+  }
+
+  async function cancelSendAssetToFocusedContact() {
+    toggleSendAssetModalVisibility();
+    setSendAsset({type: AssetType.SOL, amount: 0});
+    setSendAssetErrorMessage("");
+    setActivityIndicatorIsVisible(false);
+  }
+
    return (
     <View style={styles.container}>
       <View style={styles.leftPanel}>
         <View style={styles.leftPanelHeader}>
-
-          <Pressable
-            onPress={() => setIsModalVisible(true)}
-            style={[{margin: 5},
-              ({ pressed }) => ({ opacity: pressed ? 0.5 : 1,})
-            ]}
-            >
-            <FontAwesome5
-              name="plus-circle"
-              size={25}
-              color={'purple'}
-            />
-          </Pressable>
-          <Modal animationType="slide" 
-                   transparent 
-                   visible={isModalVisible} 
-                   presentationStyle="overFullScreen" 
-                   onDismiss={toggleModalVisibility}>
-                <View style={styles.viewWrapper}>
-                    <View style={styles.modalView}>
-                      <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
-                        <TextInput placeholder="Contact Public Key" 
-                                   value={addContactKey} style={styles.textInput} 
-                                   onChangeText={(value) => setAddContactKey(value)} />
-  
-                        <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
-                          <Button title="Add" onPress={allowContact} />
-                          <Button title="Cancel" onPress={toggleModalVisibility} />
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-
-            <View style={styles.contactList}>
-            <FlatList
-              contentContainerStyle={styles.contactListContainer}
-              data={allowedContacts}
-              renderItem={renderContactListItem}
-              keyExtractor={(item) => item.address.toBase58()}
-              ListHeaderComponent={renderContactListSummary}
-              ListHeaderComponentStyle={styles.contactListHeader}
-            />
-            </View>
+          <PressableIcon name="person-add" style={{margin: 5}} color={'purple'} onPress={toggleAddContactModalVisibility} />         
+          <PressableIcon name="refresh" style={{margin: 5}} color={'purple'} onPress={updateWalletContact} />
         </View>
+        <Modal animationType="slide" 
+            transparent 
+            visible={addContactModalVisible} 
+            presentationStyle="overFullScreen" 
+            onDismiss={toggleAddContactModalVisibility}>
+            <View style={styles.viewWrapper}>
+              <View style={styles.modalView}>
+                <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+                <TextInput 
+                  placeholder="Contact Public Key" 
+                  value={addContactKey} style={styles.textInput} 
+                  onChangeText={(value) => setAddContactKey(value)} 
+                />
+
+                <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
+                  <Button title="Add" onPress={allowContact} />
+                  <Button title="Cancel" onPress={toggleAddContactModalVisibility} />
+                </View>
+              </View>
+            </View>
+        </Modal>
+
+        <View style={styles.contactList}>
+          <FlatList
+            contentContainerStyle={styles.contactListContainer}
+            data={allowedContacts}
+            renderItem={renderContactListItem}
+            keyExtractor={(item) => item.address.toBase58()}
+            ListHeaderComponent={renderContactListSummary}
+            ListHeaderComponentStyle={styles.contactListHeader}
+          />
+
+          <Modal 
+            animationType="slide" 
+            transparent 
+            visible={sendAssetModalVisible} 
+            presentationStyle="overFullScreen" 
+            onDismiss={toggleSendAssetModalVisibility}>
+            <View style={styles.viewWrapper}>
+              <View style={styles.sendAssetModalView}>
+                <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+                <Text style={{color: 'red', fontStyle: 'italic'}}>{sendAssetErrorMessage}</Text>
+                <View style={{flexDirection: 'row', alignContent: 'center', justifyContent: 'center'}}>
+                  <Text>Send to:</Text>
+                  <Text style={{fontSize: 18, fontWeight: 'bold'}}>{focustContact.name}</Text>
+                </View>
+                <View style={{flexDirection: 'row'}}>
+                  <Text>Address:</Text>
+                  <Text style={{fontSize: 10, fontStyle: 'italic'}}>{focustContact.receiver?.toBase58()}</Text>
+                </View>
+    
+                <SelectDropdown 
+                  data={Object.keys(AssetType).filter(v=>isNaN(Number(v)))}
+                  onSelect={(val,index)=>{ 
+                    setSendAsset({...sendAsset, type: AssetType[val]});
+                  }}
+                  buttonStyle={{margin: 5}}
+                  defaultValue={"SOL"}
+                />
+                <TextInput 
+                  placeholder="amount to send" 
+                  value={sendAsset.amount?.toString()}
+                  style={styles.textInput} 
+                  keyboardType='numeric'
+                  onChangeText={(value) => setSendAsset({...sendAsset, amount: Number(value)})} 
+                />
+
+                <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
+                  <Button title="Send" onPress={sendAssetToFocusedContact} />
+                  <Button title="Cancel" onPress={cancelSendAssetToFocusedContact} />
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+        </View>
+        
       </View>
       <View style={styles.rightPanel}>
-        <Text>Content</Text>
+        <View style={styles.contentHeader}>
+          { focustContact.data && 
+          <>
+          <Image source={{uri:focustContact.data.img}} style={{width: '30%', height: '100%'}}/>
+          <View style={{flexDirection: 'column', width: '100%'}}>
+            <Text style={{fontSize: 16, fontWeight: 'bold'}}>{focustContact.name}</Text>
+         
+            <Text style={{fontStyle: 'italic', flexWrap: 'wrap', width:'100%'}}>{focustContact.data.description}</Text>
+         
+            <View style={{flexDirection: 'row'}}>
+            <PressableImage
+                source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
+                style={styles.contactIcon}
+                show={focustContact.data.twitter}
+                onPress={()=>Linking.openURL(focustContact.data.twitter)}/>              
+              <PressableImage
+                source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
+                style={styles.contactIcon}
+                show={focustContact.data.instagram}
+                onPress={()=>Linking.openURL(focustContact.data.instagram)}/>
+              <PressableImage
+                source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
+                style={styles.contactIcon}
+                show={focustContact.data.facebook}
+                onPress={()=>Linking.openURL(focustContact.data.facebook)}/>         
+              <PressableImage
+                source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
+                style={styles.contactIcon}
+                show={focustContact.data.web}
+                onPress={()=>Linking.openURL(focustContact.data.web)}/>
+              <PressableImage
+                source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
+                style={styles.contactIcon}
+                show={focustContact.data.wiki}
+                onPress={()=>Linking.openURL(focustContact.data.wiki)}/>
+          </View>
+
+
+            <PressableIcon
+              name="cash-outline"
+              color={'purple'}
+              style={{marginTop: 10}}
+              onPress={toggleSendAssetModalVisibility}
+            />
+          </View>
+          </>
+          }
+
+        </View>
       </View>
     </View>
    )
@@ -164,6 +313,9 @@ const styles = StyleSheet.create({
       width: '100%',
       height: '5%',
       backgroundColor: 'orange',
+      flexDirection: 'row',
+      alignContent: 'center',
+      alignItems: 'center',
     },
     screen: {
       flex: 1,
@@ -191,6 +343,20 @@ const styles = StyleSheet.create({
       backgroundColor: "#fff",
       borderRadius: 7,
   },
+  sendAssetModalView: {
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    elevation: 5,
+    transform: [{ translateX: -(WINDOW_WIDTH * 0.4) }, 
+                { translateY: -90 }],
+    height: 270,
+    width: WINDOW_WIDTH * 0.8,
+    backgroundColor: "#fff",
+    borderRadius: 7,
+},
   textInput: {
       width: "80%",
       borderRadius: 5,
@@ -204,14 +370,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'pink',
     borderWidth:1,
     flexDirection: 'column',
-    height: WINDOW_HEIGHT,
+    //height: WINDOW_HEIGHT,
     width: '100%',
   },
   contactListContainer: {
     backgroundColor: 'green',
-    paddingVertical: 8,
-    marginHorizontal: 8,
     borderWidth:1,
+    width: '100%',
   },
   contactListHeader: {
     backgroundColor: 'yellow',
@@ -229,5 +394,16 @@ const styles = StyleSheet.create({
     height:50,
     borderWidth: 1,
 
+  },
+  contentHeader: {
+    width: '100%',
+    height: '15%',
+    backgroundColor: 'lime',
+    flexDirection: 'row',
+  },
+  contactIcon:{
+    width:17,
+    height:17,
+    margin: 1,
   },
 });

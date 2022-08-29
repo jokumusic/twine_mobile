@@ -2922,7 +2922,7 @@ better-opn@~3.0.2:
   dependencies:
     open "^8.0.4"
 
-big-integer@1.6.x:
+big-integer@1.6.x, big-integer@^1.6.51:
   version "1.6.51"
   resolved "https://registry.yarnpkg.com/big-integer/-/big-integer-1.6.51.tgz#0df92a5d9880560d3ff2d5fd20245c889d130686"
   integrity sha512-GPEid2Y9QU1Exl1rpO9B2IPJGHPSupF5GnVIP0blYvNOMer2bTvSWs1jGOUg04hTmu67nmLsQ9TBo1puaotBHg==
@@ -8001,6 +8001,11 @@ react-native-securerandom@^1.0.0:
   integrity sha512-lnhcsWloFzMN/HffyDBlh4VlqdhDH8uxEzUIH3aJPgC1PxV6OKZkvAk409EwsAhcmG/z3yZuVKegKpUr5IM9ug==
   dependencies:
     base64-js "*"
+
+react-native-select-dropdown@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/react-native-select-dropdown/-/react-native-select-dropdown-2.0.4.tgz#269d1d8d6228d511a2b82a4f110f2a6e655609dd"
+  integrity sha512-bv8iznvf04FThqCkkD4kxlbNjo2d69yLcEe3nUwalQ6ea2NXqUJRQ5uUr1SEDSCH8l6IQlmog8rkHthrLEzQ9A==
 
 react-native-snap-carousel@^3.9.1:
   version "3.9.1"

@@ -1,4 +1,4 @@
-import { FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -25,6 +25,8 @@ import { ScreenProps } from 'react-native-screens';
 import ContactScreen from '../screens/ContactScreen';
 import EditContactScreen from '../screens/EditContactScreen';
 import AddContactScreen from '../screens/AddContactScreen';
+import { PressableIcon } from '../components/Pressables';
+import * as twine from '../api/twine';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -109,20 +111,22 @@ function BottomTabNavigator() {
           headerRight: () => (
             <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
             <CartIcon navigation={navigation} />
-            <Pressable
-              onPress={() => navigation.navigate('About')}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
-              })}>
-              <FontAwesome5
-                name="info-circle"
-                size={25}
-                color={Colors[colorScheme].text}
-                style={{ marginRight: 15 }}
-              />
-            </Pressable>
+            <PressableIcon
+              name="ios-information-circle-outline"
+              onPress={() => navigation.navigate('About')}            
+              color={Colors[colorScheme].text}
+              style={{ marginRight: 15 }}
+            />
+
+            <PressableIcon
+              name="ios-information-circle-outline"
+              onPress={() => navigation.navigate('About')}            
+              color={Colors[colorScheme].text}
+              style={{ marginRight: 15 }}
+            />
+
             </View>
-          ),
+          )
         })}
       />
 
@@ -132,22 +136,17 @@ function BottomTabNavigator() {
         options={({ navigation }: RootTabScreenProps<'ContactTab'>) => ({
           title: 'Contacts',
           headerShown: true,
-          tabBarIcon: ({ color }) => <TabBarIcon name='address-book' color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name='people-outline' color={color} />,
           headerRight: () => (
             <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
             <CartIcon navigation={navigation} />
-            <Pressable
+            <PressableIcon
+              name="person-circle"
+              size={34}
+              color={Colors[colorScheme].text}
+              style={{ marginRight: 15, }}
               onPress={() => navigation.navigate('EditContact')}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
-              })}>
-              <FontAwesome5
-                name="address-card"
-                size={25}
-                color={Colors[colorScheme].text}
-                style={{ marginRight: 15 }}
-              />
-            </Pressable>
+            />
             </View>
           ),  
         })}
@@ -157,24 +156,19 @@ function BottomTabNavigator() {
         name="StoresTab"
         component={StoresScreen}
         options={({ navigation }: RootTabScreenProps<'StoresTab'>) => ({
-          title: 'Manage Stores',
+          title: 'Listings',
           headerShown: true,
-          tabBarIcon: ({ color }) => <TabBarIcon name='store' color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name='list' color={color} />,
           headerRight: () => (
             <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
             <CartIcon navigation={navigation} />
-            <Pressable
+            <PressableIcon
+              name="add-circle-outline"
+              color={Colors[colorScheme].text}
+              style={{ marginRight: 15 }}
+              size={34}
               onPress={() => navigation.navigate('CreateStore')}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
-              })}>
-              <FontAwesome5
-                name="plus-circle"
-                size={25}
-                color={Colors[colorScheme].text}
-                style={{ marginRight: 15 }}
-              />
-            </Pressable>
+            />
             </View>
           ),
         })}
@@ -186,7 +180,7 @@ function BottomTabNavigator() {
         options={({ navigation }: RootTabScreenProps<'CartTab'>) => ({
           title: 'Cart',
           headerShown: true,
-          tabBarIcon: ({ color }) => <TabBarIcon name='shopping-cart' color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name='cart-outline' color={color} />,
         })}
       />
     </BottomTab.Navigator>
@@ -197,8 +191,8 @@ function BottomTabNavigator() {
  * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
  */
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome5>['name'];
+  name: React.ComponentProps<typeof Ionicons>['name'];
   color: string;
 }) {
-  return <FontAwesome5 size={25} style={{ marginBottom: -3}} {...props} />;
+  return <Ionicons size={25} style={{ marginBottom: -3}} {...props} />;
 }

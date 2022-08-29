@@ -28,7 +28,6 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     });    
   },[myPubkey])
 
-
   async function connectWallet(){
     const walletPubkey = await twine
       .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
@@ -40,6 +39,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
       console.log("didn't get wallet public key");
     }    
   }
+  
 
   return (  
     <View style={styles.container}>   
