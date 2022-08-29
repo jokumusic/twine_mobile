@@ -123,12 +123,11 @@ export async function addAllow(contactPda: PublicKey, allow: Allow, deeplinkRout
       return;
     }
 
-    console.log('contactPdaString: ', contactPdaString);
-    console.log(contact.data);
+    if(!contact.data?.allows)
+      contact.data.allows = [];
 
 
-
-    if(contact.data.allows.includes(contactPdaString)) {
+    if(contact.data?.allows?.includes(contactPdaString)) {
       const allowContact = await getContactByPda(contactPda, deeplinkRoute);
       if(!allowContact) {
         reject('the specified key does not belong to a registered contact. Ask them to create a contact in the system');
