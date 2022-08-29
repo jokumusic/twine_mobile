@@ -74,7 +74,7 @@ export default function ContactScreen(props) {
   function renderContactListSummary(){
     return (
       <Pressable
-            onPress={() => setIsModalVisible(true)}
+            onPress={() => {}}
             style={[{margin: 5},
               ({ pressed }) => ({ opacity: pressed ? 0.5 : 1,})
             ]}
