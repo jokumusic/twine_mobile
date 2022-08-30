@@ -14,10 +14,10 @@ const CarouselCardItem = ({ item, index }) => {
     <View style={styles.container} key={index}>  
       <ScrollView>
         <View style={{flex:1, flexDirection:'row'}}>
-          <Image
-            source={{ uri: item.img }}
-            style={styles.image}
-          />
+          {item.img 
+          ? <Image source={{ uri: item.img }} style={styles.image} />
+          : <View style={styles.image}/>
+          }
           <PressableImage
             show={item.twitter}
             source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}

@@ -39,7 +39,27 @@ async function connectWallet(){
   .catch(err=> log(err));
 }
 
+function storeDataIsValid(): bool {
+  if(!storeData.name){
+    log('a name is required');
+    return false;
+  }
+
+  if(!storeData.description){
+    log('a description is required.')
+    return false;
+  }
+
+  if(!storeData.img){
+    log('an image is required');
+    return false;
+  }
+}
+
 async function createStore() {
+ if(!storeDataIsValid())
+  return;
+
   log('creating store...');
   setActivityIndicatorIsVisible(true);
 
@@ -77,6 +97,9 @@ const readStore = async () => {
 }
 
 const updateStore = async() =>{
+  if(!storeDataIsValid())
+    return;
+
   log('updating store...');
   setActivityIndicatorIsVisible(true);
   const data = storeData;

@@ -208,9 +208,13 @@ export const CardView = (item: any) => {
       <Pressable onPress={item.onPress} style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
         <View style={styles.cardTopRow}>
           <View style={{flex:1, flexDirection: 'row', alignContent:'flex-start'}}>
+            { item.img ?
             <Image 
               source={{uri:item.img}}
               style={{width:80, height: 80}}/>
+              :
+              <View style={{width:80,height:80}}/>
+            }
             <View >
               <PressableImage
                 source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}

@@ -103,7 +103,7 @@ export default function ContactScreen(props) {
 
   function renderContactListItem({item}){
     return (
-      <View style={styles.renderContactListItem}>
+      <View style={styles.contactListItem}>
         <PressableText 
           text={item.name}
           style={{fontSize: 20}}
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     borderBottomWidth: 2,
   },
-  contactLine: {
+  contactListItem: {
     flex: 1,
     fontSize: 17, 
     fontWeight: 'bold',
