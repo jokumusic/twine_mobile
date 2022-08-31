@@ -117,14 +117,6 @@ function BottomTabNavigator() {
               color={Colors[colorScheme].text}
               style={{ marginRight: 15 }}
             />
-
-            <PressableIcon
-              name="ios-information-circle-outline"
-              onPress={() => navigation.navigate('About')}            
-              color={Colors[colorScheme].text}
-              style={{ marginRight: 15 }}
-            />
-
             </View>
           )
         })}
