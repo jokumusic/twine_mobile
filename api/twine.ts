@@ -68,8 +68,8 @@ export async function connectWallet(force=false, deeplinkRoute: string) {
     return new Promise<PublicKey>(async (resolve,reject) =>{
         Phantom
         .connect(force, deeplinkRoute)
-        .then(()=>{
-            resolve(getCurrentWalletPublicKey());
+        .then((key)=>{
+            resolve(key);
         })
         .catch(err=> reject(err));
     });

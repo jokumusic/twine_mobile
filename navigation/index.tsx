@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
-import { ColorSchemeName, Pressable, View } from 'react-native';
+import { Alert, ColorSchemeName, Pressable, View } from 'react-native';
 import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
 import LinkingConfiguration from './LinkingConfiguration';
 import Colors from '../constants/Colors';
@@ -86,6 +86,32 @@ function RootNavigator() {
   );
 }
 
+
+async function connectWallet(deeplinkRoute) {
+  console.log(deeplinkRoute);
+  await twine
+    .connectWallet(false, deeplinkRoute)
+    .catch(err=>{
+      if(err.includes('error')) {
+        Alert.alert("wallet connect",err);
+      }
+      else {
+        Alert.alert("wallet connect",
+          "You're already connected to a wallet. Do you want to connect to another wallet?",
+          [{
+              text:'Yes',
+              onPress: ()=>{ twine.connectWallet(true, deeplinkRoute).catch(err=>Alert.alert("error", err)); },
+              style: 'OK'
+          },
+          {
+            text: 'No',
+            style: 'cancel',
+          }]
+        );
+      }
+    });
+}
+
 /**
  * A bottom tab navigator displays tab buttons on the bottom of the display to switch screens.
  * https://reactnavigation.org/docs/bottom-tab-navigator
@@ -109,14 +135,20 @@ function BottomTabNavigator() {
           headerShown: true,
           tabBarIcon: ({ color }) => <TabBarIcon name='search' color={color} />,
           headerRight: () => (
-            <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
-            <CartIcon navigation={navigation} />
-            <PressableIcon
-              name="ios-information-circle-outline"
-              onPress={() => navigation.navigate('About')}            
-              color={Colors[colorScheme].text}
-              style={{ marginRight: 15 }}
-            />
+            <View style={{flexDirection: 'row', alignItems: 'flex-end',}}>
+              <CartIcon navigation={navigation} />             
+              <PressableIcon
+                name="wallet"
+                onPress={()=>connectWallet("shop")}            
+                color={Colors[colorScheme].text}
+                style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
+              />
+              <PressableIcon
+                name="ios-information-circle-outline"
+                onPress={() => navigation.navigate('About')}            
+                color={Colors[colorScheme].text}
+                style={{ marginRight: 15 }}
+              />
             </View>
           )
         })}
@@ -132,6 +164,12 @@ function BottomTabNavigator() {
           headerRight: () => (
             <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
             <CartIcon navigation={navigation} />
+            <PressableIcon
+              name="wallet"
+              onPress={()=>connectWallet("contacts")}            
+              color={Colors[colorScheme].text}
+              style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
+            />
             <PressableIcon
               name="person-circle"
               size={34}
@@ -155,6 +193,12 @@ function BottomTabNavigator() {
             <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
             <CartIcon navigation={navigation} />
             <PressableIcon
+              name="wallet"
+              onPress={()=>connectWallet("stores")}            
+              color={Colors[colorScheme].text}
+              style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
+            />
+            <PressableIcon
               name="add-circle-outline"
               color={Colors[colorScheme].text}
               style={{ marginRight: 15 }}
@@ -173,6 +217,16 @@ function BottomTabNavigator() {
           title: 'Cart',
           headerShown: true,
           tabBarIcon: ({ color }) => <TabBarIcon name='cart-outline' color={color} />,
+          headerRight: ()=>(
+            <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+              <PressableIcon
+                name="wallet"
+                onPress={()=>connectWallet("contacts")}            
+                color={Colors[colorScheme].text}
+                style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}              
+              />
+            </View>
+          )
         })}
       />
     </BottomTab.Navigator>
