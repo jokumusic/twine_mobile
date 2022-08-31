@@ -84,7 +84,7 @@ export default function CreateProductScreen(props) {
     log('updating product data...');
     
     const data = await twine
-      .updateProduct(product)
+      .updateProduct(product, SCREEN_DEEPLINK_ROUTE)
       .catch(err=>log(err));
 
     if(data) {

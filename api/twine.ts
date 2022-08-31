@@ -117,6 +117,10 @@ function decodeData(data: any) {
 export async function createStore(store: WriteableStore, deeplinkRoute: string) {
     const promise = new Promise<Store>(async (resolve,reject) => {
         const ownerPubkey = getCurrentWalletPublicKey();
+        if(!ownerPubkey){
+            reject('not connected to a wallet.');
+            return;
+        }
         const newStore = {
             ...store,
             id: generateRandomString(12).toString()
@@ -212,10 +216,16 @@ export async function readStore(storeId: string, deeplinkRoute:string) {
 
 export async function updateStore(store: Store, deeplinkRoute: string) {
     const promise = new Promise<Store>(async (resolve,reject) => {
-        if(!store.id)
+        if(!store.id) {
             reject('store must contain an id');
+        }
 
         const ownerPubkey = getCurrentWalletPublicKey();
+        if(!ownerPubkey) {
+            reject('not connected to a wallet');
+            return;
+        }
+
         const [storePda, storePdaBump] = getStorePda(store.id);
         const program = getProgram(deeplinkRoute);
         const existingStore = await program.account.store.fetchNullable(storePda);

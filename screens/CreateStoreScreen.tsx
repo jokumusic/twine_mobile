@@ -54,30 +54,44 @@ function storeDataIsValid(): bool {
     log('an image is required');
     return false;
   }
+
+  return true;
 }
 
 async function createStore() {
- if(!storeDataIsValid())
-  return;
+  if(!storeDataIsValid())
+    return;
+
+  let errored = false;
 
   log('creating store...');
   setActivityIndicatorIsVisible(true);
 
   const store = await twine
     .createStore(storeData, SCREEN_DEEPLINK_ROUTE)
-    .catch(err=>log(err));
+    .catch(err=>{errored=true; log(err);});
   
-    if(store) {
-      setStoreData(store);
-    } else {
-      log("didn''t receive store data");
-    }
+  if(errored) {
+    setActivityIndicatorIsVisible(false);
+    return;
+  }
+
+  if(store) {
+    setStoreData(store);
+  } else {
+    log("didn''t receive store data");
+  }
 
   setActivityIndicatorIsVisible(false);
   log('done');
 }
 
 const readStore = async () => {
+  if(!storeData.id) {
+    log("store doesn't exist. The store must be created first.");
+    return;
+  }
+
   log('reading store...');
   setActivityIndicatorIsVisible(true);
   
@@ -100,8 +114,14 @@ const updateStore = async() =>{
   if(!storeDataIsValid())
     return;
 
+  if(!storeData.id) {
+    log("store doesn't exist. The store must be created first.");
+    return;
+  }
+
   log('updating store...');
   setActivityIndicatorIsVisible(true);
+  
   const data = storeData;
   const store = await twine
     .updateStore(data, SCREEN_DEEPLINK_ROUTE)

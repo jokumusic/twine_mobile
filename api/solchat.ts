@@ -69,11 +69,24 @@ function getProgram(deeplinkRoute: string){
 }
 
 function getContactPda(pubkey: PublicKey) {
-  return PublicKey.findProgramAddressSync(
-    [
-      anchor.utils.bytes.utf8.encode("contact"), 
-      pubkey.toBuffer(),             
-    ], programId);
+  return new Promise<anchor.web3.PublicKey>((resolve, reject) => {
+    if(!pubkey)
+    {
+      reject('pubkey not specified.');
+      return;
+    }
+
+    const [contactPda] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode("contact"), 
+        pubkey.toBuffer(),             
+      ], programId);
+
+    if(contactPda)
+      resolve(contactPda);
+    else
+      reject('unable to get contact PDA');
+  });
 }
 
 function encodeData(data: any) {
@@ -90,19 +103,42 @@ function decodeData(data: any) {
 }
 
 export async function getContactByPubKey(key: PublicKey, deeplinkRoute: string) {
-  const [contactPda, contactAPdaBump] = await getContactPda(key);
-  return await getContactByPda(contactPda, deeplinkRoute);  
+  return new Promise<Contact>(async (resolve,reject)=>{
+    const contactPda = getContactPda(key)
+      .catch(reject);
+
+    if(!contactPda)
+      return;
+
+    const contact = await getContactByPda(contactPda, deeplinkRoute)
+      .catch(reject);
+
+    if(contact)
+      resolve(contact);
+    else
+      reject('contact not returned');
+  });
 }
 
-export async function getContactByPda(contactPda: PublicKey, deeplinkRoute: string) {
-  const program = getProgram(deeplinkRoute);
-  const contact = await program.account.contact.fetchNullable(contactPda);
-  if(!contact)
-    return null;
+export async function getContactByPda(contactPda: PublicKey, deeplinkRoute: string) {  
+  return new Promise<Contact>(async (resolve,reject) => {
+    if(!contactPda) {
+      reject('contactPda not specified');
+      return;
+    }
 
-  const contactData = decodeData(contact.data);
+    const program = getProgram(deeplinkRoute);
+    const contact = await program.account.contact
+      .fetchNullable(contactPda)
+      .catch(reject);
+    
+    if(!contact)
+      return;
 
-  return {...contact, data:contactData, address: contactPda};
+    const contactData = decodeData(contact.data);
+
+    resolve({...contact, data:contactData, address: contactPda});
+  })
 }
 
 export async function getCurrentWalletContact(deeplinkRoute: string) {
@@ -111,12 +147,27 @@ export async function getCurrentWalletContact(deeplinkRoute: string) {
 }
 
 export function getCurrentWalletContactPda() {
-  return getContactPda(getCurrentWalletPublicKey())
+  return new Promise<[anchor.web3.PublicKey,number]>((resolve,reject) =>{
+    const currentWalletPubkey = getCurrentWalletPublicKey()
+    if(!currentWalletPubkey)
+    {
+      reject('not connected to a wallet');
+      return;
+    }
+  
+    const contactPda = getContactPda(currentWalletPubkey)
+      .catch(reject);
+
+    if(contactPda)
+      resolve(contactPda);
+    else
+      reject('unable to get contact PDA');
+  });
 }
 
 export async function addAllow(contactPda: PublicKey, allow: Allow, deeplinkRoute: string) {
   const promise = new Promise<Contact>(async (resolve,reject) =>{
-    const contact = await getCurrentWalletContact(deeplinkRoute).catch(err=>{reject(err);});
+    const contact = await getCurrentWalletContact(deeplinkRoute).catch(reject);
     const contactPdaString = contactPda.toBase58();
 
     if(!contact){
@@ -138,7 +189,7 @@ export async function addAllow(contactPda: PublicKey, allow: Allow, deeplinkRout
     }
     else{
       contact.data.allows.push(contactPdaString);
-      const updatedContact = await updateContact(contact, deeplinkRoute).catch(err=>reject(err));
+      const updatedContact = await updateContact(contact, deeplinkRoute).catch(reject);
       if(updatedContact)
         resolve(updatedContact);
       else
@@ -172,15 +223,24 @@ export async function getAllowedContacts(contact: Contact, deeplinkRoute: string
 }
 
 export async function updateContact(contact: WriteableContact, deeplinkRoute: string) {
-  const promise = new Promise<Contact>(async (resolve,reject)=>{
-      console.log('upateContact() contact: ', contact);
-    const creatorPubkey = getCurrentWalletPublicKey();  
+  return new Promise<Contact>(async (resolve,reject)=>{
+    let errored = false;
+    const creatorPubkey = getCurrentWalletPublicKey();
+    if(!creatorPubkey){
+      reject('not connected to a wallet');
+      return;
+    }
+
     const program = getProgram(deeplinkRoute);
-    let [contactPda, contactPdaBump] = getContactPda(creatorPubkey);
+    let contactPda= getContactPda(creatorPubkey)
+      .catch(reject);
+    
+    if(contactPda)
+      return;
+
     const existingContact = await program.account.contact.fetchNullable(contactPda);
     const contactData = encodeData(contact.data);
     console.log(contact.data);
-    let errored=false;
     let tx = null;
 
     if(existingContact){
@@ -192,7 +252,7 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
         contact: contactPda,
       })
       .transaction()
-      .catch(err=>{errored=true; reject(err); });
+      .catch(reject);
     }
     else {      
       console.log('creating contact...');
@@ -203,10 +263,10 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
           contact: contactPda,
         })
         .transaction()
-        .catch(err=>{errored=true; reject(err); });
+        .catch(reject);
     }
 
-    if(errored)  
+    if(!tx)  
       return;
 
     console.log('getting latest blockhash...');
@@ -216,23 +276,22 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
     console.log('signing and sending transaction...');
     const trans = await Phantom
       .signAndSendTransaction(tx, false, true, deeplinkRoute) 
-      .catch(err=>{errored=true; reject(err);});
+      .catch(reject);
 
-
-    if(errored)
+    if(!trans)
       return;
   
     console.log('waiting for finalization...');
-    await connection
+    const signatureResult = await connection
         .confirmTransaction(trans.signature, 'finalized')
-        .catch(err=>{errored=true; reject(err);}); 
+        .catch(reject); 
     
-    if(errored)
+    if(!signatureResult)
         return;
 
     console.log('retrieving finalized data...');
     const latestContact = await getContactByPda(contactPda, deeplinkRoute)
-      .catch(err=>{errored=true; reject(err);});
+      .catch(reject);
    
     if(latestContact) {
       console.log('got it! ', latestContact);
@@ -245,8 +304,6 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
     }
 
   });
-
-  return await promise;
 }
 
 export async function sendMessage(message: string, contact1Pda: PublicKey, contact2Pda: PublicKey, deeplinkRoute: string){

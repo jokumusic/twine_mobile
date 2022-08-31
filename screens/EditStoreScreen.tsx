@@ -19,7 +19,7 @@ export default function EditStoreScreen(props) {
     const data = store;
     const storeData = await twine
       .updateStore(data, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>log(err));  
+      .catch(err=>console.log(err));  
   
       if(storeData) {
         setStore(storeData);

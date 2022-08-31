@@ -20,6 +20,11 @@ export default function EditContactScreen(props) {
     },[]);
 
     const submit = async()=>{
+        if(!contact) {
+            console.log("contact doesn't exist");
+            return;
+        }
+
         setActivityIndicatorIsVisible(true);
         console.log('submitting contact data...');
         
