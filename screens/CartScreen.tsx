@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useRef } from "react";
-import { Button, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Button, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { CartContext } from "../components/CartProvider";
 import { TextInput } from "../components/Themed";
 
@@ -23,7 +23,7 @@ export default function CartScreen(props) {
     },[itemCount]);
 
     async function checkOut(){
-        console.log('checking out');
+        Alert.alert("Not Implemented", "Not implemented yet.");
     }
 
     async function setItemCount(item, count) {
