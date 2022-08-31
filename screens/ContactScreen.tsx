@@ -53,7 +53,7 @@ export default function ContactScreen(props) {
     console.log('getCurrentWalletContact...');
     solchat
       .getCurrentWalletContact(SCREEN_DEEPLINK_ROUTE)
-      .then((c)=>setContact(c))
+      .then((c)=>{console.log('and here'); setContact(c);})
       .catch(err=>console.log(err));
   }
 
@@ -62,10 +62,10 @@ export default function ContactScreen(props) {
     solchat
       .getAllowedContacts(contact, SCREEN_DEEPLINK_ROUTE)
       .then(contacts=>{
-        console.log('gotAllowedContacts: ', contacts); 
         setAllowedContacts(contacts);
         if(!contacts.some(c=>c.address == focusedContact.address))
         {
+          console.log('no contacts');
           setFocusedContact({} as solchat.Contact);
         }
       })
@@ -103,12 +103,16 @@ export default function ContactScreen(props) {
 
   function renderContactListItem({item}){
     return (
-      <View style={styles.contactListItem}>
-        <PressableText 
-          text={item.name}
-          style={{fontSize: 20}}
-          onPress={()=>setFocusedContact(item)} />       
-      </View>
+      <Pressable
+        onPress={()=>setFocusedContact(item)}
+        style={({ pressed }) => ({
+        opacity: pressed ? 0.5 : 1,
+        })}
+      >
+        <View style={styles.contactListItem}>
+          <Text style={{fontSize: 18}}>{item.name}</Text>    
+        </View>
+      </Pressable>
     );
   }
 

@@ -69,12 +69,6 @@ function getProgram(deeplinkRoute: string){
 }
 
 function getContactPda(pubkey: PublicKey) {
-  return new Promise<anchor.web3.PublicKey>((resolve, reject) => {
-    if(!pubkey)
-    {
-      reject('pubkey not specified.');
-      return;
-    }
 
     const [contactPda] = PublicKey.findProgramAddressSync(
       [
@@ -82,11 +76,7 @@ function getContactPda(pubkey: PublicKey) {
         pubkey.toBuffer(),             
       ], programId);
 
-    if(contactPda)
-      resolve(contactPda);
-    else
-      reject('unable to get contact PDA');
-  });
+    return contactPda;
 }
 
 function encodeData(data: any) {
@@ -102,13 +92,19 @@ function decodeData(data: any) {
   return decompressed;
 }
 
-export async function getContactByPubKey(key: PublicKey, deeplinkRoute: string) {
+export function getContactByPubKey(key: PublicKey, deeplinkRoute: string) {
   return new Promise<Contact>(async (resolve,reject)=>{
-    const contactPda = getContactPda(key)
-      .catch(reject);
-
-    if(!contactPda)
+    if(!key) {
+      reject('key must be specified');
       return;
+    }
+
+    const contactPda = getContactPda(key);
+
+    if(!contactPda){
+      reject('failed to generate contact PDA');
+      return;
+    }
 
     const contact = await getContactByPda(contactPda, deeplinkRoute)
       .catch(reject);
@@ -116,7 +112,7 @@ export async function getContactByPubKey(key: PublicKey, deeplinkRoute: string) 
     if(contact)
       resolve(contact);
     else
-      reject('contact not returned');
+      reject('failed to get contact');
   });
 }
 
@@ -126,7 +122,6 @@ export async function getContactByPda(contactPda: PublicKey, deeplinkRoute: stri
       reject('contactPda not specified');
       return;
     }
-
     const program = getProgram(deeplinkRoute);
     const contact = await program.account.contact
       .fetchNullable(contactPda)
@@ -136,33 +131,34 @@ export async function getContactByPda(contactPda: PublicKey, deeplinkRoute: stri
       return;
 
     const contactData = decodeData(contact.data);
-
     resolve({...contact, data:contactData, address: contactPda});
-  })
+  });
 }
 
 export async function getCurrentWalletContact(deeplinkRoute: string) {
-  const creatorPubkey = getCurrentWalletPublicKey();
-  return await getContactByPubKey(creatorPubkey, deeplinkRoute);
-}
-
-export function getCurrentWalletContactPda() {
-  return new Promise<[anchor.web3.PublicKey,number]>((resolve,reject) =>{
-    const currentWalletPubkey = getCurrentWalletPublicKey()
-    if(!currentWalletPubkey)
+  return new Promise<Contact>(async(resolve,reject) => {
+    const creatorPubkey = getCurrentWalletPublicKey();
+    if(!creatorPubkey)
     {
       reject('not connected to a wallet');
       return;
     }
-  
-    const contactPda = getContactPda(currentWalletPubkey)
+    const contact = await getContactByPubKey(creatorPubkey, deeplinkRoute)
       .catch(reject);
 
-    if(contactPda)
-      resolve(contactPda);
-    else
-      reject('unable to get contact PDA');
+    resolve(contact);
   });
+}
+
+export function getCurrentWalletContactPda() {
+    const currentWalletPubkey = getCurrentWalletPublicKey()
+    if(!currentWalletPubkey)
+    {
+      return;
+    }
+  
+    const contactPda = getContactPda(currentWalletPubkey);
+    return contactPda;
 }
 
 export async function addAllow(contactPda: PublicKey, allow: Allow, deeplinkRoute: string) {
@@ -232,15 +228,16 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
     }
 
     const program = getProgram(deeplinkRoute);
-    let contactPda= getContactPda(creatorPubkey)
-      .catch(reject);
+    let contactPda= getContactPda(creatorPubkey);
     
-    if(contactPda)
+    if(!contactPda) {
+      reject('failed to create contact PDA');
       return;
+    }
 
     const existingContact = await program.account.contact.fetchNullable(contactPda);
+  
     const contactData = encodeData(contact.data);
-    console.log(contact.data);
     let tx = null;
 
     if(existingContact){
@@ -269,7 +266,6 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
     if(!tx)  
       return;
 
-    console.log('getting latest blockhash...');
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     tx.feePayer = creatorPubkey;  
 
