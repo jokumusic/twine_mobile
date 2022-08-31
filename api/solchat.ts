@@ -274,16 +274,16 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
     tx.feePayer = creatorPubkey;  
 
     console.log('signing and sending transaction...');
-    const trans = await Phantom
+    const signature = await Phantom
       .signAndSendTransaction(tx, false, true, deeplinkRoute) 
       .catch(reject);
 
-    if(!trans)
+    if(!signature)
       return;
   
     console.log('waiting for finalization...');
     const signatureResult = await connection
-        .confirmTransaction(trans.signature, 'finalized')
+        .confirmTransaction(signature, 'finalized')
         .catch(reject); 
     
     if(!signatureResult)
@@ -307,7 +307,7 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
 }
 
 export async function sendMessage(message: string, contact1Pda: PublicKey, contact2Pda: PublicKey, deeplinkRoute: string){
-  const promise = new Promise<Transaction>(async (resolve,reject) => {
+  const promise = new Promise<string>(async (resolve,reject) => {
     const currentWalletKey = getCurrentWalletPublicKey();
     const program = getProgram(deeplinkRoute);
     let [directConversationPda, directConversationPdaBump] = PublicKey.findProgramAddressSync(
@@ -362,11 +362,14 @@ export async function sendMessage(message: string, contact1Pda: PublicKey, conta
     tx.feePayer = currentWalletKey;  
 
     console.log('signing and sending transaction...');
-    const trans = await Phantom
+    const signature = await Phantom
       .signAndSendTransaction(tx, false, true, deeplinkRoute) 
       .catch(err=>{errored=true; reject(err);});
 
-    resolve(trans);
+    if(signature)
+      resolve(signature);
+    else
+      reject("didn't receive a signature");
   });
   
   return await promise;

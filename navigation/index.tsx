@@ -166,7 +166,7 @@ function BottomTabNavigator() {
             <CartIcon navigation={navigation} />
             <PressableIcon
               name="wallet"
-              onPress={()=>connectWallet("contacts")}            
+              onPress={()=>connectWallet("contact")}            
               color={Colors[colorScheme].text}
               style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
             />
@@ -221,7 +221,7 @@ function BottomTabNavigator() {
             <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
               <PressableIcon
                 name="wallet"
-                onPress={()=>connectWallet("contacts")}            
+                onPress={()=>connectWallet("cart")}            
                 color={Colors[colorScheme].text}
                 style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}              
               />

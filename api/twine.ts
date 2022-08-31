@@ -156,7 +156,7 @@ export async function createStore(store: WriteableStore, deeplinkRoute: string) 
         tx.feePayer = ownerPubkey;  
         
         console.log('signing and sending transaction...');
-        const trans = await Phantom
+        const signature = await Phantom
         .signAndSendTransaction(tx, false, true, deeplinkRoute) 
         .catch(err=>{errored=true; reject(err);});
 
@@ -165,7 +165,7 @@ export async function createStore(store: WriteableStore, deeplinkRoute: string) 
         
         console.log('waiting for finalization...');
         await connection
-            .confirmTransaction(trans.signature, 'finalized')
+            .confirmTransaction(signature, 'finalized')
             .catch(err=>{errored=true; reject(err);}); 
         
         if(errored)
@@ -255,7 +255,7 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         tx.feePayer = ownerPubkey;        
         
         console.log('signing and sending transaction...');
-        const trans = await Phantom
+        const signature = await Phantom
                     .signAndSendTransaction(tx, false, true, deeplinkRoute)
                     .catch(err=>{errored=true; reject(err);});
 
@@ -264,7 +264,7 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         
         console.log('waiting for finalization...');
         await connection
-            .confirmTransaction(trans.signature, 'finalized')
+            .confirmTransaction(signature, 'finalized')
             .catch(err=>{errored=true; reject(err);});
             
         if(errored)
@@ -494,12 +494,12 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         
 
         console.log('signing and sending transaction...');
-        const trans = await Phantom
+        const signature = await Phantom
             .signAndSendTransaction(tx, false, true, deeplinkRoute)
             .catch(err=>{errored=true; reject(err); });
 
         console.log('waiting for finalization of transaction...');
-        await connection.confirmTransaction(trans.signature, 'finalized'); //wait for confirmation before trying to retrieve account data
+        await connection.confirmTransaction(signature, 'finalized'); //wait for confirmation before trying to retrieve account data
 
         const updatedProduct = await program.account.product
             .fetchNullable(productPda)
@@ -522,7 +522,7 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
   }
 
   export async function sendAsset(assetType: AssetType, to: PublicKey, amount: number, deeplinkRoute: string) {
-    const promise = new Promise<Transaction>(async (resolve,reject) => {
+    const promise = new Promise<string>(async (resolve,reject) => {
         const currentWalletKey = getCurrentWalletPublicKey();
         if(assetType == AssetType.LAMPORT || assetType == AssetType.SOL){
             let lamports: number = 0;
@@ -551,7 +551,7 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             tx.feePayer = currentWalletKey;            
     
             console.log('signing and sending transaction...');
-            const trans = await Phantom
+            const signature = await Phantom
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
                 .catch(err=>{errored=true; reject(err); });
     
@@ -560,13 +560,13 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
 
             console.log('waiting for finalization of transaction...');
             await connection
-                .confirmTransaction(trans.signature, 'finalized')
+                .confirmTransaction(signature, 'finalized')
                 .catch(err=>{errored = true, reject(err);});
 
             if(errored)
                 return;
 
-            resolve(trans);
+            resolve(signature);
             return;
         }
         else {

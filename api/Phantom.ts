@@ -10,7 +10,6 @@ import {
     Transaction,
   } from "@solana/web3.js";
 import { Buffer } from "buffer";
-import { Platform } from "react-native";
 
 global.Buffer = global.Buffer || Buffer;
 global.PhantomCallbackMap = new Map<string,RegisteredCallbackHandler>(); //holds callback functions to be called after each return from a call to a Phantom deep link
@@ -169,7 +168,7 @@ const handleDeepLinkCallback = ({ url }: Linking.EventType) => {
           global.PhantomSession.shared_secret
         );
   
-        callbackHander.resolve(signAndSendTransactionData);
+        callbackHander.resolve(signAndSendTransactionData.signature);
     } 
     else if (method.includes(DeepLinkMethod.signAllTransactions)) {
         //console.log('processing SignAllTransactions callback');
@@ -329,7 +328,7 @@ export const signMessage = async (message: string, deepLinkReturnRoute = "") => 
 * @param deepLinkReturnRoute deeplink route back to the screen you want to display
 */
 export const signAndSendTransaction = async (transaction: Transaction, requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
-    return new Promise<Transaction>(async (resolve, reject) => {
+    return new Promise<string>(async (resolve, reject) => {
         if(!getWalletPublicKey()){
             reject('not connected to a wallet');
             return;
