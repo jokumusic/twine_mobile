@@ -30,9 +30,7 @@ export interface ImageCarouselProps {
 
 const ImageCarousel: FC<ImageCarouselProps> = ({data}) => {
   const scrollX = useRef(new Animated.Value(0)).current;
-  const [dataWithPlaceholders, setDataWithPlaceholders] = useState<
-    ImageCarouselItem[]
-  >([]);
+  const [dataWithPlaceholders, setDataWithPlaceholders] = useState<ImageCarouselItem[]>([]);
   const currentIndex = useRef<number>(0);
   const flatListRef = useRef<FlatList<any>>(null);
   const viewConfigRef = useRef({ itemVisiblePercentThreshold: 100 })

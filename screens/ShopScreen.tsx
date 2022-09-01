@@ -4,11 +4,14 @@ import ImageCarousel from '../components/ImageCarousel';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import CarouselCards from '../components/CarouselCards'
-import { getFavorites, getStores, HorizontalScrollView, SearchString, setSearchString, CardView } from '../components/data';
+import { HorizontalScrollView, SearchString, setSearchString, CardView } from '../components/CardView';
 import { blue100 } from 'react-native-paper/lib/typescript/styles/colors';
 import MarqueeText from 'react-native-marquee';
 import { generateRandomString } from '../utils/random';
+import * as twine from '../api/twine';
 
+
+const SCREEN_DEEPLINK_ROUTE = "shop";
 
 export const WINDOW_WIDTH = Dimensions.get('window').width;
 export const ITEM_WIDTH = Math.round(WINDOW_WIDTH);
@@ -16,13 +19,14 @@ export const ITEM_HEIGHT = Math.round(ITEM_WIDTH/4);
 
 export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>) {
   const [search, updateSearch] = useState(SearchString);
-  const [items, updateItems] = useState([]);
+  const [items, updateItems] = useState([] as twine.Store[]);
 
-  const runSearch = async (s)=>{
-    updateSearch(s)
-    setSearchString(s);
-    const stores = await getStores();
-    updateItems(stores);
+  async function runSearch(s) {
+    const stores = await twine.getStores(s, SCREEN_DEEPLINK_ROUTE)
+      .catch(console.log);
+    
+    if(stores)
+      updateItems(stores);
   }
 
   useEffect(()=>{
@@ -48,7 +52,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
               {
                 items.map((item)=>(
                 <CardView 
-                  key={item.id} 
+                  key={item.address.toBase58()} 
                   onPress={()=>{
                     if(item.account_type == "product")
                       navigation.navigate('ProductDetails',{product: item});

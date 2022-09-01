@@ -1,13 +1,13 @@
 import React, {createContext, useState} from 'react';
 import {MapOrEntries, useMap} from '../hooks/useMap';
-import * as data from '../components/data';
+import * as data from './CardView';
 
 //import { getProduct } from './services/ProductsService.js';
 
 export const CartContext = createContext();
 
 export function CartProvider(props) {
-    const [map, actions] = useMap<String, number>();
+    const [map, actions] = useMap<String, string>();
     const [itemCount, setItemCount] = useState(0);
   
     function addItemToCart(id, cnt = 1) {

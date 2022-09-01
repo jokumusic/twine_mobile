@@ -3,6 +3,42 @@ export type Twine = {
   "name": "twine",
   "instructions": [
     {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "programMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "secondaryAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "feeAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "createStore",
       "accounts": [
         {
@@ -11,9 +47,19 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "creator",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "secondaryAuthority",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -23,8 +69,12 @@ export type Twine = {
       ],
       "args": [
         {
-          "name": "storeId",
-          "type": "string"
+          "name": "id",
+          "type": "u16"
+        },
+        {
+          "name": "status",
+          "type": "u8"
         },
         {
           "name": "name",
@@ -49,7 +99,7 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "authority",
           "isMut": true,
           "isSigner": true
         },
@@ -78,29 +128,29 @@ export type Twine = {
       "name": "createProduct",
       "accounts": [
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "product",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "productMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mintProductRef",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
+          "name": "creator",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "secondaryAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -116,21 +166,24 @@ export type Twine = {
           "name": "rent",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "twineProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "productId",
-          "type": "string"
+          "name": "id",
+          "type": "u32"
         },
         {
-          "name": "decimals",
+          "name": "status",
           "type": "u8"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "inventory",
+          "type": "u64"
         },
         {
           "name": "name",
@@ -138,14 +191,6 @@ export type Twine = {
         },
         {
           "name": "description",
-          "type": "string"
-        },
-        {
-          "name": "cost",
-          "type": "u64"
-        },
-        {
-          "name": "sku",
           "type": "string"
         },
         {
@@ -158,22 +203,7 @@ export type Twine = {
       "name": "createStoreProduct",
       "accounts": [
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "product",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "productMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mintProductRef",
           "isMut": true,
           "isSigner": false
         },
@@ -183,9 +213,24 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "creator",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "secondaryAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -201,21 +246,24 @@ export type Twine = {
           "name": "rent",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "twineProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "productId",
-          "type": "string"
+          "name": "id",
+          "type": "u32"
         },
         {
-          "name": "decimals",
+          "name": "status",
           "type": "u8"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "inventory",
+          "type": "u64"
         },
         {
           "name": "name",
@@ -223,14 +271,6 @@ export type Twine = {
         },
         {
           "name": "description",
-          "type": "string"
-        },
-        {
-          "name": "cost",
-          "type": "u64"
-        },
-        {
-          "name": "sku",
           "type": "string"
         },
         {
@@ -248,7 +288,7 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "authority",
           "isMut": true,
           "isSigner": true
         },
@@ -260,6 +300,18 @@ export type Twine = {
       ],
       "args": [
         {
+          "name": "status",
+          "type": "u8"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "inventory",
+          "type": "u64"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -268,21 +320,113 @@ export type Twine = {
           "type": "string"
         },
         {
-          "name": "cost",
+          "name": "data",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "buyProduct",
+      "accounts": [
+        {
+          "name": "product",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "productSnapshotMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "productSnapshot",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "buyFor",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u16"
+        },
+        {
+          "name": "quantity",
           "type": "u64"
         },
         {
-          "name": "sku",
-          "type": "string"
-        },
-        {
-          "name": "data",
-          "type": "string"
+          "name": "agreedPrice",
+          "type": "u64"
         }
       ]
     }
   ],
   "accounts": [
+    {
+      "name": "programMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "secondaryAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "feeAccount",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
     {
       "name": "store",
       "type": {
@@ -293,8 +437,32 @@ export type Twine = {
             "type": "u8"
           },
           {
-            "name": "owner",
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": "u8"
+          },
+          {
+            "name": "creator",
             "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "secondaryAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "id",
+            "type": "u16"
+          },
+          {
+            "name": "tag",
+            "type": "u64"
           },
           {
             "name": "productCount",
@@ -306,10 +474,6 @@ export type Twine = {
           },
           {
             "name": "description",
-            "type": "string"
-          },
-          {
-            "name": "storeId",
             "type": "string"
           },
           {
@@ -329,7 +493,45 @@ export type Twine = {
             "type": "u8"
           },
           {
-            "name": "owner",
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": "u8"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "secondaryAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "id",
+            "type": "u32"
+          },
+          {
+            "name": "tag",
+            "type": "u64"
+          },
+          {
+            "name": "isSnapshot",
+            "type": "bool"
+          },
+          {
+            "name": "usableSnapshot",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "payTo",
             "type": "publicKey"
           },
           {
@@ -339,7 +541,11 @@ export type Twine = {
             }
           },
           {
-            "name": "cost",
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "inventory",
             "type": "u64"
           },
           {
@@ -351,14 +557,6 @@ export type Twine = {
             "type": "string"
           },
           {
-            "name": "sku",
-            "type": "string"
-          },
-          {
-            "name": "productId",
-            "type": "string"
-          },
-          {
             "name": "data",
             "type": "string"
           }
@@ -366,7 +564,7 @@ export type Twine = {
       }
     },
     {
-      "name": "mintProductRef",
+      "name": "productSnapshotMetadata",
       "type": {
         "kind": "struct",
         "fields": [
@@ -375,8 +573,88 @@ export type Twine = {
             "type": "u8"
           },
           {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
             "name": "product",
             "type": "publicKey"
+          },
+          {
+            "name": "productSnapshot",
+            "type": "publicKey"
+          },
+          {
+            "name": "nonce",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "purchaseTicket",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "product",
+            "type": "publicKey"
+          },
+          {
+            "name": "productSnapshotMetadata",
+            "type": "publicKey"
+          },
+          {
+            "name": "productSnapshot",
+            "type": "publicKey"
+          },
+          {
+            "name": "buyer",
+            "type": "publicKey"
+          },
+          {
+            "name": "payTo",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "quantity",
+            "type": "u64"
+          },
+          {
+            "name": "redeemed",
+            "type": "u64"
+          },
+          {
+            "name": "nonce",
+            "type": "u16"
           }
         ]
       }
@@ -447,33 +725,83 @@ export type Twine = {
   "errors": [
     {
       "code": 6000,
+      "name": "AlreadyInitialized",
+      "msg": "AlreadyInitialized"
+    },
+    {
+      "code": 6001,
       "name": "PublicKeyMismatch",
       "msg": "PublicKeyMismatch"
     },
     {
-      "code": 6001,
+      "code": 6002,
       "name": "InvalidMintAuthority",
       "msg": "InvalidMintAuthority"
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "UninitializedAccount",
       "msg": "UninitializedAccount"
     },
     {
-      "code": 6003,
-      "name": "IncorrectOwner",
-      "msg": "IncorrectOwner"
+      "code": 6004,
+      "name": "IncorrectAuthority",
+      "msg": "IncorrectAuthority"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "StoreNumberDoesntMatchCompanyStoreCount",
       "msg": "StoreNumberDoesntMatchCompanyStoreCount"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "NotMutable",
       "msg": "NotMutable"
+    },
+    {
+      "code": 6007,
+      "name": "AuthorityDoesntExist",
+      "msg": "authority Doesn't Exist"
+    },
+    {
+      "code": 6008,
+      "name": "PayToDoesntExist",
+      "msg": "pay_to Doesn't Exist"
+    },
+    {
+      "code": 6009,
+      "name": "PriceIsGreaterThanPayment",
+      "msg": "Price Is Greater Payment"
+    },
+    {
+      "code": 6010,
+      "name": "NameIsTooLong",
+      "msg": "name is too long"
+    },
+    {
+      "code": 6011,
+      "name": "DescriptionIsTooLong",
+      "msg": "description is too long"
+    },
+    {
+      "code": 6012,
+      "name": "NotEnoughInventory",
+      "msg": "not enough inventory"
+    },
+    {
+      "code": 6013,
+      "name": "InsufficientFunds",
+      "msg": "insufficient funds"
+    },
+    {
+      "code": 6014,
+      "name": "UnableToDeductFromBuyerAccount",
+      "msg": "unable to deduct from buyer account"
+    },
+    {
+      "code": 6015,
+      "name": "UnableToAddToPayToAccount",
+      "msg": "unable to add to pay_to account"
     }
   ]
 };
@@ -483,6 +811,42 @@ export const IDL: Twine = {
   "name": "twine",
   "instructions": [
     {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "programMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "secondaryAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "feeAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "createStore",
       "accounts": [
         {
@@ -491,9 +855,19 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "creator",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "secondaryAuthority",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -503,8 +877,12 @@ export const IDL: Twine = {
       ],
       "args": [
         {
-          "name": "storeId",
-          "type": "string"
+          "name": "id",
+          "type": "u16"
+        },
+        {
+          "name": "status",
+          "type": "u8"
         },
         {
           "name": "name",
@@ -529,7 +907,7 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "authority",
           "isMut": true,
           "isSigner": true
         },
@@ -558,29 +936,29 @@ export const IDL: Twine = {
       "name": "createProduct",
       "accounts": [
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "product",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "productMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mintProductRef",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
+          "name": "creator",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "secondaryAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -596,21 +974,24 @@ export const IDL: Twine = {
           "name": "rent",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "twineProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "productId",
-          "type": "string"
+          "name": "id",
+          "type": "u32"
         },
         {
-          "name": "decimals",
+          "name": "status",
           "type": "u8"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "inventory",
+          "type": "u64"
         },
         {
           "name": "name",
@@ -618,14 +999,6 @@ export const IDL: Twine = {
         },
         {
           "name": "description",
-          "type": "string"
-        },
-        {
-          "name": "cost",
-          "type": "u64"
-        },
-        {
-          "name": "sku",
           "type": "string"
         },
         {
@@ -638,22 +1011,7 @@ export const IDL: Twine = {
       "name": "createStoreProduct",
       "accounts": [
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "product",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "productMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mintProductRef",
           "isMut": true,
           "isSigner": false
         },
@@ -663,9 +1021,24 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "creator",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "secondaryAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -681,21 +1054,24 @@ export const IDL: Twine = {
           "name": "rent",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "twineProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "productId",
-          "type": "string"
+          "name": "id",
+          "type": "u32"
         },
         {
-          "name": "decimals",
+          "name": "status",
           "type": "u8"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "inventory",
+          "type": "u64"
         },
         {
           "name": "name",
@@ -703,14 +1079,6 @@ export const IDL: Twine = {
         },
         {
           "name": "description",
-          "type": "string"
-        },
-        {
-          "name": "cost",
-          "type": "u64"
-        },
-        {
-          "name": "sku",
           "type": "string"
         },
         {
@@ -728,7 +1096,7 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "owner",
+          "name": "authority",
           "isMut": true,
           "isSigner": true
         },
@@ -740,6 +1108,18 @@ export const IDL: Twine = {
       ],
       "args": [
         {
+          "name": "status",
+          "type": "u8"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "inventory",
+          "type": "u64"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -748,21 +1128,113 @@ export const IDL: Twine = {
           "type": "string"
         },
         {
-          "name": "cost",
+          "name": "data",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "buyProduct",
+      "accounts": [
+        {
+          "name": "product",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "productSnapshotMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "productSnapshot",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "buyFor",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u16"
+        },
+        {
+          "name": "quantity",
           "type": "u64"
         },
         {
-          "name": "sku",
-          "type": "string"
-        },
-        {
-          "name": "data",
-          "type": "string"
+          "name": "agreedPrice",
+          "type": "u64"
         }
       ]
     }
   ],
   "accounts": [
+    {
+      "name": "programMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "secondaryAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "feeAccount",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
     {
       "name": "store",
       "type": {
@@ -773,8 +1245,32 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
-            "name": "owner",
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": "u8"
+          },
+          {
+            "name": "creator",
             "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "secondaryAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "id",
+            "type": "u16"
+          },
+          {
+            "name": "tag",
+            "type": "u64"
           },
           {
             "name": "productCount",
@@ -786,10 +1282,6 @@ export const IDL: Twine = {
           },
           {
             "name": "description",
-            "type": "string"
-          },
-          {
-            "name": "storeId",
             "type": "string"
           },
           {
@@ -809,7 +1301,45 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
-            "name": "owner",
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": "u8"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "secondaryAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "id",
+            "type": "u32"
+          },
+          {
+            "name": "tag",
+            "type": "u64"
+          },
+          {
+            "name": "isSnapshot",
+            "type": "bool"
+          },
+          {
+            "name": "usableSnapshot",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "payTo",
             "type": "publicKey"
           },
           {
@@ -819,7 +1349,11 @@ export const IDL: Twine = {
             }
           },
           {
-            "name": "cost",
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "inventory",
             "type": "u64"
           },
           {
@@ -831,14 +1365,6 @@ export const IDL: Twine = {
             "type": "string"
           },
           {
-            "name": "sku",
-            "type": "string"
-          },
-          {
-            "name": "productId",
-            "type": "string"
-          },
-          {
             "name": "data",
             "type": "string"
           }
@@ -846,7 +1372,7 @@ export const IDL: Twine = {
       }
     },
     {
-      "name": "mintProductRef",
+      "name": "productSnapshotMetadata",
       "type": {
         "kind": "struct",
         "fields": [
@@ -855,8 +1381,88 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
             "name": "product",
             "type": "publicKey"
+          },
+          {
+            "name": "productSnapshot",
+            "type": "publicKey"
+          },
+          {
+            "name": "nonce",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "purchaseTicket",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "product",
+            "type": "publicKey"
+          },
+          {
+            "name": "productSnapshotMetadata",
+            "type": "publicKey"
+          },
+          {
+            "name": "productSnapshot",
+            "type": "publicKey"
+          },
+          {
+            "name": "buyer",
+            "type": "publicKey"
+          },
+          {
+            "name": "payTo",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "quantity",
+            "type": "u64"
+          },
+          {
+            "name": "redeemed",
+            "type": "u64"
+          },
+          {
+            "name": "nonce",
+            "type": "u16"
           }
         ]
       }
@@ -927,33 +1533,83 @@ export const IDL: Twine = {
   "errors": [
     {
       "code": 6000,
+      "name": "AlreadyInitialized",
+      "msg": "AlreadyInitialized"
+    },
+    {
+      "code": 6001,
       "name": "PublicKeyMismatch",
       "msg": "PublicKeyMismatch"
     },
     {
-      "code": 6001,
+      "code": 6002,
       "name": "InvalidMintAuthority",
       "msg": "InvalidMintAuthority"
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "UninitializedAccount",
       "msg": "UninitializedAccount"
     },
     {
-      "code": 6003,
-      "name": "IncorrectOwner",
-      "msg": "IncorrectOwner"
+      "code": 6004,
+      "name": "IncorrectAuthority",
+      "msg": "IncorrectAuthority"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "StoreNumberDoesntMatchCompanyStoreCount",
       "msg": "StoreNumberDoesntMatchCompanyStoreCount"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "NotMutable",
       "msg": "NotMutable"
+    },
+    {
+      "code": 6007,
+      "name": "AuthorityDoesntExist",
+      "msg": "authority Doesn't Exist"
+    },
+    {
+      "code": 6008,
+      "name": "PayToDoesntExist",
+      "msg": "pay_to Doesn't Exist"
+    },
+    {
+      "code": 6009,
+      "name": "PriceIsGreaterThanPayment",
+      "msg": "Price Is Greater Payment"
+    },
+    {
+      "code": 6010,
+      "name": "NameIsTooLong",
+      "msg": "name is too long"
+    },
+    {
+      "code": 6011,
+      "name": "DescriptionIsTooLong",
+      "msg": "description is too long"
+    },
+    {
+      "code": 6012,
+      "name": "NotEnoughInventory",
+      "msg": "not enough inventory"
+    },
+    {
+      "code": 6013,
+      "name": "InsufficientFunds",
+      "msg": "insufficient funds"
+    },
+    {
+      "code": 6014,
+      "name": "UnableToDeductFromBuyerAccount",
+      "msg": "unable to deduct from buyer account"
+    },
+    {
+      "code": 6015,
+      "name": "UnableToAddToPayToAccount",
+      "msg": "unable to add to pay_to account"
     }
   ]
 };

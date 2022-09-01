@@ -16,17 +16,16 @@ export default function EditStoreScreen(props) {
   const updateStore = async() =>{
     console.log('updating store...');
     setActivityIndicatorIsVisible(true);
-    const data = store;
-    const storeData = await twine
-      .updateStore(data, SCREEN_DEEPLINK_ROUTE)
+    const updatedStore = await twine
+      .updateStore(store, SCREEN_DEEPLINK_ROUTE)
       .catch(err=>console.log(err));  
   
-      if(storeData) {
-        setStore(storeData);
-        console.log(JSON.stringify(storeData));
-      } else {
-        console.log("didn''t receive store data");
-      }  
+    if(updatedStore) {
+      setStore(updatedStore);
+      console.log(JSON.stringify(updatedStore));
+    } else {
+      console.log("didn''t receive store data");
+    }  
   
     setActivityIndicatorIsVisible(false);
     console.log('done');
@@ -58,8 +57,8 @@ export default function EditStoreScreen(props) {
         <TextInput 
           style={styles.inputBox}
           placeholder='http://'
-          value={store.img}
-          onChangeText={(t)=>setStore({...store, img: t})}
+          value={store.data?.img}
+          onChangeText={(t)=>setStore({...store, data:{...store.data, img: t}})}
         />
       </View>
       

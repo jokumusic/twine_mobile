@@ -3,9 +3,8 @@ import { Text, View, TextInput } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import ImageCarousel, {ImageCarouselItem} from '../components/ImageCarousel';
 import { useEffect, useState } from 'react';
-import {getStoresByOwner} from '../components/data';
+import {getStoresByOwner} from '../components/CardView';
 import * as twine from '../api/twine';
-
 
 const SCREEN_DEEPLINK_ROUTE = "stores";
 
@@ -14,18 +13,21 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   const [myPubkey, setMyPubkey] = useState();
 
   useEffect(()=>{
-    getStoresByOwner(myPubkey).then(stores=>{
-      const carouselItems = stores.map((store)=>{
-        return {
-          id: store.id,
-          uri: store.img,
-          title: store.name,
-          onPress: async () => {navigation.navigate('StoreDetails',{store})},
-        };
+    twine
+      .getAuthorizedStores(myPubkey, SCREEN_DEEPLINK_ROUTE)
+      .then(stores=>{
+        const carouselItems = stores.map(store=> {
+          return {
+            id: store.address.toBase58(),
+            uri: store.data.img,
+            title: store.name,
+            onPress: async ()=>{ navigation.navigate('StoreDetails',{store}); }
+          }
+        });
+
+        setMyStores(carouselItems);
       });
-      
-      setMyStores(carouselItems);
-    });    
+
   },[myPubkey])
 
   async function connectWallet(){

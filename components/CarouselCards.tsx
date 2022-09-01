@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react'
 import { View } from "react-native"
 import Carousel, { Pagination } from 'react-native-snap-carousel'
 import CarouselCardItem, { SLIDER_WIDTH, ITEM_WIDTH } from './CarouselCardItem'
-import { getFavorites, SearchString } from '../components/data';
+import { SearchString } from './CardView';
+import { getTopStores } from '../api/twine';
 
 const CarouselCards = () => {
   const isCarousel = React.useRef(null)
   const [index, setIndex] = React.useState(0)
   const [favorites, updateFavorites] = useState([]);
+  
   useEffect(()=>{
-    getFavorites()
+    getTopStores(10, SearchString, "")
     .then(items=> updateFavorites(items))
     .catch(e=>log(e));
   }, [SearchString])

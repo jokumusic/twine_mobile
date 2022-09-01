@@ -14,11 +14,7 @@ export default function CreateStoreScreen() {
   const [state, updateState] = useState('')
   const settings = useSelector(state => state);
   const dispatch = useDispatch();
-  const [storeData, setStoreData] = useState({
-    name:'', 
-    description:'',
-    img: '',
-  });
+  const [store, setStore] = useState<twine.Store>({});
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
@@ -40,17 +36,17 @@ async function connectWallet(){
 }
 
 function storeDataIsValid(): bool {
-  if(!storeData.name){
+  if(!store.name){
     log('a name is required');
     return false;
   }
 
-  if(!storeData.description){
+  if(!store.description){
     log('a description is required.')
     return false;
   }
 
-  if(!storeData.img){
+  if(!store.data.img){
     log('an image is required');
     return false;
   }
@@ -62,32 +58,21 @@ async function createStore() {
   if(!storeDataIsValid())
     return;
 
-  let errored = false;
-
   log('creating store...');
   setActivityIndicatorIsVisible(true);
 
-  const store = await twine
-    .createStore(storeData, SCREEN_DEEPLINK_ROUTE)
-    .catch(err=>{errored=true; log(err);});
-  
-  if(errored) {
-    setActivityIndicatorIsVisible(false);
-    return;
-  }
-
-  if(store) {
-    setStoreData(store);
-  } else {
-    log("didn''t receive store data");
-  }
-
-  setActivityIndicatorIsVisible(false);
-  log('done');
+  twine
+    .createStore(store, SCREEN_DEEPLINK_ROUTE)
+    .then(createdStore=>{if(createdStore) setStore(createdStore);})
+    .catch(log)
+    .finally(()=>{
+      setActivityIndicatorIsVisible(false);
+      log('done');
+    })
 }
 
 const readStore = async () => {
-  if(!storeData.id) {
+  if(!store.address) {
     log("store doesn't exist. The store must be created first.");
     return;
   }
@@ -95,17 +80,15 @@ const readStore = async () => {
   log('reading store...');
   setActivityIndicatorIsVisible(true);
   
-  const store = await twine
-    .readStore(storeData.id, SCREEN_DEEPLINK_ROUTE)
-    .catch(err=>{log(err); return;});
+  const refreshedStore = await twine
+    .getStoreByAddress(store.address, SCREEN_DEEPLINK_ROUTE)
+    .catch(log);
+   
+  if(refreshedStore) {
+    setStore(refreshedStore);
+    log(JSON.stringify(store));
+  }
 
-    if(store) {
-      setStoreData(store);
-      log(JSON.stringify(store));
-    } else {
-      log("didn''t receive store data");
-    }  
-  
   setActivityIndicatorIsVisible(false);
   log('done');
 }
@@ -114,7 +97,7 @@ const updateStore = async() =>{
   if(!storeDataIsValid())
     return;
 
-  if(!storeData.id) {
+  if(!store.address) {
     log("store doesn't exist. The store must be created first.");
     return;
   }
@@ -122,17 +105,16 @@ const updateStore = async() =>{
   log('updating store...');
   setActivityIndicatorIsVisible(true);
   
-  const data = storeData;
-  const store = await twine
-    .updateStore(data, SCREEN_DEEPLINK_ROUTE)
-    .catch(err=>log(err));  
+  const updatedStore = await twine
+    .updateStore(store, SCREEN_DEEPLINK_ROUTE)
+    .catch(log);  
 
-    if(store) {
-      setStoreData(store);
-      log(JSON.stringify(store));
-    } else {
-      log("didn''t receive store data");
-    }  
+  if(updatedStore) {
+    setStore(updatedStore);
+    log(JSON.stringify(updatedStore));
+  } else {
+    log("didn''t receive store data");
+  }  
 
   setActivityIndicatorIsVisible(false);
   log('done');
@@ -149,8 +131,8 @@ const updateStore = async() =>{
         <Text style={styles.inputLabel}>Name</Text>
         <TextInput 
           style={styles.inputBox}
-          value={storeData.name}
-          onChangeText={(t)=>setStoreData({...storeData, name: t})}
+          value={store.name}
+          onChangeText={(t)=>setStore({...store, name: t})}
           />
 
         <Text style={styles.inputLabel}>Description</Text> 
@@ -158,15 +140,15 @@ const updateStore = async() =>{
           style={styles.inputBox}          
           multiline={true}
           numberOfLines={3}
-          value={storeData.description}
-          onChangeText={(t)=>setStoreData({...storeData, description: t})}
+          value={store.description}
+          onChangeText={(t)=>setStore({...store, description: t})}
         />
 
         <Text style={styles.inputLabel}>Image URL</Text>
         <TextInput 
           style={styles.inputBox}
-          value={storeData.img}
-          onChangeText={(t)=>setStoreData({...storeData, img: t})}
+          value={store.data?.img}
+          onChangeText={(t)=>setStore({...store, data:{...store.data, img: t}})}
         />
 
       </View>

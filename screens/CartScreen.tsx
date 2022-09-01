@@ -28,9 +28,9 @@ export default function CartScreen(props) {
 
     async function setItemCount(item, count) {
         if(item.count > count)
-            removeItemFromCart(item.id, item.count - count)
+            removeItemFromCart(item.address.toBase58(), item.count - count)
         else if(count > item.count)
-            addItemToCart(item.id, count-item.count);
+            addItemToCart(item.address.toBase58(), count-item.count);
         //else the difference is 0, so leave the same
    }
 
@@ -50,18 +50,18 @@ export default function CartScreen(props) {
     function renderItem({item}) {
 
         return (
-            <View key={item.id} style={styles.cartLine}>                    
+            <View key={item.address.toBase58()} style={styles.cartLine}>                    
                 <Pressable
                     onPress={() => navigation.navigate('ProductDetails',{product:item})}
                     style={({ pressed }) => ({
                     opacity: pressed ? 0.5 : 1,
                 })}>
-                    <Image source={{uri:item.img}} style={styles.lineImage} />
+                    <Image source={{uri:item.data.img}} style={styles.lineImage} />
                 </Pressable>
                 
                 <View style={{flexDirection: 'column', width:'35%'}}>
                     <Text style={styles.lineLeft}>{item.name}</Text>                    
-                    <Button title="delete" onPress={()=>removeItemFromCart(item.id)}/>                  
+                    <Button title="delete" onPress={()=>removeItemFromCart(item.address.toBase58())}/>                  
                 </View>
                 
                 <View style={{flexDirection: 'column', width: '10%', paddingLeft: 30, alignContent:'center', justifyContent:'center'}}>
@@ -85,7 +85,7 @@ export default function CartScreen(props) {
             contentContainerStyle={styles.itemsListContainer}
             data={products}
             renderItem={renderItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.address.toBase58()}
             ListHeaderComponent={renderTotal}
         />
     );

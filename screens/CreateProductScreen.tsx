@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
@@ -15,42 +15,31 @@ export default function CreateProductScreen(props) {
   const [store, setStore] = useState(props.route.params.store);
   const navigation = useRef(props.navigation).current;
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-  const [product, setProduct] = useState(
-    {
-     name:'',
-     description:'',
-     img:'',
-     price: 0,
-     sku: '',
-    });
+  const [product, setProduct] = useState<twine.Product>({store: store?.address})
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
-
+/*
+  useEffect(()=>{
+    setProduct()
+  },[]);
+  */
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
     setLogText((logs) => [...logs, "> " + log])
   }, []);
 
 
-  async function connectWallet(){
-    twine.connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-    .then(()=>{
-      log('connected to wallet');
-    })
-    .catch(err=> log(err));
-  }
-
   async function createProduct() {
     setActivityIndicatorIsVisible(true);
     log('creating product...');
     
-    const data = await twine
-      .createProduct({...product, storeId: store.id}, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>log(err));
+    const createdProduct= await twine
+      .createProduct(product as twine.WriteableProduct, SCREEN_DEEPLINK_ROUTE)
+      .catch(log);
 
-      if(data){
-        setProduct(data);
-        log(JSON.stringify(data));
+      if(createdProduct){
+        setProduct(createdProduct);
+        log(JSON.stringify(createdProduct));
       } else{
         log('no product was returned');
       }
@@ -63,13 +52,13 @@ export default function CreateProductScreen(props) {
     setActivityIndicatorIsVisible(true);
     console.log('reading product...');
 
-    const data = await twine
-      .readProduct(product.id, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>log(err));
+    const refreshedProduct = await twine
+      .getProductByAddress(product?.address, SCREEN_DEEPLINK_ROUTE)
+      .catch(log);
 
-    if(data) {
-      setProduct(data);
-      log(JSON.stringify(data));
+    if(refreshedProduct) {
+      setProduct(refreshedProduct);
+      log(JSON.stringify(refreshedProduct));
     }
     else {
       log("no product was returned");
@@ -83,13 +72,13 @@ export default function CreateProductScreen(props) {
     setActivityIndicatorIsVisible(true);
     log('updating product data...');
     
-    const data = await twine
+    const updatedProduct = await twine
       .updateProduct(product, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>log(err));
+      .catch(log);
 
-    if(data) {
-      setProduct(data);
-      log(JSON.stringify(data));
+    if(updatedProduct) {
+      setProduct(updatedProduct);
+      log(JSON.stringify(updatedProduct));
     }
     else {
       log("a product wasn't returned")
@@ -109,7 +98,7 @@ export default function CreateProductScreen(props) {
         <TextInput 
           style={styles.inputBox}
           placeholder='name of the product'
-          value={product.name}
+          value={product?.name}
           onChangeText={(t)=>setProduct({...product,  name: t})}
         />
 
@@ -119,7 +108,7 @@ export default function CreateProductScreen(props) {
           style={styles.inputBox}       
           multiline={true}
           numberOfLines={4}
-          value={product.description}
+          value={product?.description}
           onChangeText={(t)=>setProduct({...product,  description: t})}
         />
 
@@ -127,23 +116,23 @@ export default function CreateProductScreen(props) {
         <TextInput
           style={styles.inputBox}
           placeholder='http://'
-          value={product.img}
-          onChangeText={(t)=>setProduct({...product, img: t})} 
+          value={product?.data?.img}
+          onChangeText={(t)=>setProduct({...product, data:{...product?.data, img: t}})} 
         />
         
         <Text style={styles.inputLabel}>USDC</Text>
         <TextInput
           style={styles.inputBox}
-          value={product.price}
+          value={product?.price?.toString()}
           keyboardType='numeric'
-          onChangeText={(t)=>setProduct({...product,  price: t})}
+          onChangeText={(t)=>setProduct({...product,  price: parseInt(t)})}
         />
         
         <Text style={styles.inputLabel}>SKU#</Text>
         <TextInput
           style={styles.inputBox}
-          value={product.sku}
-          onChangeText={(t)=>setProduct({...product,  sku: t})}/>
+          value={product?.data?.sku}
+          onChangeText={(t)=>setProduct({...product,  data: {...product?.data, sku: t}})}/>
       </View>
 
       <View> 

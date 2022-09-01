@@ -5,7 +5,8 @@ import {
    Pressable,
    ColorSchemeName,
    ImageBackground,
-  FlatList
+  FlatList,
+  Alert
   } from 'react-native';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -13,8 +14,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import { Card } from 'react-native-paper';
-import {getProductsByStore} from '../components/data';
+import * as twine from '../api/twine';
 import PressableImage from '../components/PressableImage';
+import { TokenInvalidOwnerError } from '@solana/spl-token';
+
+const SCREEN_DEEPLINK_ROUTE = "store_details";
 
 const spacing = 10;
 const width = (Dimensions.get('window').width) / 2;
@@ -22,23 +26,45 @@ const height = width;
 
 export default function StoreDetailsScreen(props) {
   const [store, setStore] = useState(props.route.params.store);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const navigation = useRef(props.navigation).current;
-  const keyExtractor = (item) => item.id;
+  const keyExtractor = (item) => item.address.toBase58();
   
-  useEffect(()=>{
-    getProductsByStore(store.id).then(products=>{
-      setProducts(products);
-    });    
-  },[store.id]);
+   useEffect(()=>{
+    if(store.address) {
+      console.log('refreshing store...');
+      twine
+        .getStoreByAddress(store.address, SCREEN_DEEPLINK_ROUTE)
+        .then(s=>{s && setStore(s);})
+        .catch((err)=>{
+          Alert.alert("error", err);
+        });
+    }
+   },[])
+
+   useEffect(()=>{
+    if(store.address) {
+      console.log('refreshing store products...');
+      twine
+        .getProductsByStore(store.address, SCREEN_DEEPLINK_ROUTE)
+        .then(products=>{
+          setProducts(products);
+        })
+        .catch(err=>Alert.alert("error", err));
+    }
+  },[store]);
       
+  function isAuthorizedToEditStore() {
+    const pkey = twine.getCurrentWalletPublicKey()?.toBase58();
+    return pkey == store.authority.toBase58() || pkey == store.secondaryAuthority.toBase58();
+  }
 
   const renderItem = ({ item }) => (  
     <View style={styles.row}>
       <View style={styles.card}>
       <PressableImage
         show={true}
-        source={{uri:item.img}}
+        source={{uri:item.data?.img}}
         onPress={() => navigation.navigate('ProductDetails',{product: item})}
         style={styles.itemImage} />      
       <Text style={styles.productCaption}>
@@ -51,51 +77,57 @@ export default function StoreDetailsScreen(props) {
   
     return (    
       <View style={styles.container}>
-         <ImageBackground 
-        style={{width: '100%', height: '100%'}} 
-        source={{
-          uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
-        }}>  
-        <View style={styles.header}>        
-            <Pressable
-              onPress={() => navigation.navigate('EditStore',{store})}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
-              })}>
-              <FontAwesome5
-                name="edit"
-                size={25}
-                style={{ marginRight: 15 }}
-              />
-            </Pressable>  
-            <Pressable
-              onPress={() => navigation.navigate('CreateProduct',{store})}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
-              })}>
-              <FontAwesome5
-                name="plus-circle"
-                size={25}
-                style={{ marginRight: 15 }}
-              />
-            </Pressable>     
+        <ImageBackground 
+          style={{width: '100%', height: '100%'}} 
+          source={{
+            uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
+          }}
+        >  
+          <View style={styles.header}>
+            <Image source={{uri:store.data?.img}} style={styles.headerImage}/>
+            <Text style={styles.title}>{store.name} Products</Text>            
+            
+            { isAuthorizedToEditStore() &&   
+              <>
+              <Pressable
+                onPress={() => navigation.navigate('EditStore',{store})}
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.5 : 1,
+                })}>
+                <FontAwesome5
+                  name="edit"
+                  size={25}
+                  style={{ marginRight: 15 }}
+                />
+              </Pressable>  
+              <Pressable
+                onPress={() => navigation.navigate('CreateProduct',{store})}
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.5 : 1,
+                })}>
+                <FontAwesome5
+                  name="plus-circle"
+                  size={25}
+                  style={{ marginRight: 15 }}
+                />
+              </Pressable>
+              </>    
+            }
+            
+          </View>    
 
-        <Text style={styles.title}>{store.name} Products</Text>
-        <Image source={{uri:store.img}} style={styles.headerImage}/>
-        </View>  
-    
+          <FlatList
+            data={products}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            contentContainerStyle={styles.list}
+            numColumns={2}
+            columnWrapperStyle={styles.column}
+          />
 
-        <FlatList
-          data={products}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          contentContainerStyle={styles.list}
-          numColumns={2}
-          columnWrapperStyle={styles.column}
-        />
-      </ImageBackground>
+        </ImageBackground>
       </View>    
-    );
+  );
 }
 
 const styles = StyleSheet.create({
@@ -105,7 +137,7 @@ const styles = StyleSheet.create({
     },
     header: {
       alignItems: 'center',
-      flexDirection: 'row-reverse',
+      flexDirection: 'row',
       backgroundColor: 'gray',
       height: '10%',
       marginBottom: 10,
@@ -134,6 +166,7 @@ const styles = StyleSheet.create({
     title: {
       fontSize: 20,
       fontWeight: 'bold',
+      alignSelf: 'flex-start',
     },
     body: {
       //flex: 1,
@@ -155,7 +188,8 @@ const styles = StyleSheet.create({
       width: '20%',
       height: '100%',
       borderRadius: 8,
-      resizeMode: 'cover',  
+      resizeMode: 'cover',
+      alignSelf: 'flex-start',
     },
     list: {
       justifyContent: 'space-around',
