@@ -1,6 +1,6 @@
 import React, {createContext, useState} from 'react';
 import {MapOrEntries, useMap} from '../hooks/useMap';
-import * as data from './CardView';
+import * as twine from '../api/twine';
 
 //import { getProduct } from './services/ProductsService.js';
 
@@ -41,13 +41,13 @@ export function CartProvider(props) {
     async function getItemsResolved() {
         const promises = [];
         map.forEach((v,k) => {
-            const promise = data.getProductById(k);
+            const promise = twine.getProductByAddress(k, "");
             promises.push(promise);
         });
 
         const products = await Promise.all(promises);
         const cartProducts = products.map((p)=>{
-            return {...p, count: map.get(p.id)}
+            return {...p, count: map.get(p.address)}
         });
 
         return cartProducts;

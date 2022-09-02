@@ -21,24 +21,23 @@ export default function App() {
     return null;
   } else {
     return (
-      <Provider store={store}>
-        
+      <Provider store={store}>        
         <PersistGate loading={<Text>Loading...</Text>} persistor={persistor}>
           <SafeAreaProvider>
             <PaperProvider theme={PaperDarkTheme}>
-            <Suspense
-              fallback={
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator
-                    size="large"
-                    style={styles.loadingIndicator}
-                  />
-                </View>
-              }>
+              <Suspense
+                fallback={
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator
+                      size="large"
+                      style={styles.loadingIndicator}
+                    />
+                  </View>
+                }>
                 <CartProvider>
-              <Navigation colorScheme={colorScheme}/>
-              </CartProvider>
-              <StatusBar />
+                  <Navigation colorScheme={colorScheme}/>
+                </CartProvider>
+                <StatusBar />
               </Suspense>
             </PaperProvider>
           </SafeAreaProvider>

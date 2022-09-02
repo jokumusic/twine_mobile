@@ -238,11 +238,6 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "rent",
           "isMut": false,
           "isSigner": false
@@ -365,11 +360,6 @@ export type Twine = {
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "clock",
           "isMut": false,
           "isSigner": false
         }
@@ -1046,11 +1036,6 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "rent",
           "isMut": false,
           "isSigner": false
@@ -1173,11 +1158,6 @@ export const IDL: Twine = {
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "clock",
           "isMut": false,
           "isSigner": false
         }

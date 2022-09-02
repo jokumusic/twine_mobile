@@ -7,7 +7,8 @@ import {
     ImageBackground,
    FlatList,
    ScrollView,
-   SafeAreaView
+   SafeAreaView,
+   Alert
    } from 'react-native';
  import { Text, View, TextInput, Button} from '../components/Themed';
  import { FontAwesome5 } from '@expo/vector-icons';
@@ -15,51 +16,54 @@ import {
  import Colors from '../constants/Colors';
  import useColorScheme from '../hooks/useColorScheme';
  import { CartContext } from '../components/CartProvider';
+ import * as twine from '../api/twine';
+ import { PressableIcon } from '../components/Pressables';
  
+
+ const SCREEN_DEEPLINK_ROUTE = "stores";
 
  export const WINDOW_WIDTH = Dimensions.get('window').width;
 
 
  export default function ProductDetailsScreen(props) {
-   const [product, setProduct] = useState(props.route.params.product);
+   const [product, setProduct] = useState<twine.Product>(props.route.params.product);
    const navigation = useRef(props.navigation).current;
    const { addItemToCart } = useContext(CartContext);
 
+      
    async function addToCart(){
-      addItemToCart(product.id);
+      addItemToCart(product.address);
    }
 
-    return (    
-    <SafeAreaView style={styles.container}>
+   
+
+    return (  
+      
+    <View style={styles.container}>
         <ImageBackground 
             style={{width: '100%', height: '100%'}} 
             source={{uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg'}}>  
         <View style={styles.header}>        
-            <Pressable
-            onPress={() => navigation.navigate('EditProduct',{product})}
-            style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
-            })}>
-            <FontAwesome5
-                name="edit"
-                size={25}
-                style={{ marginRight: 15 }}
+            <PressableIcon
+              name="create"
+              style={{ marginRight: 15 }}
+              onPress={() => navigation.navigate('EditProduct',{product})}
             />
-            </Pressable> 
             <Text style={styles.title}>{product.name}</Text>
         </View>
-        <View style={{backgroundColor: 'rgba(52, 52, 52, .025)'}}>
-          <ScrollView horizontal={false}>
-            <Image source={{uri:product.img}} style={styles.productImage}/>
+        <View style={{backgroundColor: 'rgba(52, 52, 52, .025)'}}>          
+          <ScrollView horizontal={false}>          
+            <Image source={{uri:product.data?.img}} style={styles.productImage}/>
             <Text>{product.description}</Text>
-            <Text>Price: {product.price}</Text>
-            <Text>Sku: {product.sku}</Text>
+            <Text>Price: {product.price.toString()}</Text>            
+            <Text>Sku: {product.data?.sku}</Text>              
             <Button title="Add To Cart" onPress={addToCart}/>
           </ScrollView>
         </View>
     </ImageBackground>
-    </SafeAreaView>    
+    </View>    
     );
+      
  }
  
  const styles = StyleSheet.create({

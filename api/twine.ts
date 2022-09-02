@@ -76,6 +76,7 @@ export interface WriteableProduct {
     name: string;
     description: string;
     data: ProductData;
+    sku: string;
 }
 
 export interface Product extends WriteableProduct {
@@ -447,7 +448,7 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         const program = getProgram(deeplinkRoute);    
         const product = await program.account.product.fetchNullable(address);
         if(!product){
-            reject("product doesn't exist at address: ", address.toBase58());        
+            reject(`product doesn't exist at address: ${address.toBase58()}`);        
             return;
         }
 
@@ -527,23 +528,24 @@ export async function getStores(searchString: string, deeplinkRoute: string) {
     return new Promise<Store[]>(async (resolve, reject) => {
         const list = [] as Store[];
         const program = getProgram(deeplinkRoute);
-        const stores = await program.account.store.all()
+        const stores = await program.account.store
+            .all()
             .catch(reject);
 
         let regex:RegExp;
 
         if(searchString) {
             regex = new RegExp(searchString, 'i');
-            console.log('set regex');
         }
 
-        stores.forEach((store) => {  
+        stores.forEach(store => {  
             try 
-            {   
-                if(store.account.data){
-                    const parsedStoreData = JSON.parse(store.account.data);          
+            {
+                if(store.account?.data){
+                    const parsedStoreData = JSON.parse(store.account.data);                    
                     store.account.data = decompress(parsedStoreData);
                     const st = {...store.account, address: store.publicKey, account_type: "store"};
+                    
                     if(regex) {
                         if(regex.test(st.name) || regex.test(st.description)) {
                             list.push(st);
@@ -554,7 +556,7 @@ export async function getStores(searchString: string, deeplinkRoute: string) {
                 }
             }
             catch(e) {
-                console.log('exception: ', e);
+                //console.log('exception: ', e, store);
                 //console.log(store.account.data);
             }  
         });
@@ -569,18 +571,28 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
     return new Promise<Product[]>(async (resolve, reject) => {
         let items = [] as Product[];
 
+        if(!storeAddress) {
+            reject('storeAddress is required');
+            return;            
+        }
+
         const program = getProgram(deeplinkRoute);
         const products = await program.account.product.all(
-            [
-                {
-                    memcmp: { offset: 178, bytes: storeAddress.toBase58() }
+            [{
+                memcmp: { 
+                    offset: 154,
+                    bytes: storeAddress.toBase58(),
                 }
-            ]
+             }]
         )
         .catch(reject);
 
+        //console.log(productList);
+        //const products = productList.filter(p=> p.account?.store && storeAddress.equals(p.account.store));
+        
         if(!products)
             return;
+
     console.log('got products', products);
         products.forEach((product,i)=>{  
             try
@@ -592,12 +604,12 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
                 }
             }
             catch(e) {
-                console.log('exception: ', e);
+                //console.log('exception: ', e);
                 //console.log(store.account.data);
             }
         });
 
-        resolve(products);
+        resolve(items);
     });
 }
 
@@ -632,7 +644,7 @@ async function getProducts(searchString: string, deeplinkRoute: string) {
                 }
             }
             catch(e) {
-                console.log('exception: ', e);
+                //console.log('exception: ', e);
                 //console.log(product.account.data);
             }  
         });
@@ -657,7 +669,7 @@ async function getMixedItems(searchString: string, deeplinkRoute: string) {
     });
   }
 
-  export async function getAuthorizedStores(authority: PublicKey, deeplinkRoute: string) {
+  export async function getStoresByAuthority(authority: PublicKey, deeplinkRoute: string) {
     return new Promise<Store[]>(async (resolve,reject) => {
         let items = [] as Store[];
         if(!authority){
@@ -666,19 +678,17 @@ async function getMixedItems(searchString: string, deeplinkRoute: string) {
         }
         
         const program = getProgram(deeplinkRoute);
-        const stores = await program.account.store.all(
-            [
-                {
-                    memcmp: { offset: 35, bytes: authority.toBase58() }
-                }
-            ]
-        )
-        .catch(reject);
+        const stores = await program.account.store
+            .all([
+                    {
+                        memcmp: { offset: 43, bytes: authority.toBase58() }
+                    }
+            ])
+            .catch(reject);
 
         if(!stores)
             return;
     
-        console.log('store count: ', stores.length);
         stores.forEach((store,i)=>{  
             try{   
                 if(store.account.data){
@@ -699,7 +709,6 @@ async function getMixedItems(searchString: string, deeplinkRoute: string) {
 
   export async function getTopStores(n: number, searchString: string, deeplinkRoute: string) {
     return new Promise<any[]>(async (resolve, reject) => {
-        console.log('getTopStores(): ', searchString);
         const stores = await getStores(searchString, deeplinkRoute)
             .catch(reject);
 

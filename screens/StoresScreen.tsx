@@ -1,9 +1,8 @@
-import { StyleSheet, ImageBackground, Button } from 'react-native';
+import { StyleSheet, ImageBackground, Button, Alert } from 'react-native';
 import { Text, View, TextInput } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import ImageCarousel, {ImageCarouselItem} from '../components/ImageCarousel';
 import { useEffect, useState } from 'react';
-import {getStoresByOwner} from '../components/CardView';
 import * as twine from '../api/twine';
 
 const SCREEN_DEEPLINK_ROUTE = "stores";
@@ -13,19 +12,24 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   const [myPubkey, setMyPubkey] = useState();
 
   useEffect(()=>{
+    if(!myPubkey)
+      return;
+
     twine
-      .getAuthorizedStores(myPubkey, SCREEN_DEEPLINK_ROUTE)
+      .getStoresByAuthority(myPubkey, SCREEN_DEEPLINK_ROUTE)
       .then(stores=>{
-        const carouselItems = stores.map(store=> {
-          return {
-            id: store.address.toBase58(),
-            uri: store.data.img,
-            title: store.name,
-            onPress: async ()=>{ navigation.navigate('StoreDetails',{store}); }
-          }
-        });
+        const carouselItems = stores
+          .map(store => ({             
+              id: store.address.toBase58(),
+              uri: store.data.img,
+              title: store.name,
+              onPress: async ()=>{ navigation.navigate('StoreDetails',{store}); }
+          }));
 
         setMyStores(carouselItems);
+      })
+      .catch(err=>{
+        Alert.alert("Error", err);
       });
 
   },[myPubkey])
@@ -33,7 +37,9 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   async function connectWallet(){
     const walletPubkey = await twine
       .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>console.log(err));
+      .catch(err=>{
+        Alert.alert('Error', err);
+      });
     
     if(walletPubkey){
       setMyPubkey(walletPubkey);

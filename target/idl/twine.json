@@ -238,11 +238,6 @@
           "isSigner": false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "rent",
           "isMut": false,
           "isSigner": false
@@ -365,11 +360,6 @@
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "clock",
           "isMut": false,
           "isSigner": false
         }
@@ -805,6 +795,6 @@
     }
   ],
   "metadata": {
-    "address": "3ym4V8kf1RctdZw9PoSzZhqLCEQFN1UyWLUUZpqjFnPS"
+    "address": "7bREQ6dfqMM31jAPHZiXHNJvvKkefEgJUCQGk9ZyZDah"
   }
 }

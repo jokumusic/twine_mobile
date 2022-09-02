@@ -2,11 +2,12 @@ import { useState, useContext, useEffect, useRef } from "react";
 import { Alert, Button, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { CartContext } from "../components/CartProvider";
 import { TextInput } from "../components/Themed";
+import * as twine from "../api/twine";
 
 
 export default function CartScreen(props) {
     const navigation = useRef(props.navigation).current;
-    const [products, setProducts] = useState([]);
+    const [products, setProducts] = useState([] as twine.Product[]);
     let [total, setTotal] = useState(0);
     const {map, itemCount, addItemToCart, removeItemFromCart, getItemsResolved} = useContext(CartContext);
 
@@ -19,13 +20,13 @@ export default function CartScreen(props) {
                 setProducts(items)
                 setTotal(items.reduce((total,item)=>total + (item.count * item.price), 0));
             })
-            .catch(err=>console.log(err));    
+            .catch(err=>Alert.alert('error', err));    
     },[itemCount]);
 
     async function checkOut(){
         Alert.alert("Not Implemented", "Not implemented yet.");
     }
-
+/*
     async function setItemCount(item, count) {
         if(item.count > count)
             removeItemFromCart(item.address.toBase58(), item.count - count)
@@ -33,7 +34,7 @@ export default function CartScreen(props) {
             addItemToCart(item.address.toBase58(), count-item.count);
         //else the difference is 0, so leave the same
    }
-
+*/
     function renderTotal() {        
         return (
             <View style={{marginBottom: 15}}>
@@ -56,12 +57,12 @@ export default function CartScreen(props) {
                     style={({ pressed }) => ({
                     opacity: pressed ? 0.5 : 1,
                 })}>
-                    <Image source={{uri:item.data.img}} style={styles.lineImage} />
+                    <Image source={{uri:item.data?.img}} style={styles.lineImage} />
                 </Pressable>
                 
                 <View style={{flexDirection: 'column', width:'35%'}}>
                     <Text style={styles.lineLeft}>{item.name}</Text>                    
-                    <Button title="delete" onPress={()=>removeItemFromCart(item.address.toBase58())}/>                  
+                    <Button title="delete" onPress={()=>removeItemFromCart(item.address)}/>                  
                 </View>
                 
                 <View style={{flexDirection: 'column', width: '10%', paddingLeft: 30, alignContent:'center', justifyContent:'center'}}>
@@ -74,12 +75,12 @@ export default function CartScreen(props) {
                 />
                 </View>
 
-                <Text style={styles.lineRight}>$ {item.price}</Text>
+                <Text style={styles.lineRight}>$ {item.price.toString()} </Text>
             </View>
         );
         }
 
-    return (
+    return ( 
         <FlatList
             style={styles.itemsList}
             contentContainerStyle={styles.itemsListContainer}
@@ -88,6 +89,7 @@ export default function CartScreen(props) {
             keyExtractor={(item) => item.address.toBase58()}
             ListHeaderComponent={renderTotal}
         />
+
     );
 }
 

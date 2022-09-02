@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
@@ -24,26 +24,17 @@ export default function EditProductScreen(props) {
   }, []);
 
 
-  async function connectWallet(){
-    twine.connectWallet(false, SCREEN_DEEPLINK_ROUTE)
-    .then(()=>{
-      log('connected to wallet');
-    })
-    .catch(err=> log(err));
-  }
-
-
   const readProduct = async () => {
     setActivityIndicatorIsVisible(true);
     console.log('reading product...');
 
-    const data = await twine
-      .readProduct(product.id, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>log(err));
+    const refreshedProduct = await twine
+      .getProductByAddress(product.address, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>Alert.alert('error', err));
 
-    if(data) {
-      setProduct(data);
-      log(JSON.stringify(data));
+    if(refreshedProduct) {
+      setProduct(refreshedProduct);
+      log(JSON.stringify(refreshedProduct));
     }
     else {
       log("no product was returned");
@@ -57,13 +48,13 @@ export default function EditProductScreen(props) {
     setActivityIndicatorIsVisible(true);
     log('updating product data...');
     
-    const data = await twine
-      .updateProduct(product)
-      .catch(err=>log(err));
+    const updatedProduct = await twine
+      .updateProduct(product, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>Alert.alert('error', err));
 
-    if(data) {
-      setProduct(data);
-      log(JSON.stringify(data));
+    if(updatedProduct) {
+      setProduct(updatedProduct);
+      log(JSON.stringify(updatedProduct));
     }
     else {
       log("a product wasn't returned")
@@ -100,8 +91,8 @@ export default function EditProductScreen(props) {
         <Text style={styles.inputLabel}>Image URL</Text>
         <TextInput
           style={styles.inputBox}
-          value={product.img}
-          onChangeText={(t)=>setProduct({...product, img: t})} 
+          value={product.data?.img}
+          onChangeText={(t)=>setProduct({...product, data:{...product.data, img: t}})} 
         />
    
         <Text style={styles.inputLabel}>USDC:</Text>
@@ -115,8 +106,8 @@ export default function EditProductScreen(props) {
         <Text style={styles.inputLabel}>SKU#</Text>
         <TextInput
           style={styles.inputBox}
-          value={product.sku}
-          onChangeText={(t)=>setProduct({...product,  sku: t})}/>
+          value={product.data?.sku}
+          onChangeText={(t)=>setProduct({...product, data: {...product.data, sku: t}})}/>
       </View>
 
       <View>

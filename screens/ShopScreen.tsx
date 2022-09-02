@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, ImageBackground, FlatList, Image, ScrollView, Pressable, Dimensions } from 'react-native';
+import { StyleSheet, ImageBackground, FlatList, Image, ScrollView, Pressable, Dimensions, Alert } from 'react-native';
 import ImageCarousel from '../components/ImageCarousel';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { RootTabScreenProps } from '../types';
@@ -18,15 +18,17 @@ export const ITEM_WIDTH = Math.round(WINDOW_WIDTH);
 export const ITEM_HEIGHT = Math.round(ITEM_WIDTH/4);
 
 export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>) {
-  const [search, updateSearch] = useState(SearchString);
-  const [items, updateItems] = useState([] as twine.Store[]);
+  const [search, setSearch] = useState("");
+  const [items, setItems] = useState([] as twine.Store[]);
 
   async function runSearch(s) {
-    const stores = await twine.getStores(s, SCREEN_DEEPLINK_ROUTE)
-      .catch(console.log);
+    setSearch(s);
+    const stores = await twine
+      .getStores(s, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>Alert.alert('error', err));
     
     if(stores)
-      updateItems(stores);
+      setItems(stores);
   }
 
   useEffect(()=>{
@@ -70,7 +72,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
             source={{
               uri: favorites_uri,
             }}>  
-              <CarouselCards />
+              <CarouselCards navigation={navigation}/>
               <MarqueeText
                 style={{ fontSize: 10, color: 'red', fontWeight: 'bold', }}
                 speed={.5}

@@ -9,9 +9,12 @@ export const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .4)
 export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * .4);
 
 
-const CarouselCardItem = ({ item, index }) => {
+const CarouselCardItem = ({ item, index, onPress }) => {
   return ( 
-    <View style={styles.container} key={index}>  
+    <Pressable 
+        onPress={onPress}
+        style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
+    <View style={styles.container} key={index}>
       <ScrollView>
         <View style={{flex:1, flexDirection:'row'}}>
           {item.data.img 
@@ -50,6 +53,7 @@ const CarouselCardItem = ({ item, index }) => {
         <Text style={styles.body}>{item.description}</Text>
       </ScrollView>
     </View>
+    </Pressable>
 
   )
 }

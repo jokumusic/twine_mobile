@@ -25,13 +25,13 @@ const width = (Dimensions.get('window').width) / 2;
 const height = width;
 
 export default function StoreDetailsScreen(props) {
-  const [store, setStore] = useState(props.route.params.store);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [store, setStore] = useState<twine.Store>(props.route.params.store);
+  const [products, setProducts] = useState<twine.Product[]>([]);
   const navigation = useRef(props.navigation).current;
   const keyExtractor = (item) => item.address.toBase58();
   
    useEffect(()=>{
-    if(store.address) {
+    if(store?.address) {
       console.log('refreshing store...');
       twine
         .getStoreByAddress(store.address, SCREEN_DEEPLINK_ROUTE)
@@ -43,7 +43,7 @@ export default function StoreDetailsScreen(props) {
    },[])
 
    useEffect(()=>{
-    if(store.address) {
+    if(store?.address) {
       console.log('refreshing store products...');
       twine
         .getProductsByStore(store.address, SCREEN_DEEPLINK_ROUTE)
@@ -56,7 +56,7 @@ export default function StoreDetailsScreen(props) {
       
   function isAuthorizedToEditStore() {
     const pkey = twine.getCurrentWalletPublicKey()?.toBase58();
-    return pkey == store.authority.toBase58() || pkey == store.secondaryAuthority.toBase58();
+    return pkey == store?.authority?.toBase58() || pkey == store?.secondaryAuthority?.toBase58();
   }
 
   const renderItem = ({ item }) => (  
@@ -64,11 +64,11 @@ export default function StoreDetailsScreen(props) {
       <View style={styles.card}>
       <PressableImage
         show={true}
-        source={{uri:item.data?.img}}
+        source={{uri:item?.data?.img}}
         onPress={() => navigation.navigate('ProductDetails',{product: item})}
         style={styles.itemImage} />      
       <Text style={styles.productCaption}>
-        {item.name}
+        {item?.name}
       </Text>
       </View>          
     </View>
@@ -84,8 +84,8 @@ export default function StoreDetailsScreen(props) {
           }}
         >  
           <View style={styles.header}>
-            <Image source={{uri:store.data?.img}} style={styles.headerImage}/>
-            <Text style={styles.title}>{store.name} Products</Text>            
+            <Image source={{uri:store?.data?.img}} style={styles.headerImage}/>
+            <Text style={styles.title}>{store?.name} Products</Text>            
             
             { isAuthorizedToEditStore() &&   
               <>
