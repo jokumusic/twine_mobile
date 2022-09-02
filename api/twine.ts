@@ -650,7 +650,7 @@ export async function getStoresByName(nameStartsWith: string) {
     else
         return getStores([{
             memcmp: {
-                offset: 121,
+                offset: 129,
                 bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith,'utf8')),
             }
         }]);

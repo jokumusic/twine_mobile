@@ -9,6 +9,7 @@ import { blue100 } from 'react-native-paper/lib/typescript/styles/colors';
 import MarqueeText from 'react-native-marquee';
 import { generateRandomString } from '../utils/random';
 import * as twine from '../api/twine';
+import { PressableIcon } from '../components/Pressables';
 
 
 const SCREEN_DEEPLINK_ROUTE = "shop";
@@ -18,16 +19,15 @@ export const ITEM_WIDTH = Math.round(WINDOW_WIDTH);
 export const ITEM_HEIGHT = Math.round(ITEM_WIDTH/4);
 
 export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>) {
-  const [search, setSearch] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [items, setItems] = useState([] as twine.Store[]);
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
 
-  async function runSearch(s) {
+  async function runSearch() {
     setActivityIndicatorIsVisible(true);
 
-    setSearch(s);
     const stores = await twine
-      .getStoresByName(s)
+      .getStoresByName(searchText)
       .catch(err=>Alert.alert('error', err));
     
     if(stores)
@@ -37,7 +37,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
   }
 
   useEffect(()=>{
-    runSearch("");
+    runSearch();
   },[]);
 
 
@@ -50,12 +50,22 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
         }}>  
         <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
 
-          <TextInput 
-            placeholder='search...'
-            placeholderTextColor='white'
-            style={styles.searchbox}
-            value={search}
-            onChangeText={runSearch}/>
+          <View style={{flexDirection:'row', alignContent: 'flex-end', justifyContent:'flex-start', backgroundColor: 'rgba(52, 52, 52, .025)'}}>
+            <TextInput 
+              placeholder='search...'
+              placeholderTextColor='white'
+              autoCapitalize = 'none'
+              style={styles.searchbox}
+              value={searchText}
+              onChangeText={setSearchText}/>
+            
+            <PressableIcon
+              name="search"
+              size={31}
+              style={styles.searchIcon}
+              onPress={runSearch}
+            />
+          </View>
           <ScrollView  contentContainerStyle={{flexGrow:1, flexWrap: 'wrap', flexDirection:'row', alignContent: 'space-around'}}>
               {
                 items.map((item)=>(
@@ -112,9 +122,16 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   searchbox: {
-    width: '100%',
+    width: '92%',
     height: 35,
     color: 'white',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    borderBottomColor: 'white',
+    borderBottomWidth: 2,
+    marginBottom: 2,
+  },
+  searchIcon: {
     justifyContent: 'center',
     fontWeight: 'bold',
     borderBottomColor: 'white',
