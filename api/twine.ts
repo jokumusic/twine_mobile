@@ -73,6 +73,7 @@ export interface WriteableProduct {
     store: PublicKey;
     price: number;
     inventory: number;
+    redemptionType: number; //0=immediate, 1=inperson
     name: string;
     description: string;
     data: ProductData;
@@ -364,10 +365,12 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         if(product.store) 
         {
             console.log('creating store product transaction...');
+            console.log('redemption type is: ', product.redemptionType);
 
             tx = await program.methods
                 .createStoreProduct(newProductId, product.status, //productMintDecimals, 
-                    new anchor.BN(product.price), product.inventory, product.name, product.description, productData)
+                    new anchor.BN(product.price), product.inventory, product.redemptionType, 
+                    product.name, product.description, productData)
                 .accounts({
                     //mint: storeProductMintPda,
                     product: productPda,
@@ -385,7 +388,8 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             console.log('creating lone product transaction...');
             tx = await program.methods
                 .createProduct(newProductId, product.status, //productMintDecimals, 
-                    new anchor.BN(product.price), product.inventory, product.name, product.description, productData)
+                    new anchor.BN(product.price), product.inventory, product.redemptionType, 
+                    product.name, product.description, productData)
                 .accounts({
                     //mint: loneProductMintPda,
                     product: productPda,
@@ -488,7 +492,8 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
 
         console.log('creating transaction...');
         const tx = await program.methods
-            .updateProduct(product.status, new anchor.BN(product.price), new anchor.BN(product.inventory), product.name,
+            .updateProduct(product.status, new anchor.BN(product.price), new anchor.BN(product.inventory),
+                product.redemptionType, product.name,
                 product.description, productData)
             .accounts({
                 product: product.address,
@@ -593,7 +598,6 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
         if(!products)
             return;
 
-    console.log('got products', products);
         products.forEach((product,i)=>{  
             try
             {   

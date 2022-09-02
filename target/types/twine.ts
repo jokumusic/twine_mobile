@@ -186,6 +186,10 @@ export type Twine = {
           "type": "u64"
         },
         {
+          "name": "redemptionType",
+          "type": "u8"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -261,6 +265,10 @@ export type Twine = {
           "type": "u64"
         },
         {
+          "name": "redemptionType",
+          "type": "u8"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -305,6 +313,10 @@ export type Twine = {
         {
           "name": "inventory",
           "type": "u64"
+        },
+        {
+          "name": "redemptionType",
+          "type": "u8"
         },
         {
           "name": "name",
@@ -537,6 +549,10 @@ export type Twine = {
           {
             "name": "inventory",
             "type": "u64"
+          },
+          {
+            "name": "redemptionType",
+            "type": "u8"
           },
           {
             "name": "name",
@@ -984,6 +1000,10 @@ export const IDL: Twine = {
           "type": "u64"
         },
         {
+          "name": "redemptionType",
+          "type": "u8"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -1059,6 +1079,10 @@ export const IDL: Twine = {
           "type": "u64"
         },
         {
+          "name": "redemptionType",
+          "type": "u8"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -1103,6 +1127,10 @@ export const IDL: Twine = {
         {
           "name": "inventory",
           "type": "u64"
+        },
+        {
+          "name": "redemptionType",
+          "type": "u8"
         },
         {
           "name": "name",
@@ -1335,6 +1363,10 @@ export const IDL: Twine = {
           {
             "name": "inventory",
             "type": "u64"
+          },
+          {
+            "name": "redemptionType",
+            "type": "u8"
           },
           {
             "name": "name",

@@ -6,7 +6,8 @@ import {
    ColorSchemeName,
    ImageBackground,
   FlatList,
-  Alert
+  Alert,
+  ActivityIndicator
   } from 'react-native';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -28,29 +29,31 @@ export default function StoreDetailsScreen(props) {
   const [store, setStore] = useState<twine.Store>(props.route.params.store);
   const [products, setProducts] = useState<twine.Product[]>([]);
   const navigation = useRef(props.navigation).current;
-  const keyExtractor = (item) => item.address.toBase58();
+  const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   
    useEffect(()=>{
     if(store?.address) {
+      setActivityIndicatorIsVisible(true);
       console.log('refreshing store...');
       twine
         .getStoreByAddress(store.address, SCREEN_DEEPLINK_ROUTE)
-        .then(s=>{s && setStore(s);})
-        .catch((err)=>{
-          Alert.alert("error", err);
-        });
+        .then(s=>{setStore(s);})
+        .catch(err=>Alert.alert("error", err))
+        .finally(()=>setActivityIndicatorIsVisible(false));
     }
    },[])
 
    useEffect(()=>{
     if(store?.address) {
+      setActivityIndicatorIsVisible(true);
       console.log('refreshing store products...');
       twine
         .getProductsByStore(store.address, SCREEN_DEEPLINK_ROUTE)
         .then(products=>{
           setProducts(products);
         })
-        .catch(err=>Alert.alert("error", err));
+        .catch(err=>Alert.alert("error", err))
+        .finally(()=>setActivityIndicatorIsVisible(false));
     }
   },[store]);
       
@@ -62,14 +65,16 @@ export default function StoreDetailsScreen(props) {
   const renderItem = ({ item }) => (  
     <View style={styles.row}>
       <View style={styles.card}>
-      <PressableImage
-        show={true}
-        source={{uri:item?.data?.img}}
-        onPress={() => navigation.navigate('ProductDetails',{product: item})}
-        style={styles.itemImage} />      
-      <Text style={styles.productCaption}>
-        {item?.name}
-      </Text>
+        <PressableImage
+          show={true}
+          source={{uri:item?.data?.img}}
+          onPress={() => navigation.navigate('ProductDetails',{product: item})}
+          style={styles.itemImage} 
+        /> 
+
+        <Text style={styles.productCaption}>
+          {item?.name}
+        </Text>
       </View>          
     </View>
   );
@@ -83,6 +88,7 @@ export default function StoreDetailsScreen(props) {
             uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
           }}
         >  
+          <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
           <View style={styles.header}>
             <Image source={{uri:store?.data?.img}} style={styles.headerImage}/>
             <Text style={styles.title}>{store?.name} Products</Text>            
@@ -119,7 +125,7 @@ export default function StoreDetailsScreen(props) {
           <FlatList
             data={products}
             renderItem={renderItem}
-            keyExtractor={keyExtractor}
+            keyExtractor={(item) => item.address.toBase58()}
             contentContainerStyle={styles.list}
             numColumns={2}
             columnWrapperStyle={styles.column}

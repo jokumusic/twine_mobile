@@ -186,6 +186,10 @@
           "type": "u64"
         },
         {
+          "name": "redemptionType",
+          "type": "u8"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -261,6 +265,10 @@
           "type": "u64"
         },
         {
+          "name": "redemptionType",
+          "type": "u8"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -305,6 +313,10 @@
         {
           "name": "inventory",
           "type": "u64"
+        },
+        {
+          "name": "redemptionType",
+          "type": "u8"
         },
         {
           "name": "name",
@@ -537,6 +549,10 @@
           {
             "name": "inventory",
             "type": "u64"
+          },
+          {
+            "name": "redemptionType",
+            "type": "u8"
           },
           {
             "name": "name",
@@ -795,6 +811,6 @@
     }
   ],
   "metadata": {
-    "address": "7bREQ6dfqMM31jAPHZiXHNJvvKkefEgJUCQGk9ZyZDah"
+    "address": "6r2E5EkhhNEyChaZmwzNbgviYB2Yr3Gcv92SWxSFB2im"
   }
 }

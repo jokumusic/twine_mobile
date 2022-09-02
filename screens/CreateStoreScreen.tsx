@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, findNodeHandle, AccessibilityInfo, KeyboardAvoidingView } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, findNodeHandle, AccessibilityInfo, KeyboardAvoidingView, Alert } from 'react-native';
 import { useSelector, useDispatch, connect } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
@@ -7,6 +7,7 @@ import { Text, View, TextInput, Button } from '../components/Themed';
 import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
 import { getCustomTabsSupportingBrowsersAsync } from 'expo-web-browser';
 import * as twine from '../api/twine';
+import { PublicKey } from '@solana/web3.js';
 
 const SCREEN_DEEPLINK_ROUTE = "create_store";
 
@@ -20,6 +21,7 @@ export default function CreateStoreScreen() {
   const scrollViewRef = useRef<any>(null);
   const isProgramInitialized = useRef(true);
   const focusComponent = useRef();
+  const [secondaryAuthority, setSecondaryAuthority] = useState("");
 
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
@@ -35,7 +37,7 @@ async function connectWallet(){
   .catch(err=> log(err));
 }
 
-function storeDataIsValid(): bool {
+function validateInputs(): bool {
   if(!store.name){
     log('a name is required');
     return false;
@@ -46,16 +48,28 @@ function storeDataIsValid(): bool {
     return false;
   }
 
-  if(!store.data.img){
+  if(!store.data?.img){
     log('an image is required');
     return false;
   }
+
+  if(secondaryAuthority !== ""){
+    try{
+      const a = new PublicKey(secondaryAuthority);
+      setStore({...store, secondaryAuthority: a});
+    }catch(err) {
+      Alert.alert('error', 'Secondary Authority address is invalid');
+      return;
+    }
+  }
+
+  log('all inputs look good!');
 
   return true;
 }
 
 async function createStore() {
-  if(!storeDataIsValid())
+  if(!validateInputs())
     return;
 
   log('creating store...');
@@ -71,7 +85,7 @@ async function createStore() {
     })
 }
 
-const readStore = async () => {
+const refreshStore = async () => {
   if(!store.address) {
     log("store doesn't exist. The store must be created first.");
     return;
@@ -94,7 +108,7 @@ const readStore = async () => {
 }
 
 const updateStore = async() =>{
-  if(!storeDataIsValid())
+  if(!validateInputs())
     return;
 
   if(!store.address) {
@@ -127,38 +141,59 @@ const updateStore = async() =>{
       <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
       
       <View style={styles.inputSection}>
+      <ScrollView>
 
-        <Text style={styles.inputLabel}>Name</Text>
-        <TextInput 
-          style={styles.inputBox}
-          value={store.name}
-          onChangeText={(t)=>setStore({...store, name: t})}
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Name</Text>
+          <TextInput 
+            placeholder='store name...'
+            style={styles.inputBox}
+            value={store.name}
+            onChangeText={(t)=>setStore({...store, name: t})}
+            />
+        </View>
+
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Description</Text> 
+          <TextInput
+            placeholder="store description..."
+            style={styles.inputBox}          
+            multiline={true}
+            numberOfLines={3}
+            value={store.description}
+            onChangeText={(t)=>setStore({...store, description: t})}
           />
+        </View>
 
-        <Text style={styles.inputLabel}>Description</Text> 
-        <TextInput
-          style={styles.inputBox}          
-          multiline={true}
-          numberOfLines={3}
-          value={store.description}
-          onChangeText={(t)=>setStore({...store, description: t})}
-        />
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Image</Text>
+          <TextInput 
+            placeholder='http://'
+            style={styles.inputBox}
+            value={store.data?.img}
+            onChangeText={(t)=>setStore({...store, data:{...store.data, img: t}})}
+          />
+        </View>
 
-        <Text style={styles.inputLabel}>Image URL</Text>
-        <TextInput 
-          style={styles.inputBox}
-          value={store.data?.img}
-          onChangeText={(t)=>setStore({...store, data:{...store.data, img: t}})}
-        />
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Secondary Authority</Text>
+          <TextInput
+            placeholder="(OPTIONAL) address of another account that you authoritze to edit this store"
+            style={styles.inputBox}
+            value={secondaryAuthority}
+            onChangeText={setSecondaryAuthority}/>
+        </View>
 
+      </ScrollView>
       </View>
     
-      <View>
-        <Button title='Connect Wallet' onPress={connectWallet}/>
-        <Button title='Create Store' onPress={createStore} />
-        <Button title='Read Store Data' onPress={readStore} />
-        <Button title='Update Store Data' onPress={updateStore} />      
+      <View style={{flexDirection: 'row', alignContent: 'space-between', justifyContent: 'space-between', padding: 5}}>
+        <Button title='Create' onPress={createStore} />
+        <Button title='Refresh' onPress={refreshStore} />
+        <Button title='Update' onPress={updateStore} />      
       </View>
+
+      <Button title="validate" onPress={()=>validateInputs()} />       
 
       <View style={{width: '95%', height: '20%', margin:5}}>
         <ScrollView
@@ -216,5 +251,8 @@ const styles = StyleSheet.create({
     alignContent: 'flex-start',
     height: 40,
     marginBottom: 10,
+  },
+  inputRow:{
+    margin: 5,
   }
 });
