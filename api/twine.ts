@@ -14,9 +14,8 @@ import {
   Transaction,
   AccountInfo,
 } from "@solana/web3.js";
-import {TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token} from "@solana/spl-token";
-import { rejects } from 'assert';
-import { Asset } from 'expo-asset';
+//import {TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token} from "@solana/spl-token";
+//import { bs58 } from '../dist/browser/types/src/utils/bytes';
 
 if (typeof BigInt === 'undefined') global.BigInt = require('big-integer') //fixes an issue with react native not supporting bigint. added package big-integer to project and then added this
 
@@ -24,9 +23,16 @@ const network = clusterApiUrl("testnet")
 const connection = new Connection(network);
 const programId = new PublicKey(idl.metadata.address);
 
+export enum RedemptionType {
+    Immediate=0,
+    Ticketed=1
+}
 
 export interface WriteableStoreData{
+    displayName: string;
+    displayDescription: string;
     img: string;
+    images: string[];
     twitter?: string;
     instagram?: string;
     facebook?: string;
@@ -39,12 +45,8 @@ export interface StoreData extends WriteableStoreData {
 
 export interface WriteableStore {
     status: number;
-    authority: PublicKey;
     secondaryAuthority: PublicKey;
     tag: number;
-    name: string;
-    description: string;
-    productCount: number;
     data: StoreData;
 }
 
@@ -53,31 +55,35 @@ export interface Store extends WriteableStore {
     readonly bump: number;
     readonly id: number;
     readonly creator: PublicKey;
+    readonly authority: PublicKey;
+    readonly productCount: number;
+    readonly name: string;
+    readonly description: string;
 }
 
 export interface WriteableProductData {
+    displayName: string;
+    displayDescription: string;
     img: string;
+    images: string[];
     price: number;
     sku?: string;
 }
 
 export interface ProductData extends WriteableProductData {
+
 }
 
 export interface WriteableProduct {
     status: number;
-    authority: PublicKey;
     secondaryAuthority: PublicKey;
     tag: number;
     payTo: PublicKey;
     store: PublicKey;
     price: number;
     inventory: number;
-    redemptionType: number; //0=immediate, 1=inperson
-    name: string;
-    description: string;
+    redemptionType: RedemptionType;
     data: ProductData;
-    sku: string;
 }
 
 export interface Product extends WriteableProduct {
@@ -85,7 +91,10 @@ export interface Product extends WriteableProduct {
     readonly bump: number;    
     readonly creator: PublicKey;   
     readonly id: number;   
-    readonly isSnapshot: boolean;   
+    readonly isSnapshot: boolean;
+    readonly authority: PublicKey;
+    readonly name: string;
+    readonly description: string;
 }
 
 export enum AssetType{
@@ -129,7 +138,7 @@ function getStorePda(creatorPubkey: PublicKey, storeId: number) {
     return PublicKey.findProgramAddressSync(
         [
           anchor.utils.bytes.utf8.encode("store"), 
-          creatorPubkey.toBuffer(),             
+          creatorPubkey.toBuffer(),
           Buffer.from(uIntToBytes(storeId,2,"setUint"))
         ], programId);
 }
@@ -159,10 +168,26 @@ function decodeData(data: any) {
 export async function createStore(store: WriteableStore, deeplinkRoute: string) {
     return new Promise<Store>(async (resolve,reject) => {
         const currentWalletPubkey = getCurrentWalletPublicKey();
-        if(!currentWalletPubkey){
-            reject('not connected to a wallet.');
+        if(!currentWalletPubkey) {
+            reject('not connected to a wallet');
+            return;
+        }        
+    
+        if(!store.data.displayName) {
+            reject("store must have a name");
             return;
         }
+    
+        if(!store.data.displayDescription){
+            reject("store must have a description");
+            return;
+        }
+
+        if(!store.data.img) {
+            reject('store must have an image');
+            return;
+        }
+
 
         const newStoreId = generateRandomU16();
         const [storePda, storePdaBump] = getStorePda(currentWalletPubkey, newStoreId);
@@ -174,11 +199,14 @@ export async function createStore(store: WriteableStore, deeplinkRoute: string) 
             return;
         }
 
-        const storeData = encodeData(store.data);
-
         console.log('creating transaction...');
         const tx = await program.methods
-            .createStore(newStoreId, store.status, store.name, store.description, storeData)
+            .createStore(
+                newStoreId,
+                store.status,
+                store.data.displayName.toLowerCase(),
+                store.data.displayDescription.toLowerCase(),
+                encodeData(store.data))
             .accounts({
                 store: storePda,
                 creator: currentWalletPubkey,
@@ -229,43 +257,36 @@ export async function createStore(store: WriteableStore, deeplinkRoute: string) 
   }
 
 
-export async function getStoreByAddress(address: PublicKey, deeplinkRoute:string) {
-    return new Promise<Store>(async (resolve,reject) => {
-        if(!address) {
-            reject('a store address is required');
-            return;
-        }
-
-        const program = getProgram(deeplinkRoute);
-        const store = await program.account.store.fetchNullable(address)
-            .catch(reject);
-
-        if(!store){
-            reject(`store doesn't exist at address: ${address}`);
-            return;
-        }
-
-        const storeData = decodeData(store.data);
-        store.data = storeData;
-        resolve({...store, address});
-    });
-}
-
 export async function updateStore(store: Store, deeplinkRoute: string) {
     return new Promise<Store>(async (resolve,reject) => {
-        if(!store.address) {
-            reject('store must contain an address');
-            return;
-        }
-
         const currentWalletPubkey = getCurrentWalletPublicKey();
         if(!currentWalletPubkey) {
             reject('not connected to a wallet');
             return;
         }
 
+        if(!store.address) {
+            reject('store must contain an address');
+            return;
+        }
+    
         if(!currentWalletPubkey.equals(store.authority) && !currentWalletPubkey.equals(store.secondaryAuthority)){
             reject("you're not authorized to update the store");
+            return;
+        }
+    
+        if(!store.data.displayName) {
+            reject("store must have a name");
+            return;
+        }
+    
+        if(!store.data.displayDescription){
+            reject("store must have a description");
+            return;
+        }
+
+        if(!store.data.img) {
+            reject('store must have an image');
             return;
         }
 
@@ -276,11 +297,12 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             return;
         }
 
-        const storeData = encodeData(store.data);
-
         console.log('creating transaction...');
         const tx = await program.methods
-            .updateStore(store.name, store.description, storeData)
+            .updateStore(
+                store.data.displayName.toLowerCase(),
+                store.data.displayDescription.toLowerCase(),
+                encodeData(store.data))
             .accounts({
                 store: store.address,
                 authority: currentWalletPubkey,
@@ -324,15 +346,65 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
 
         resolve({...updatedStore, address: updatedStore.address});        
     });
-  }
+}
 
-  export async function createProduct(product: WriteableProduct, deeplinkRoute: string) {
+export async function getStoreByAddress(address: PublicKey) {
+    return new Promise<Store>(async (resolve,reject) => {
+        if(!address) {
+            reject('a store address is required');
+            return;
+        }
+
+        const program = getProgram("");
+        const store = await program.account.store.fetchNullable(address)
+            .catch(reject);
+
+        if(!store){
+            reject(`store doesn't exist at address: ${address}`);
+            return;
+        }
+
+        const storeData = decodeData(store.data);
+        store.data = storeData;
+        resolve({...store, address});
+    });
+}
+
+
+
+export async function createProduct(product: WriteableProduct, deeplinkRoute: string) {
     return new Promise<Product>(async (resolve,reject) => {
         const currentWalletPubkey = getCurrentWalletPublicKey();
         if(!currentWalletPubkey){
             reject('not connected to a wallet.');
             return;
         }
+
+        if(!product.data.displayName) {
+            reject('product must have a name');
+            return;
+        }
+
+        if(!product.data.displayDescription) {
+            reject('product must have a description');
+            return;
+        }
+
+        if(!product.data.img) {
+            reject('product must have an image');
+            return;
+        }
+
+        if(product.price < 0) {
+            reject('product price must be equal to or greater than 0');
+            return;
+        }
+
+        if(product.inventory < 0) {
+            reject('product inventory must be equal to or greater than 0');
+            return;
+        }
+
         
         const program = getProgram(deeplinkRoute);
         const newProductId  = generateRandomU32();
@@ -356,26 +428,29 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         ], program.programId);
         */
 
-        const productPrice= new anchor.BN(product.price);
-        //const productMintDecimals = 2;
-        const productData = encodeData(product.data);
-
-        let tx = null;
+        let tx;
 
         if(product.store) 
         {
             console.log('creating store product transaction...');
 
             tx = await program.methods
-                .createStoreProduct(newProductId, product.status, //productMintDecimals, 
-                    new anchor.BN(product.price), new anchor.BN(product.inventory), product.redemptionType, 
-                    product.name, product.description, productData)
+                .createStoreProduct(
+                    newProductId,
+                    product.status, //productMintDecimals, 
+                    new anchor.BN(product.price),
+                    new anchor.BN(product.inventory),
+                    product.redemptionType, 
+                    product.data.displayName.toLowerCase(),
+                    product.data.displayDescription.toLowerCase(),
+                    encodeData(product.data)
+                )
                 .accounts({
                     //mint: storeProductMintPda,
                     product: productPda,
                     store: product.store,
                     creator: currentWalletPubkey,
-                    authority: product.authority ?? currentWalletPubkey,
+                    authority: currentWalletPubkey,
                     secondaryAuthority: product.secondaryAuthority ?? currentWalletPubkey,
                     payTo: product.payTo ?? currentWalletPubkey,
                     //tokenProgram: TOKEN_PROGRAM_ID,
@@ -386,14 +461,21 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
           else {
             console.log('creating lone product transaction...');
             tx = await program.methods
-                .createProduct(newProductId, product.status, //productMintDecimals, 
-                    new anchor.BN(product.price), new anchor.BN(product.inventory), product.redemptionType, 
-                    product.name, product.description, productData)
+                .createProduct(
+                    newProductId,
+                    product.status, //productMintDecimals, 
+                    new anchor.BN(product.price),
+                    new anchor.BN(product.inventory),
+                    product.redemptionType, 
+                    product.data.displayName.toLowerCase(),
+                    product.data.displayDescription.toLowerCase(),
+                    encodeData(product.data)
+                )
                 .accounts({
                     //mint: loneProductMintPda,
                     product: productPda,
                     creator: currentWalletPubkey,
-                    authority: product.authority ?? currentWalletPubkey,
+                    authority: currentWalletPubkey,
                     secondaryAuthority: product.secondaryAuthority ?? currentWalletPubkey,
                     payTo: product.payTo ?? currentWalletPubkey,
                     //tokenProgram: TOKEN_PROGRAM_ID,
@@ -434,12 +516,12 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             return;
    
         createdProduct.data = decodeData(createdProduct.data);
-        resolve({...createdProduct, address: productPda});
+        resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber(), inventory: createdProduct.inventory.toNumber()});
     });
-  }
+}
 
 
-  export async function getProductByAddress(address: PublicKey, deeplinkRoute: string) {
+export async function getProductByAddress(address: PublicKey, deeplinkRoute: string) {
     return new Promise<Product>(async(resolve,reject) => {
 
         if(!address) {
@@ -456,12 +538,12 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         }
 
         product.data = decodeData(product.data);
-        resolve({...product, address: address});        
+        resolve({...product, address: address, price: product.price.toNumber(), inventory: product.inventory.toNumber()});        
     });
-  }
+}
 
 
-  export async function updateProduct(product: Product, deeplinkRoute: string) {
+export async function updateProduct(product: Product, deeplinkRoute: string) {
     return new Promise<Product>(async (resolve, reject) => {
         const currentWalletPubkey = getCurrentWalletPublicKey();
         if(!currentWalletPubkey){
@@ -473,11 +555,32 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             reject("a product address is required");
             return;
         }
-        
-        if(product.authority != currentWalletPubkey && product.secondaryAuthority != currentWalletPubkey){
-            reject("you're not authorized to update the product");
+
+        if(!product.data.displayName) {
+            reject('product must have a name');
             return;
         }
+
+        if(!product.data.displayDescription) {
+            reject('product must have a description');
+            return;
+        }
+
+        if(!product.data.img) {
+            reject('product must have an image');
+            return;
+        }
+
+        if(product.price < 0) {
+            reject('product price must be equal to or greater than 0');
+            return;
+        }
+
+        if(product.inventory < 0) {
+            reject('product inventory must be equal to or greater than 0');
+            return;
+        }
+
 
         const program = getProgram(deeplinkRoute);
 
@@ -487,19 +590,28 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             return;
         }
 
-        const productData = encodeData(product);
+        if(!existingProduct.authority.equals(currentWalletPubkey) && !existingProduct.secondaryAuthority.equals(currentWalletPubkey)) {
+            reject("you're not authorized to update the product");
+            return;
+        }
 
         console.log('creating transaction...');
         const tx = await program.methods
-            .updateProduct(product.status, new anchor.BN(product.price), new anchor.BN(product.inventory),
-                product.redemptionType, product.name,
-                product.description, productData)
+            .updateProduct(
+                product.status,
+                new anchor.BN(product.price),
+                new anchor.BN(product.inventory),
+                product.redemptionType,
+                product.data.displayName.toLowerCase(),
+                product.data.displayDescription.toLowerCase(),
+                encodeData(product.data),
+            )
             .accounts({
                 product: product.address,
                 authority: currentWalletPubkey,      
             })
             .transaction()
-            .catch(rejects);
+            .catch(reject);
 
         if(!tx)
             return;
@@ -512,7 +624,10 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             .signAndSendTransaction(tx, false, true, deeplinkRoute)
             .catch(reject);
 
-        console.log('waiting for finalization of transaction...');
+        if(!signature)
+            return;
+
+        console.log('waiting for finalization of transaction ', signature);
         const confirmationResponse = await connection.confirmTransaction(signature, 'finalized');
 
         const updatedProduct = await program.account.product
@@ -523,24 +638,34 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             return;
       
         updatedProduct.data = decodeData(updatedProduct.data);
-        resolve({...updatedProduct, address: product.address});
+        resolve({...updatedProduct, address: product.address, price: updatedProduct.price.toNumber(), inventory: updatedProduct.inventory.toNumber()});
     });
-  }
+}
 
 
-export async function getStores(searchString: string, deeplinkRoute: string) {
+export async function getStoresByName(nameStartsWith: string) {
+    console.log('name : ', nameStartsWith);
+    if(!nameStartsWith)
+        return getStores();
+    else
+        return getStores([{
+            memcmp: {
+                offset: 121,
+                bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith,'utf8')),
+            }
+        }]);
+}
+
+async function getStores(filters?: Buffer | web3.GetProgramAccountsFilter[]) {
     return new Promise<Store[]>(async (resolve, reject) => {
         const list = [] as Store[];
-        const program = getProgram(deeplinkRoute);
+        const program = getProgram("");
         const stores = await program.account.store
-            .all()
+            .all(filters)
             .catch(reject);
 
         let regex:RegExp;
 
-        if(searchString) {
-            regex = new RegExp(searchString, 'i');
-        }
 
         stores.forEach(store => {  
             try 
@@ -549,14 +674,7 @@ export async function getStores(searchString: string, deeplinkRoute: string) {
                     const parsedStoreData = JSON.parse(store.account.data);                    
                     store.account.data = decompress(parsedStoreData);
                     const st = {...store.account, address: store.publicKey, account_type: "store"};
-                    
-                    if(regex) {
-                        if(regex.test(st.name) || regex.test(st.description)) {
-                            list.push(st);
-                        }
-                    } else {
-                        list.push(st);          
-                    }
+                    list.push(st);
                 }
             }
             catch(e) {
@@ -603,7 +721,7 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
                 if(product.account.data) {
                     const parsedProductData = JSON.parse(product.account.data);          
                     product.account.data = decompress(parsedProductData);
-                    items.push({...product.account, address: product.publicKey, account_type: "product"});          
+                    items.push({...product.account, address: product.publicKey, price: product.account.price.toNumber(), inventory: product.account.inventory.toNumber(), account_type: "product"});          
                 }
             }
             catch(e) {
@@ -637,7 +755,7 @@ async function getProducts(searchString: string, deeplinkRoute: string) {
                 if(product.account.data) {
                     const parsedProductData = JSON.parse(product.account.data);
                     product.account.data = decompress(parsedProductData);
-                    const p = {...product.account, address: product.publicKey, account_type: "product"}
+                    const p = {...product.account, address: product.publicKey, price: product.account.price.toNumber(), inventory: product.account.inventory.toNumber(), account_type: "product"}
                     if(regex) {
                         if(regex.test(p.name) || regex.test(p.description))
                             list.push(p) 
@@ -660,8 +778,9 @@ async function getMixedItems(searchString: string, deeplinkRoute: string) {
     return new Promise<Store[]|Product[]>(async (resolve, reject) => {
         const items = [] as Store[]|Product[];
         
-        const stores = await getStores(searchString, deeplinkRoute)
+        const stores = await getStoresByName(searchString)
             .catch(console.log);
+        
         items.push(stores);
 
         const products = await getProducts(searchString, deeplinkRoute)
@@ -710,9 +829,9 @@ async function getMixedItems(searchString: string, deeplinkRoute: string) {
     });
   }
 
-  export async function getTopStores(n: number, searchString: string, deeplinkRoute: string) {
+  export async function getTopStores(n: number, searchString: string) {
     return new Promise<any[]>(async (resolve, reject) => {
-        const stores = await getStores(searchString, deeplinkRoute)
+        const stores = await getStoresByName(searchString)
             .catch(reject);
 
         if(!stores)

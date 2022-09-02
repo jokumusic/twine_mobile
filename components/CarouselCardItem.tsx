@@ -49,8 +49,8 @@ const CarouselCardItem = ({ item, index, onPress }) => {
             onPress={()=>Linking.openURL(item.data.wiki)}/>
         </View>
           
-        <Text style={styles.header}>{item.name}</Text>        
-        <Text style={styles.body}>{item.description}</Text>
+        <Text style={styles.header}>{item.data.displayName}</Text>        
+        <Text style={styles.body}>{item.data.dislayDescription}</Text>
       </ScrollView>
     </View>
     </Pressable>

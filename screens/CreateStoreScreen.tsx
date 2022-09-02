@@ -11,11 +11,11 @@ import { PublicKey } from '@solana/web3.js';
 
 const SCREEN_DEEPLINK_ROUTE = "create_store";
 
-export default function CreateStoreScreen() {
+export default function CreateStoreScreen(props) {
   const [state, updateState] = useState('')
   const settings = useSelector(state => state);
   const dispatch = useDispatch();
-  const [store, setStore] = useState<twine.Store>({});
+  const [store, setStore] = useState<twine.Store>(props.route.params?.store ?? {});
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
@@ -29,26 +29,19 @@ export default function CreateStoreScreen() {
   }, []);
 
 
-async function connectWallet(){
-  twine.connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-  .then(()=>{
-    log('connected to wallet');
-  })
-  .catch(err=> log(err));
-}
 
 function validateInputs(): bool {
-  if(!store.name){
+  if(!store?.data?.displayName){
     log('a name is required');
     return false;
   }
 
-  if(!store.description){
+  if(!store?.data?.displayDescription){
     log('a description is required.')
     return false;
   }
 
-  if(!store.data?.img){
+  if(!store?.data?.img){
     log('an image is required');
     return false;
   }
@@ -86,7 +79,7 @@ async function createStore() {
 }
 
 const refreshStore = async () => {
-  if(!store.address) {
+  if(!store?.address) {
     log("store doesn't exist. The store must be created first.");
     return;
   }
@@ -95,7 +88,7 @@ const refreshStore = async () => {
   setActivityIndicatorIsVisible(true);
   
   const refreshedStore = await twine
-    .getStoreByAddress(store.address, SCREEN_DEEPLINK_ROUTE)
+    .getStoreByAddress(store.address)
     .catch(log);
    
   if(refreshedStore) {
@@ -111,7 +104,7 @@ const updateStore = async() =>{
   if(!validateInputs())
     return;
 
-  if(!store.address) {
+  if(!store?.address) {
     log("store doesn't exist. The store must be created first.");
     return;
   }
@@ -148,8 +141,8 @@ const updateStore = async() =>{
           <TextInput 
             placeholder='store name...'
             style={styles.inputBox}
-            value={store.name}
-            onChangeText={(t)=>setStore({...store, name: t})}
+            value={store?.data?.displayName}
+            onChangeText={(t)=>setStore({...store, data: {...store?.data, displayName: t}})}
             />
         </View>
 
@@ -160,8 +153,8 @@ const updateStore = async() =>{
             style={styles.inputBox}          
             multiline={true}
             numberOfLines={3}
-            value={store.description}
-            onChangeText={(t)=>setStore({...store, description: t})}
+            value={store?.data?.displayDescription}
+            onChangeText={(t)=>setStore({...store, data:{...store?.data, displayDescription: t}})}
           />
         </View>
 
@@ -170,8 +163,8 @@ const updateStore = async() =>{
           <TextInput 
             placeholder='http://'
             style={styles.inputBox}
-            value={store.data?.img}
-            onChangeText={(t)=>setStore({...store, data:{...store.data, img: t}})}
+            value={store?.data?.img}
+            onChangeText={(t)=>setStore({...store, data:{...store?.data, img: t}})}
           />
         </View>
 
@@ -188,9 +181,8 @@ const updateStore = async() =>{
       </View>
     
       <View style={{flexDirection: 'row', alignContent: 'space-between', justifyContent: 'space-between', padding: 5}}>
-        <Button title='Create' onPress={createStore} />
-        <Button title='Refresh' onPress={refreshStore} />
-        <Button title='Update' onPress={updateStore} />      
+        <Button title={store?.address ? 'Update' : 'Create'} onPress={store?.address ? updateStore : createStore} />
+        <Button title='Refresh' onPress={refreshStore} />   
       </View>
 
       <Button title="validate" onPress={()=>validateInputs()} />       

@@ -52,7 +52,14 @@ function RootNavigator() {
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
       <Stack.Group screenOptions={{ presentation: 'modal' }}>
         <Stack.Screen name="About" component={AboutScreen} />
-        <Stack.Screen name="CreateStore" component={CreateStoreScreen} />
+        <Stack.Screen 
+          name="CreateStore"
+          component={CreateStoreScreen}
+          options={({ navigation }: ScreenProps<'CreateStore'>) => ({
+            title: 'Store Create/Update',
+            headerShown: true,
+          })} 
+        />
         <Stack.Screen name="StoreDetails" component={StoreDetailsScreen} 
           options={({ navigation }: ScreenProps<'StoreDetails'>) => (
             {
@@ -64,8 +71,14 @@ function RootNavigator() {
             })
           } 
         />
-        <Stack.Screen name="EditStore" component={EditStoreScreen} />
-        <Stack.Screen name="CreateProduct" component={CreateProductScreen} />
+        <Stack.Screen 
+          name="CreateProduct"
+          component={CreateProductScreen}
+          options={({ navigation }: ScreenProps<'CreateProduct'>) => ({
+            title: 'Product Create/Update',
+            headerShown: true,
+          })}
+        />
         <Stack.Screen name="ProductDetails" component={ProductDetailsScreen}
           options={({ navigation }: ScreenProps<'ProductDetails'>) => (
             {
@@ -77,7 +90,6 @@ function RootNavigator() {
             })
           } 
         />
-        <Stack.Screen name="EditProduct" component={EditProductScreen} />
         <Stack.Screen name="EditContact" component={EditContactScreen} />
         <Stack.Screen name="AddContact" component={AddContactScreen} />
 

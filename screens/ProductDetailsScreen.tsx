@@ -26,37 +26,46 @@ import {
 
 
  export default function ProductDetailsScreen(props) {
+   const [store, setStore] = useState<twine.Store>(props.route.params?.store ?? {})
    const [product, setProduct] = useState<twine.Product>(props.route.params.product);
    const navigation = useRef(props.navigation).current;
    const { addItemToCart } = useContext(CartContext);
 
       
-   async function addToCart(){
+  async function addToCart(){
       addItemToCart(product.address);
-   }
+  }
 
-   
+  function isAuthorizedToEditStore() {
+    const pkey = twine.getCurrentWalletPublicKey();
+    if(!pkey)
+      return false;
 
-    return (  
-      
+    return pkey.equals(product?.authority) || pkey.equals(product?.secondaryAuthority);
+  }
+
+
+  return (      
     <View style={styles.container}>
         <ImageBackground 
             style={{width: '100%', height: '100%'}} 
             source={{uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg'}}>  
-        <View style={styles.header}>        
+        <View style={styles.header}>    
+        { isAuthorizedToEditStore &&    
             <PressableIcon
               name="create"
               style={{ marginRight: 15 }}
-              onPress={() => navigation.navigate('EditProduct',{product})}
+              onPress={() => navigation.navigate('CreateProduct',{store, product})}
             />
-            <Text style={styles.title}>{product.name}</Text>
+        }
+            <Text style={styles.title}>{product?.data?.displayName}</Text>
         </View>
         <View style={{backgroundColor: 'rgba(52, 52, 52, .025)'}}>          
           <ScrollView horizontal={false}>          
             <Image source={{uri:product.data?.img}} style={styles.productImage}/>
-            <Text>{product.description}</Text>
+            <Text>{product?.data?.displayDescription}</Text>
             <Text>Price: {product.price.toString()}</Text>
-            <Text>Available Quantity: {product.inventory?.toString()}</Text>         
+            <Text>Available Quantity: {product.inventory.toString()}</Text>         
             <Text>Sku: {product.data?.sku}</Text>              
             <Button title="Add To Cart" onPress={addToCart}/>
           </ScrollView>

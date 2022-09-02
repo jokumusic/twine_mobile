@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, ImageBackground, FlatList, Image, ScrollView, Pressable, Dimensions, Alert } from 'react-native';
+import { StyleSheet, ImageBackground, FlatList, Image, ScrollView, Pressable, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import ImageCarousel from '../components/ImageCarousel';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { RootTabScreenProps } from '../types';
@@ -20,15 +20,20 @@ export const ITEM_HEIGHT = Math.round(ITEM_WIDTH/4);
 export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>) {
   const [search, setSearch] = useState("");
   const [items, setItems] = useState([] as twine.Store[]);
+  const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
 
   async function runSearch(s) {
+    setActivityIndicatorIsVisible(true);
+
     setSearch(s);
     const stores = await twine
-      .getStores(s, SCREEN_DEEPLINK_ROUTE)
+      .getStoresByName(s)
       .catch(err=>Alert.alert('error', err));
     
     if(stores)
       setItems(stores);
+
+    setActivityIndicatorIsVisible(false);
   }
 
   useEffect(()=>{
@@ -43,6 +48,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
         source={{
           uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
         }}>  
+        <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
 
           <TextInput 
             placeholder='search...'

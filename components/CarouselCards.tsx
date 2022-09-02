@@ -12,7 +12,7 @@ const CarouselCards = (props) => {
   const [favorites, updateFavorites] = useState([]);
   
   useEffect(()=>{
-    getTopStores(10, SearchString, "")
+    getTopStores(10, SearchString)
     .then(items=> updateFavorites(items))
     .catch(e=>log(e));
   }, [SearchString])

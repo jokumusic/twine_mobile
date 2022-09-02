@@ -122,7 +122,7 @@ const callDeepLinkMethod = (method: DeepLinkMethod, payload: any, callback_handl
 }
  
 const handleDeepLinkCallback = ({ url }: Linking.EventType) => {
-    //console.log(`got callback: ${url}`)
+    console.log(`got callback: ${url}`)
     const u = new URL(url);
     let pathname = u.pathname;
     const params = u.searchParams;

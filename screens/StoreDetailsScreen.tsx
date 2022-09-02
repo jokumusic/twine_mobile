@@ -32,19 +32,19 @@ export default function StoreDetailsScreen(props) {
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   
    useEffect(()=>{
-    if(store?.address) {
+    if(store.address) {
       setActivityIndicatorIsVisible(true);
       console.log('refreshing store...');
       twine
-        .getStoreByAddress(store.address, SCREEN_DEEPLINK_ROUTE)
+        .getStoreByAddress(store.address)
         .then(s=>{setStore(s);})
         .catch(err=>Alert.alert("error", err))
         .finally(()=>setActivityIndicatorIsVisible(false));
     }
-   },[])
+   },[]);
 
    useEffect(()=>{
-    if(store?.address) {
+    if(store.address) {
       setActivityIndicatorIsVisible(true);
       console.log('refreshing store products...');
       twine
@@ -55,11 +55,14 @@ export default function StoreDetailsScreen(props) {
         .catch(err=>Alert.alert("error", err))
         .finally(()=>setActivityIndicatorIsVisible(false));
     }
-  },[store]);
+  },[store.address]);
       
   function isAuthorizedToEditStore() {
-    const pkey = twine.getCurrentWalletPublicKey()?.toBase58();
-    return pkey == store?.authority?.toBase58() || pkey == store?.secondaryAuthority?.toBase58();
+    const pkey = twine.getCurrentWalletPublicKey();
+    if(!pkey)
+      return false;
+
+    return pkey.equals(store?.authority) || pkey.equals(store?.secondaryAuthority);
   }
 
   const renderItem = ({ item }) => (  
@@ -68,12 +71,12 @@ export default function StoreDetailsScreen(props) {
         <PressableImage
           show={true}
           source={{uri:item?.data?.img}}
-          onPress={() => navigation.navigate('ProductDetails',{product: item})}
+          onPress={() => navigation.navigate('ProductDetails',{store, product: item})}
           style={styles.itemImage} 
         /> 
 
         <Text style={styles.productCaption}>
-          {item?.name}
+          {item?.data?.displayName}
         </Text>
       </View>          
     </View>
@@ -91,19 +94,21 @@ export default function StoreDetailsScreen(props) {
           <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
           <View style={styles.header}>
             <Image source={{uri:store?.data?.img}} style={styles.headerImage}/>
-            <Text style={styles.title}>{store?.name} Products</Text>            
+            <View style={styles.headerTitle}>
+              <Text style={styles.title}>{store?.data?.displayName}</Text>            
+            </View>
             
             { isAuthorizedToEditStore() &&   
               <>
               <Pressable
-                onPress={() => navigation.navigate('EditStore',{store})}
+                onPress={() => navigation.navigate('CreateStore',{store})}
                 style={({ pressed }) => ({
                   opacity: pressed ? 0.5 : 1,
                 })}>
                 <FontAwesome5
                   name="edit"
                   size={25}
-                  style={{ marginRight: 15 }}
+                  style={{ marginRight: 5 }}
                 />
               </Pressable>  
               <Pressable
@@ -146,7 +151,14 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       backgroundColor: 'gray',
       height: '10%',
+      width: '100%',
       marginBottom: 10,
+    },
+    headerTitle: {
+      flexDirection: 'column',
+      width: 250,
+      backgroundColor: 'gray',
+      flexWrap: 'wrap',
     },
     rowContainer: {
       /*flex: 1,

@@ -23,19 +23,17 @@ export default function CreateProductScreen(props) {
   const [store, setStore] = useState(props.route.params.store);
   const navigation = useRef(props.navigation).current;
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-  const [product, setProduct] = useState<twine.Product>({store: store?.address})
+  const [product, setProduct] = useState<twine.Product>(props.route.params?.product ?? {store: store?.address});
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
-  const [redemptionType, setRedemptionType] = useState(redemptionTypeChoices);
-  const [secondaryAuthority, setSecondaryAuthority] = useState("");
-  const [payTo, setPayTo] = useState("");
+  const [redemptionType, setRedemptionType] = useState(
+    redemptionTypeChoices.map(c=> {
+      return {...c, selected: c.value == product?.redemptionType};
+    })
+  );
+  const [secondaryAuthority, setSecondaryAuthority] = useState(product?.secondaryAuthority?.toBase58() ?? "");
+  const [payTo, setPayTo] = useState(product?.payTo?.toBase58() ?? "");
 
-
-/*
-  useEffect(()=>{
-    setProduct()
-  },[]);
-  */
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
     setLogText((logs) => [...logs, "> " + log])
@@ -43,39 +41,39 @@ export default function CreateProductScreen(props) {
 
   //validates inputs and sets them in the product object if needed
   function validateInputs(){
-    if(!product.name) {
+    if(!product?.data?.displayName) {
       Alert.alert('Error', 'Name is required');
-      return;
+      return false;
     }
 
-    if(!product.description){
+    if(!product?.data?.displayDescription){
       Alert.alert("Error", 'Description is required');
-      return;
+      return false;
     }
 
     const selectedRedemptionType = redemptionType.find(t=>t.selected === true);
     console.log('r: ', selectedRedemptionType);
     if(selectedRedemptionType == undefined || ![0,1].includes(selectedRedemptionType.value)){
       Alert.alert('Error', 'Redemption Type is required');
-      return;
+      return false;
     } else{
       setProduct({...product, redemptionType: selectedRedemptionType.value});
       console.log("product redemption type set to ", product.redemptionType);
     }
 
-    if(!product.data?.img){
+    if(!product?.data?.img){
       Alert.alert("Error", 'Image is required');
-      return;
+      return false;
     }
 
-    if(product.price < 0){
+    if(product?.price < 0){
       Alert.alert("Error", 'Price must be greater than or equal to 0');
-      return;
+      return false;
     }
 
-    if(product.inventory < 1){
+    if(product?.inventory < 1){
       Alert.alert("Error", 'Quantity must be greater than 0');
-      return;
+      return false;
     }
     
     if(payTo !== "") {
@@ -84,7 +82,7 @@ export default function CreateProductScreen(props) {
         setProduct({...product, payTo: a});
       }catch(err){
         Alert.alert("Error", 'Send Payment To address is invalid');
-        return;
+        return false;
       }
     }
 
@@ -94,15 +92,19 @@ export default function CreateProductScreen(props) {
         setProduct({...product, secondaryAuthority: a});
       }catch(err) {
         Alert.alert('error', 'Secondary Authority address is invalid');
-        return;
+        return false;
       }
     }
 
     log('all inputs look good!');
+    return true;
   }
 
 
   async function createProduct() {
+    if(!validateInputs())
+      return;
+
     setActivityIndicatorIsVisible(true);
     log('creating product...');
     
@@ -142,6 +144,9 @@ export default function CreateProductScreen(props) {
   }
 
   const updateProduct = async()=>{
+    if(!validateInputs())
+      return;
+
     setActivityIndicatorIsVisible(true);
     log('updating product data...');
     
@@ -172,8 +177,8 @@ export default function CreateProductScreen(props) {
           <TextInput 
             style={styles.inputBox}
             placeholder='name of the product'
-            value={product?.name}
-            onChangeText={(t)=>setProduct({...product,  name: t})}
+            value={product?.data?.displayName}
+            onChangeText={(t)=>setProduct({...product,  data:{...product?.data, displayName: t}})}
           />
         </View>
 
@@ -184,15 +189,15 @@ export default function CreateProductScreen(props) {
             style={styles.inputBox}       
             multiline={true}
             numberOfLines={4}
-            value={product?.description}
-            onChangeText={(t)=>setProduct({...product,  description: t})}
+            value={product?.data?.displayDescription}
+            onChangeText={(t)=>setProduct({...product,  data:{...product?.data, displayDescription: t}})}
           />
         </View>
 
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Redemption Type</Text>
           <RadioGroup 
-              radioButtons={redemptionTypeChoices} 
+              radioButtons={redemptionType} 
               onPress={setRedemptionType} 
               containerStyle={{flexDirection: 'row', justifyContent: 'flex-start'}}
           />
@@ -260,9 +265,8 @@ export default function CreateProductScreen(props) {
       </View>
 
       <View style={{flexDirection: 'row', alignContent: 'space-between', justifyContent: 'space-between', padding: 5}}>       
-          <Button title='Create Product' onPress={createProduct} />        
-          <Button title='Refresh' onPress={refreshProduct} />
-          <Button title='Update Product' onPress={updateProduct} />                
+          <Button title={product?.address ? 'Update' : 'Create'} onPress={product?.address ? updateProduct : createProduct} />        
+          <Button title='Refresh' onPress={refreshProduct} />               
       </View>
 
       <Button title="validate" onPress={()=>validateInputs()} /> 
