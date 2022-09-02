@@ -10,14 +10,11 @@ import RadioGroup from 'react-native-radio-buttons-group';
 import { PublicKey } from '@solana/web3.js';
 import { publicKey } from '../dist/browser/types/src/coder/spl-token/buffer-layout';
 import { Modal } from 'react-native-paper';
+import { Twine } from '../target/types/twine';
 
 
 const SCREEN_DEEPLINK_ROUTE = "create_product";
 
-const redemptionTypeChoices = [
-  { id:'0', label:'Immediate', value: 0},
-  { id:'1', label:'In Person', value: 1},
-]
 
 export default function CreateProductScreen(props) {
   const [store, setStore] = useState(props.route.params.store);
@@ -26,21 +23,26 @@ export default function CreateProductScreen(props) {
   const [product, setProduct] = useState<twine.Product>(props.route.params?.product ?? {store: store?.address});
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
-  const [redemptionType, setRedemptionType] = useState(
-    redemptionTypeChoices.map(c=> {
-      return {...c, selected: c.value == product?.redemptionType};
-    })
+  const [redemptionTypeChoices, setRedemptionTypeChoices] = useState(
+    Object
+      .values(twine.RedemptionType)
+      .filter(v=> !isNaN(Number(v)))
+      .map(v => ({id:v , label: twine.RedemptionType[v], value: Number(v), selected: product?.redemptionType == v}))
   );
   const [secondaryAuthority, setSecondaryAuthority] = useState(product?.secondaryAuthority?.toBase58() ?? "");
   const [payTo, setPayTo] = useState(product?.payTo?.toBase58() ?? "");
+
 
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
     setLogText((logs) => [...logs, "> " + log])
   }, []);
 
+
   //validates inputs and sets them in the product object if needed
-  function validateInputs(){
+  function validateInputs() {
+    console.log("product is: ", product);
+    let validatedProduct = {...product};
     if(!product?.data?.displayName) {
       Alert.alert('Error', 'Name is required');
       return false;
@@ -51,14 +53,15 @@ export default function CreateProductScreen(props) {
       return false;
     }
 
-    const selectedRedemptionType = redemptionType.find(t=>t.selected === true);
-    console.log('r: ', selectedRedemptionType);
-    if(selectedRedemptionType == undefined || ![0,1].includes(selectedRedemptionType.value)){
+    const selectedRedemptionType = redemptionTypeChoices.find(t=>t.selected == true);
+    console.log('selected: ', selectedRedemptionType);
+    if(!selectedRedemptionType) {
       Alert.alert('Error', 'Redemption Type is required');
       return false;
-    } else{
-      setProduct({...product, redemptionType: selectedRedemptionType.value});
-      console.log("product redemption type set to ", product.redemptionType);
+    } 
+    else {
+      validatedProduct = {...validatedProduct, redemptionType: selectedRedemptionType.value};
+      //console.log(tempProduct);
     }
 
     if(!product?.data?.img){
@@ -79,7 +82,7 @@ export default function CreateProductScreen(props) {
     if(payTo !== "") {
       try {
         const a = new PublicKey(payTo);
-        setProduct({...product, payTo: a});
+        validatedProduct = {...validatedProduct, payTo: a};
       }catch(err){
         Alert.alert("Error", 'Send Payment To address is invalid');
         return false;
@@ -89,7 +92,7 @@ export default function CreateProductScreen(props) {
     if(secondaryAuthority !== ""){
       try{
         const a = new PublicKey(secondaryAuthority);
-        setProduct({...product, secondaryAuthority: a});
+        validatedProduct = {...validatedProduct, secondaryAuthority: a};
       }catch(err) {
         Alert.alert('error', 'Secondary Authority address is invalid');
         return false;
@@ -97,19 +100,21 @@ export default function CreateProductScreen(props) {
     }
 
     log('all inputs look good!');
-    return true;
+
+    return validatedProduct;
   }
 
 
   async function createProduct() {
-    if(!validateInputs())
+    const validatedProduct = validateInputs();
+    if(!validatedProduct)
       return;
 
     setActivityIndicatorIsVisible(true);
     log('creating product...');
     
     const createdProduct= await twine
-      .createProduct(product as twine.WriteableProduct, SCREEN_DEEPLINK_ROUTE)
+      .createProduct(validatedProduct as twine.WriteableProduct, SCREEN_DEEPLINK_ROUTE)
       .catch(err=>Alert.alert("error", err));
 
       if(createdProduct) {
@@ -144,14 +149,17 @@ export default function CreateProductScreen(props) {
   }
 
   const updateProduct = async()=>{
-    if(!validateInputs())
+    const validatedProduct = validateInputs();
+    if(!validatedProduct)
       return;
+
+    console.log("validated: ", validatedProduct);
 
     setActivityIndicatorIsVisible(true);
     log('updating product data...');
     
     const updatedProduct = await twine
-      .updateProduct(product, SCREEN_DEEPLINK_ROUTE)
+      .updateProduct(validatedProduct, SCREEN_DEEPLINK_ROUTE)
       .catch(log);
 
     if(updatedProduct) {
@@ -197,8 +205,8 @@ export default function CreateProductScreen(props) {
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Redemption Type</Text>
           <RadioGroup 
-              radioButtons={redemptionType} 
-              onPress={setRedemptionType} 
+              radioButtons={redemptionTypeChoices} 
+              onPress={setRedemptionTypeChoices} 
               containerStyle={{flexDirection: 'row', justifyContent: 'flex-start'}}
           />
         </View>

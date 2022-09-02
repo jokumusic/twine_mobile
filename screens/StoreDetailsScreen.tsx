@@ -91,7 +91,7 @@ export default function StoreDetailsScreen(props) {
             uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
           }}
         >  
-          <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+          
           <View style={styles.header}>
             <Image source={{uri:store?.data?.img}} style={styles.headerImage}/>
             <View style={styles.headerTitle}>
@@ -126,7 +126,8 @@ export default function StoreDetailsScreen(props) {
             }
             
           </View>    
-
+          <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+          
           <FlatList
             data={products}
             renderItem={renderItem}

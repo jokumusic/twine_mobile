@@ -21,7 +21,7 @@ export default function CreateStoreScreen(props) {
   const scrollViewRef = useRef<any>(null);
   const isProgramInitialized = useRef(true);
   const focusComponent = useRef();
-  const [secondaryAuthority, setSecondaryAuthority] = useState("");
+  const [secondaryAuthority, setSecondaryAuthority] = useState(store?.secondaryAuthority?.toBase58() ?? "");
 
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
@@ -30,7 +30,9 @@ export default function CreateStoreScreen(props) {
 
 
 
-function validateInputs(): bool {
+function validateInputs() {
+  let validatedStore = {...store};
+  
   if(!store?.data?.displayName){
     log('a name is required');
     return false;
@@ -49,7 +51,7 @@ function validateInputs(): bool {
   if(secondaryAuthority !== ""){
     try{
       const a = new PublicKey(secondaryAuthority);
-      setStore({...store, secondaryAuthority: a});
+      validatedStore = {...validatedStore, secondaryAuthority: a};
     }catch(err) {
       Alert.alert('error', 'Secondary Authority address is invalid');
       return;
@@ -58,19 +60,20 @@ function validateInputs(): bool {
 
   log('all inputs look good!');
 
-  return true;
+  return validatedStore;
 }
 
 async function createStore() {
-  if(!validateInputs())
+  const validatedStore = validateInputs();
+  if(!validatedStore)
     return;
 
   log('creating store...');
   setActivityIndicatorIsVisible(true);
 
   twine
-    .createStore(store, SCREEN_DEEPLINK_ROUTE)
-    .then(createdStore=>{if(createdStore) setStore(createdStore);})
+    .createStore(validatedStore, SCREEN_DEEPLINK_ROUTE)
+    .then(setStore)
     .catch(log)
     .finally(()=>{
       setActivityIndicatorIsVisible(false);
@@ -101,7 +104,8 @@ const refreshStore = async () => {
 }
 
 const updateStore = async() =>{
-  if(!validateInputs())
+  const validatedStore = validateInputs();
+  if(!validatedStore)
     return;
 
   if(!store?.address) {
@@ -113,7 +117,7 @@ const updateStore = async() =>{
   setActivityIndicatorIsVisible(true);
   
   const updatedStore = await twine
-    .updateStore(store, SCREEN_DEEPLINK_ROUTE)
+    .updateStore(validatedStore, SCREEN_DEEPLINK_ROUTE)
     .catch(log);  
 
   if(updatedStore) {

@@ -8,7 +8,8 @@ import {
    FlatList,
    ScrollView,
    SafeAreaView,
-   Alert
+   Alert,
+   ActivityIndicator
    } from 'react-native';
  import { Text, View, TextInput, Button} from '../components/Themed';
  import { FontAwesome5 } from '@expo/vector-icons';
@@ -30,9 +31,20 @@ import {
    const [product, setProduct] = useState<twine.Product>(props.route.params.product);
    const navigation = useRef(props.navigation).current;
    const { addItemToCart } = useContext(CartContext);
+   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
 
+   useEffect(()=>{
+      setActivityIndicatorIsVisible(true);
+      console.log('refreshing store...');
+      twine
+        .getProductByAddress(product.address)
+        .then(p=>{setProduct(p);})
+        .catch(err=>Alert.alert("error", err))
+        .finally(()=>setActivityIndicatorIsVisible(false));
+   },[]);
       
-  async function addToCart(){
+  async function addToCart(){ console.log('add item');
+  
       addItemToCart(product.address);
   }
 
@@ -45,33 +57,41 @@ import {
   }
 
 
-  return (      
-    <View style={styles.container}>
-        <ImageBackground 
+  return (         
+    <View style={styles.container}>      
+      <ImageBackground 
             style={{width: '100%', height: '100%'}} 
-            source={{uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg'}}>  
-        <View style={styles.header}>    
-        { isAuthorizedToEditStore &&    
+            source={{uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg'}}>
+        <View style={{margin: 10, backgroundColor: 'rgba(52, 52, 52, .025)'}}>
+          { isAuthorizedToEditStore() &&    
             <PressableIcon
               name="create"
+              size={30}
               style={{ marginRight: 15 }}
               onPress={() => navigation.navigate('CreateProduct',{store, product})}
             />
-        }
-            <Text style={styles.title}>{product?.data?.displayName}</Text>
+          }
+        </View>  
+       
+        <View style={styles.imagesContainer}>         
+          <Image source={{uri:product?.data?.img}} style={styles.productImage}/>
+          <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>         
         </View>
-        <View style={{backgroundColor: 'rgba(52, 52, 52, .025)'}}>          
-          <ScrollView horizontal={false}>          
-            <Image source={{uri:product.data?.img}} style={styles.productImage}/>
-            <Text>{product?.data?.displayDescription}</Text>
-            <Text>Price: {product.price.toString()}</Text>
-            <Text>Available Quantity: {product.inventory.toString()}</Text>         
-            <Text>Sku: {product.data?.sku}</Text>              
+        <ScrollView style={{marginTop: 10}}>
+                     
+              <Text style={styles.title}>{product?.data?.displayName}</Text>
+              <Text>{product?.data?.displayDescription}</Text>
+              <Text>Price: $ {product.price.toString()}</Text>
+              <Text>Available Quantity: {product.inventory.toString()}</Text> 
+              {      
+                product.data?.sku  &&
+                <Text>Sku: {product.data?.sku}</Text>
+              }
+
             <Button title="Add To Cart" onPress={addToCart}/>
-          </ScrollView>
-        </View>
-    </ImageBackground>
-    </View>    
+        </ScrollView>
+      </ImageBackground>
+    </View>
     );
       
  }
@@ -83,12 +103,13 @@ import {
      },
      header: {
        alignItems: 'center',
-       flexDirection: 'row-reverse',
-       backgroundColor: '#5DBF9B',
-       height: '5%',
-       marginBottom: 10,
-       alignContent: 'center',
-       justifyContent: 'space-between'
+       flexDirection: 'column',
+       backgroundColor: 'rgba(52, 52, 52, .025)',
+       height: '25%',
+       marginBottom: 5,
+     },
+     body: {
+      flexDirection: 'column',
      },
      rowContainer: {
        /*flex: 1,
@@ -109,11 +130,6 @@ import {
        fontSize: 20,
        fontWeight: 'bold',
      },
-     body: {
-       //flex: 1,
-       //alignItems: 'center',
-       //justifyContent: 'top'
-     },
      separator: {
        marginVertical: 30,
        height: 1,
@@ -125,9 +141,19 @@ import {
          borderRadius: 8,
          resizeMode: 'cover',
       },
+      imagesContainer: {
+        backgroundColor: 'rgba(52, 52, 52, .025)',
+        height: '25%',
+        width: '100%',
+        marginTop: 5,
+        marginBottom: 10,
+      },
       productImage: {
-        width: WINDOW_WIDTH /2,
-        height: WINDOW_WIDTH /2
-      }
+        //width: WINDOW_WIDTH /2,
+        //height: WINDOW_WIDTH /2
+        width: WINDOW_WIDTH/2,
+        height: '100%',
+      },
+
    });
    
