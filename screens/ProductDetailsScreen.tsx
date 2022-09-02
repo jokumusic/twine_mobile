@@ -55,7 +55,8 @@ import {
           <ScrollView horizontal={false}>          
             <Image source={{uri:product.data?.img}} style={styles.productImage}/>
             <Text>{product.description}</Text>
-            <Text>Price: {product.price.toString()}</Text>            
+            <Text>Price: {product.price.toString()}</Text>
+            <Text>Available Quantity: {product.inventory?.toString()}</Text>         
             <Text>Sku: {product.data?.sku}</Text>              
             <Button title="Add To Cart" onPress={addToCart}/>
           </ScrollView>
