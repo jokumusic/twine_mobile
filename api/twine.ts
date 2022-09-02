@@ -365,11 +365,10 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         if(product.store) 
         {
             console.log('creating store product transaction...');
-            console.log('redemption type is: ', product.redemptionType);
 
             tx = await program.methods
                 .createStoreProduct(newProductId, product.status, //productMintDecimals, 
-                    new anchor.BN(product.price), product.inventory, product.redemptionType, 
+                    new anchor.BN(product.price), new anchor.BN(product.inventory), product.redemptionType, 
                     product.name, product.description, productData)
                 .accounts({
                     //mint: storeProductMintPda,
@@ -388,7 +387,7 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
             console.log('creating lone product transaction...');
             tx = await program.methods
                 .createProduct(newProductId, product.status, //productMintDecimals, 
-                    new anchor.BN(product.price), product.inventory, product.redemptionType, 
+                    new anchor.BN(product.price), new anchor.BN(product.inventory), product.redemptionType, 
                     product.name, product.description, productData)
                 .accounts({
                     //mint: loneProductMintPda,
