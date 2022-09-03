@@ -264,7 +264,7 @@ export default function CreateProductScreen(props) {
         <View style={styles.inputRow}>
           <View style={{flexDirection: 'row'}}>            
             <TextInput
-              placeholder='addition image url'
+              placeholder='additional image url'
               style={[styles.inputBox,{marginRight:2, width:'92%'}]}
               value={addImageUrl}
               onChangeText={setAddImageUrl}

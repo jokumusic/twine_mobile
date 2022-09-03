@@ -25,7 +25,7 @@ import {
  const SCREEN_DEEPLINK_ROUTE = "stores";
 
  const WINDOW_WIDTH = Dimensions.get('window').width;
- const SLIDER_WIDTH = WINDOW_WIDTH + 80;
+ const SLIDER_WIDTH = WINDOW_WIDTH;
  const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .8);
 
 
@@ -46,8 +46,7 @@ import {
         .finally(()=>setActivityIndicatorIsVisible(false));
    },[]);
       
-  async function addToCart(){ console.log('add item');
-  
+  async function addToCart() {  
       addItemToCart(product.address);
   }
 
