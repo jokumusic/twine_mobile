@@ -4,6 +4,7 @@ import { CartContext } from "../components/CartProvider";
 import { TextInput } from "../components/Themed";
 import * as twine from "../api/twine";
 
+const SCREEN_DEEPLINK_ROUTE = "cart";
 
 export default function CartScreen(props) {
     const navigation = useRef(props.navigation).current;
@@ -11,10 +12,11 @@ export default function CartScreen(props) {
     let [total, setTotal] = useState(0);
     const {map, itemCount, addItemToCart, removeItemFromCart, getItemsResolved} = useContext(CartContext);
     const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+    const [viewPurchases, setViewPurchases] = useState(false);
+    const [purchases, setPurchases] = useState([] as twine.PurchaseTicket[]);
 
 
     useEffect(() =>{
-        
         setActivityIndicatorIsVisible(true);
         console.log('refreshing product list');
         console.log('before: ', itemCount);
@@ -29,8 +31,56 @@ export default function CartScreen(props) {
 
     },[itemCount]);
 
+    async function refreshPurchases() {
+        console.log('getting purchases...');
+        const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+        if(!currentWalletPubkey) {
+            console.log('not connected to a wallet.');
+            return;
+        }
+
+        setActivityIndicatorIsVisible(true);
+
+        twine
+            .getPurchaseTicketsByAuthority(currentWalletPubkey)
+            .then(tickets=>{
+                console.log('tickets: ', tickets);
+                setPurchases(tickets);
+            })
+            .catch(err=>Alert.alert('error', err))
+            .finally(()=>setActivityIndicatorIsVisible(false));
+    }
+
     async function checkOut(){
-        Alert.alert("Not Implemented", "Not implemented yet.");
+        const currentWalletPublicKey = twine.getCurrentWalletPublicKey();
+        if(!currentWalletPublicKey) {
+            Alert.alert('error', 'not connected to a wallet');
+            return;
+        }
+
+        console.log('checking out');
+        setActivityIndicatorIsVisible(true);
+        const promises = [];
+
+        for(const product of products) {
+            const buyPromise = twine
+                .buyProduct(product, product.count, SCREEN_DEEPLINK_ROUTE)
+                .then(ticket=>{
+                    removeItemFromCart(product.address, product.count);
+                })
+                .catch(err=>Alert.alert("error", err));
+
+            promises.push(buyPromise);
+        }
+
+        Promise
+            .all(promises)
+            .catch(err=>Alert.alert('error', err))
+            .finally(()=>{
+                setActivityIndicatorIsVisible(false);
+            });
+
+        console.log('done');
     }
 /*
     async function setItemCount(item, count) {
@@ -84,10 +134,39 @@ export default function CartScreen(props) {
                 <Text style={styles.lineRight}>$ {item.price.toString()} </Text>
             </View>
         );
-        }
+    }
+
+    function renderPurchaseItem({item}) {
+        console.log(item);
+        const purchaseDate = new Date(item.timestamp.toNumber() *1000);
+        return (
+            <View key={item.address.toBase58()} style={{height: 200, width:'100%', borderBottomWidth: 2,}}>
+                <Text style={{fontSize:30}}>quantity: {item.quantity?.toString()}</Text>
+                <Text style={{fontSize:30}}>slot: {item.slot.toNumber()}</Text>
+                <Text style={{fontSize:30}}>date: {purchaseDate.toLocaleDateString("en-us")}</Text>
+                <Text style={{fontSize:30}}>time: {purchaseDate.toLocaleTimeString("en-us")}</Text>
+            </View>
+        );
+    }
 
     return ( 
         <>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+            <Button title="Pending Purchase" onPress={()=>setViewPurchases(false)}/>
+            <Button title="Purchased" onPress={()=>{refreshPurchases(); setViewPurchases(true);}}/>
+        </View>
+
+        {
+            viewPurchases ?
+            <FlatList
+                style={styles.itemsList}
+                contentContainerStyle={styles.itemsListContainer}
+                data={purchases}
+                renderItem={renderPurchaseItem}
+                keyExtractor={(item) => item.address.toBase58()}                
+            />
+            :
+
             <FlatList
                 style={styles.itemsList}
                 contentContainerStyle={styles.itemsListContainer}
@@ -96,6 +175,8 @@ export default function CartScreen(props) {
                 keyExtractor={(item) => item.address.toBase58()}
                 ListHeaderComponent={renderTotal}
             />
+
+        }
 
             <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
         </>

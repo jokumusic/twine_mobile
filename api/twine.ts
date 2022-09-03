@@ -104,6 +104,23 @@ export interface Product extends WriteableProduct {
     readonly description: string;
 }
 
+export interface PurchaseTicket {
+    readonly address: PublicKey;
+    readonly bump: number;
+    readonly version: number;
+    readonly slot: number;
+    readonly timestamp: number;
+    readonly product: PublicKey;
+    readonly productSnapshotMetadata: PublicKey;
+    readonly productSnapshot: PublicKey;
+    readonly buyer: PublicKey;
+    readonly payTo: PublicKey;
+    readonly authority: PublicKey;
+    readonly quantity: number;
+    readonly redeemed: number;
+    readonly nonce: number;
+}
+
 export enum AssetType{
     SOL,
     LAMPORT,
@@ -921,6 +938,132 @@ async function getMixedItems(searchString: string) {
         }
     });
   }
+
+export function buyProduct(product: Product, quantity: number, deeplinkRoute: string) {
+    return new Promise<PurchaseTicket>(async (resolve,reject) => {
+        const currentWalletPubkey = getCurrentWalletPublicKey();
+        if(!currentWalletPubkey){
+            reject('not connected to a wallet.');
+            return;
+        }
+      
+        const program = getProgram(deeplinkRoute);
+        const nonce = generateRandomU16();
+
+        const [productSnapshotMetadataPda, productSnapshotMetadataPdaBump] = PublicKey.findProgramAddressSync(
+        [
+            anchor.utils.bytes.utf8.encode("product_snapshot_metadata"),
+            product.address.toBuffer(),
+            currentWalletPubkey.toBuffer(),
+            Buffer.from(uIntToBytes(nonce,2,"setUint")),
+        ], programId);      
+
+        const [productSnapshotPda, productSnapshotPdaBump] = PublicKey.findProgramAddressSync(
+        [
+            anchor.utils.bytes.utf8.encode("product_snapshot"),
+            productSnapshotMetadataPda.toBuffer(),
+        ], programId);
+
+        const [purchaseTicketPda, purchaseTicketPdaBump] = PublicKey.findProgramAddressSync(
+        [
+            anchor.utils.bytes.utf8.encode("purchase_ticket"),
+            productSnapshotMetadataPda.toBuffer(),
+            currentWalletPubkey.toBuffer(),
+            Buffer.from(uIntToBytes(nonce,2,"setUint"))
+        ], programId);
+        
+
+        let transferAmount = product.price * quantity + 100000000;
+
+        const transferToPurchaseTicketIx = anchor.web3.SystemProgram.transfer({
+            fromPubkey: currentWalletPubkey,
+            toPubkey: purchaseTicketPda,
+            lamports: transferAmount,
+        });
+
+
+        const buyProductIx = await program.methods
+        .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(product.price))
+        .accounts({
+            //mint: loneProduct.mint,
+            product: product.address,
+            productSnapshotMetadata: productSnapshotMetadataPda,
+            productSnapshot: productSnapshotPda,
+            buyer: currentWalletPubkey,
+            buyFor: currentWalletPubkey,
+            payTo: product.payTo,
+            purchaseTicket: purchaseTicketPda,
+        })
+        .instruction();
+
+        const tx = new anchor.web3.Transaction()
+        .add(transferToPurchaseTicketIx)
+        .add(buyProductIx);
+
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.feePayer = currentWalletPubkey;
+
+        console.log('signing and sending transaction...');
+        const signature = await Phantom
+            .signAndSendTransaction(tx, false, true, deeplinkRoute)
+            .catch(reject);
+            console.log('h');
+        if(!signature)
+            return;
+
+        console.log('waiting for finalization of transaction...');
+        const confirmationResponse = await connection
+            .confirmTransaction(signature, 'finalized')
+            .catch(reject);
+
+        if(!confirmationResponse)
+            return;
+ 
+        const purchaseTicket = await program.account
+            .purchaseTicket
+            .fetch(purchaseTicketPda)
+            .catch(reject);
+
+        if(!purchaseTicket)
+        return;
+ 
+        resolve({...purchaseTicket, address: purchaseTicketPda});
+    });
+}
+
+export async function getPurchaseTicketsByAuthority(authority: PublicKey) {
+    return new Promise<PurchaseTicket[]>(async (resolve,reject) => {
+        let items = [] as PurchaseTicket[];
+        if(!authority){
+            reject('authority not specified');
+            return;
+        }
+        
+        const program = getProgram("");
+        const tickets = await program.account.purchaseTicket
+            .all([
+                    {
+                        memcmp: { offset: 186, bytes: authority.toBase58() }
+                    }
+            ])
+            .catch(reject);
+
+        if(!tickets)
+            return;
+    
+        tickets.forEach((ticket,i)=>{  
+            try{    
+                items.push({...ticket.account, address: ticket.publicKey});                
+            }
+            catch(e){
+                console.log('exception: ', e);
+                //console.log(store.account.data);
+            }
+        });
+
+        resolve(items);
+    });
+}
 
 
 

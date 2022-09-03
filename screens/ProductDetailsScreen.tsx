@@ -91,12 +91,14 @@ import {
         </View>  
        
         <View style={styles.imagesContainer}>
-          <CarouselCards
-            data={product?.data?.images}
-            renderItem={carouselRenderImage}
-            sliderWidth={SLIDER_WIDTH}
-            itemWidth={ITEM_WIDTH}
-          />
+          { product?.data?.images &&
+            <CarouselCards
+              data={product?.data?.images}
+              renderItem={carouselRenderImage}
+              sliderWidth={SLIDER_WIDTH}
+              itemWidth={ITEM_WIDTH}
+            />
+          }
           <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>         
         </View>
         <ScrollView style={{marginTop: 10}}>
