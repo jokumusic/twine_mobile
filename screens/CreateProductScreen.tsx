@@ -29,6 +29,12 @@ export default function CreateProductScreen(props) {
       .filter(v=> !isNaN(Number(v)))
       .map(v => ({id:v , label: twine.RedemptionType[v], value: Number(v), selected: product?.redemptionType == v}))
   );
+  const [productStatusChoices, setProductStatusChoices] = useState(
+    Object
+    .values(twine.ProductStatus)
+    .filter(v=> !isNaN(Number(v)))
+    .map(v => ({id:v , label: twine.ProductStatus[v], value: Number(v), selected: product?.status == v}))
+  );
   const [secondaryAuthority, setSecondaryAuthority] = useState(product?.secondaryAuthority?.toBase58() ?? "");
   const [payTo, setPayTo] = useState(product?.payTo?.toBase58() ?? "");
 
@@ -67,6 +73,15 @@ export default function CreateProductScreen(props) {
     if(!product?.data?.img){
       Alert.alert("Error", 'Image is required');
       return false;
+    }
+
+    const selectedProductStatus = productStatusChoices.find(t=>t.selected == true);
+    if(!selectedProductStatus) {
+      Alert.alert('Error', 'Status is required');
+      return false;
+    } 
+    else {
+      validatedProduct = {...validatedProduct, status: selectedProductStatus.value};
     }
 
     if(product?.price < 0){
@@ -218,6 +233,15 @@ export default function CreateProductScreen(props) {
             placeholder='http://'
             value={product?.data?.img}
             onChangeText={(t)=>setProduct({...product, data:{...product?.data, img: t}})} 
+          />
+        </View>
+
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Status</Text>
+          <RadioGroup 
+              radioButtons={productStatusChoices} 
+              onPress={setProductStatusChoices} 
+              containerStyle={{flexDirection: 'row', justifyContent: 'flex-start'}}
           />
         </View>
         

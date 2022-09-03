@@ -28,6 +28,11 @@ export enum RedemptionType {
     Ticketed=1
 }
 
+export enum ProductStatus {
+    Active = 0,
+    Inactive = 1,
+}
+
 export interface WriteableStoreData{
     displayName: string;
     displayDescription: string;
@@ -75,7 +80,7 @@ export interface ProductData extends WriteableProductData {
 }
 
 export interface WriteableProduct {
-    status: number;
+    status: ProductStatus;
     secondaryAuthority: PublicKey;
     tag: number;
     payTo: PublicKey;
