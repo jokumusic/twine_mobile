@@ -8,11 +8,8 @@ import { compress, decompress, trimUndefined, trimUndefinedRecursively } from 'c
 import {
   clusterApiUrl,
   Connection,
-  Keypair,
   PublicKey,
-  SystemProgram,
   Transaction,
-  AccountInfo,
 } from "@solana/web3.js";
 //import {TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token} from "@solana/spl-token";
 //import { bs58 } from '../dist/browser/types/src/utils/bytes';
@@ -649,13 +646,24 @@ export async function updateProduct(product: Product, deeplinkRoute: string) {
 
 
 export async function getStoresByName(nameStartsWith: string) {
-    console.log('name : ', nameStartsWith);
     if(!nameStartsWith)
         return getStores();
     else
         return getStores([{
             memcmp: {
                 offset: 129,
+                bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith.toLowerCase(),'utf8')),
+            }
+        }]);
+}
+
+export async function getProductsByName(nameStartsWith: string) {
+    if(!nameStartsWith)
+        return getProducts();
+    else
+        return getProducts([{
+            memcmp: {
+                offset: 207,
                 bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith.toLowerCase(),'utf8')),
             }
         }]);
@@ -739,12 +747,12 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
     });
 }
 
-async function getProducts(searchString: string, deeplinkRoute: string) {
+async function getProducts(filters?: Buffer | web3.GetProgramAccountsFilter[], additionalFilterString?: string) {
     return new Promise<Product[]>(async (resolve, reject) => {
         const list = [] as Product[];
-        const program = getProgram(deeplinkRoute);
+        const program = getProgram("");
         const products = await program.account.product
-            .all()
+            .all(filters)
             .catch(reject);
 
         if(!products)
@@ -752,8 +760,8 @@ async function getProducts(searchString: string, deeplinkRoute: string) {
 
         let regex:RegExp;
 
-        if(searchString)
-            regex = new RegExp(searchString, 'i');
+        if(additionalFilterString)
+            regex = new RegExp(additionalFilterString, 'i');
 
         products.forEach((product) => {  
             try {      
@@ -779,7 +787,7 @@ async function getProducts(searchString: string, deeplinkRoute: string) {
     });
 }
 
-async function getMixedItems(searchString: string, deeplinkRoute: string) {
+async function getMixedItems(searchString: string) {
     return new Promise<Store[]|Product[]>(async (resolve, reject) => {
         const items = [] as Store[]|Product[];
         
@@ -788,7 +796,7 @@ async function getMixedItems(searchString: string, deeplinkRoute: string) {
         
         items.push(stores);
 
-        const products = await getProducts(searchString, deeplinkRoute)
+        const products = await getProductsByName(searchString)
             .catch(console.log);
         items.push(products);
 

@@ -22,34 +22,34 @@ export const ITEM_HEIGHT = Math.round(ITEM_WIDTH/4);
 
 export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>) {
   const [searchText, setSearchText] = useState("");
-  const [items, setItems] = useState([] as twine.Store[]);
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-  const [favorites, updateFavorites] = useState([]);
+  const [stores, setStores] = useState([] as twine.Store[]);
+  const [products, setProducts] = useState([] as twine.Product[]);
   
   useEffect(()=>{
-    twine
-      .getTopStores(10, SearchString)
-      .then(items=> updateFavorites(items))
-      .catch(e=>console.log(e));
+    runSearch();    
   }, [])
 
 
   async function runSearch() {
     setActivityIndicatorIsVisible(true);
 
-    const stores = await twine
+    console.log('refreshing shop screen...');
+    const getStoresPromise = twine
       .getStoresByName(searchText)
+      .then(setStores)
       .catch(err=>Alert.alert('error', err));
     
-    if(stores)
-      setItems(stores);
+    const getProductsPromise = twine
+      .getProductsByName(searchText)
+      .then(setProducts)
+      .catch(err=>Alert.alert('error', err));
 
-    setActivityIndicatorIsVisible(false);
+    Promise.all([getStoresPromise, getProductsPromise])
+    .finally(()=>{
+      setActivityIndicatorIsVisible(false);
+    });
   }
-
-  useEffect(()=>{
-    runSearch();
-  },[]);
 
 
   return (
@@ -79,7 +79,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
           </View>
           <ScrollView  contentContainerStyle={{flexGrow:1, flexWrap: 'wrap', flexDirection:'row', alignContent: 'space-around'}}>
               {
-                items.map((item)=>(
+                products.map((item)=>(
                 <CardView 
                   key={item.address.toBase58()} 
                   onPress={()=>{
@@ -100,8 +100,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
               uri: favorites_uri,
             }}>  
               <CarouselCards
-               data={favorites}
-               navigation={navigation}
+               data={stores}
                renderItem={p=>          
                 CarouselCardItem({
                   ...p,

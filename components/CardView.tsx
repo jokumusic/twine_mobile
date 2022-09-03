@@ -28,7 +28,7 @@ export const CardView = (item: any) => {
       <Pressable onPress={item.onPress} style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
         <View style={styles.cardTopRow}>
           <View style={{flex:1, flexDirection: 'row', alignContent:'flex-start'}}>
-            { item.data.img ?
+            { item?.data.img ?
             <Image 
               source={{uri:item.data.img}}
               style={{width:80, height: 80}}/>
@@ -39,28 +39,28 @@ export const CardView = (item: any) => {
               <PressableImage
                 source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
                 style={styles.contactIcon}
-                show={item.data.twitter}
-                onPress={()=>Linking.openURL(item.data.twitter)}/>              
+                show={item?.data?.twitter}
+                onPress={()=>Linking.openURL(item?.data?.twitter)}/>              
               <PressableImage
                 source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
                 style={styles.contactIcon}
-                show={item.data.instagram}
-                onPress={()=>Linking.openURL(item.data.instagram)}/>
+                show={item?.data?.instagram}
+                onPress={()=>Linking.openURL(item?.data?.instagram)}/>
               <PressableImage
                 source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
                 style={styles.contactIcon}
-                show={item.data.facebook}
-                onPress={()=>Linking.openURL(item.data.facebook)}/>         
+                show={item?.data?.facebook}
+                onPress={()=>Linking.openURL(item?.data?.facebook)}/>         
               <PressableImage
                 source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
                 style={styles.contactIcon}
-                show={item.data.web}
-                onPress={()=>Linking.openURL(item.data.web)}/>
+                show={item?.data?.web}
+                onPress={()=>Linking.openURL(item?.data?.web)}/>
               <PressableImage
                 source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
                 style={styles.contactIcon}
-                show={item.data.wiki}
-                onPress={()=>Linking.openURL(item.data.wiki)}/>
+                show={item?.data?.wiki}
+                onPress={()=>Linking.openURL(item?.data?.wiki)}/>
             </View>
 
             <View style={{flexDirection: 'column', alignContent: 'center', width: 100, margin:4}}>              
@@ -68,7 +68,7 @@ export const CardView = (item: any) => {
                   <FontAwesome name="star" size={18} color={'gold'} style={{ margin:2 }}/>
                   <Text style={{fontSize:9, position: 'absolute', left: 8, top: 5}}>{Math.floor(Math.random() * 10 / 2)}</Text>                  
                 </View>              
-              <Text style={{fontSize:12, flexWrap: 'wrap', flex:1}}>{item.price ? '$' + item.price.toNumber(): ''}</Text>  
+              <Text style={{fontSize:12, flexWrap: 'wrap', flex:1}}>{item.price ? '$' + item.price: ''}</Text>  
             </View>            
           </View>
         </View>

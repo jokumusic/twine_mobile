@@ -4,9 +4,9 @@ import { View, Text, StyleSheet, Dimensions, Image, ScrollView, Linking, Pressab
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {PressableImage} from './Pressables';
 
-export const SLIDER_WIDTH = Dimensions.get('window').width + 80
-export const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .4)
-export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * .4);
+export const SLIDER_WIDTH = Dimensions.get('window').width;
+export const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .5)
+export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * .5);
 
 
 export const CarouselCardItem = ({ item, index, onPress }) => {
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   },
   header: {
     color: "#222",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
     paddingLeft: 5,
     paddingTop: 3
