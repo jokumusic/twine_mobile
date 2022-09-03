@@ -111,6 +111,10 @@ export type Twine = {
       ],
       "args": [
         {
+          "name": "status",
+          "type": "u8"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -920,6 +924,10 @@ export const IDL: Twine = {
         }
       ],
       "args": [
+        {
+          "name": "status",
+          "type": "u8"
+        },
         {
           "name": "name",
           "type": "string"

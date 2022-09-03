@@ -30,6 +30,11 @@ export enum ProductStatus {
     Inactive = 1,
 }
 
+export enum StoreStatus {
+    Active = 0,
+    Inactive = 1,
+}
+
 export interface WriteableStoreData{
     displayName: string;
     displayDescription: string;
@@ -46,7 +51,7 @@ export interface StoreData extends WriteableStoreData {
 }
 
 export interface WriteableStore {
-    status: number;
+    status: StoreStatus;
     secondaryAuthority: PublicKey;
     tag: number;
     data: StoreData;
@@ -302,6 +307,7 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         console.log('creating transaction...');
         const tx = await program.methods
             .updateStore(
+                store.status,
                 store.data.displayName.toLowerCase(),
                 store.data.displayDescription.toLowerCase(),
                 encodeData(store.data))
@@ -346,7 +352,7 @@ export async function updateStore(store: Store, deeplinkRoute: string) {
         
         updatedStore.data = decodeData(updatedStore.data);
 
-        resolve({...updatedStore, address: updatedStore.address});        
+        resolve({...updatedStore, address: store.address});        
     });
 }
 

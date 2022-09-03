@@ -111,6 +111,10 @@
       ],
       "args": [
         {
+          "name": "status",
+          "type": "u8"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -807,6 +811,6 @@
     }
   ],
   "metadata": {
-    "address": "6snwfnAMf7dwgbwkJc8JuKdnHTRxGr3wRvjVVTevyHsY"
+    "address": "4DbTqTvrVmP5MeGMW2vJJAYwxAQjR2r9KJwRAqZnahQy"
   }
 }

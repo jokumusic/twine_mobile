@@ -8,6 +8,7 @@ import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStat
 import { getCustomTabsSupportingBrowsersAsync } from 'expo-web-browser';
 import * as twine from '../api/twine';
 import { PublicKey } from '@solana/web3.js';
+import { RadioGroup } from 'react-native-radio-buttons-group';
 
 const SCREEN_DEEPLINK_ROUTE = "edit_store";
 
@@ -22,6 +23,12 @@ export default function EditStoreScreen(props) {
   const isProgramInitialized = useRef(true);
   const focusComponent = useRef();
   const [secondaryAuthority, setSecondaryAuthority] = useState(store?.secondaryAuthority?.toBase58() ?? "");
+  const [storeStatusChoices, setStoreStatusChoices] = useState(
+    Object
+    .values(twine.StoreStatus)
+    .filter(v=> !isNaN(Number(v)))
+    .map(v => ({id:v , label: twine.StoreStatus[v], value: Number(v), selected: store?.status == v}))
+  );
 
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
@@ -56,6 +63,16 @@ function validateInputs() {
       Alert.alert('error', 'Secondary Authority address is invalid');
       return;
     }
+  }
+
+  
+  const selectedStoreStatus = storeStatusChoices.find(t=>t.selected == true);
+  if(!selectedStoreStatus) {
+    Alert.alert('Error', 'Status is required');
+    return false;
+  } 
+  else {
+    validatedStore = {...validatedStore, status: selectedStoreStatus.value};
   }
 
   log('all inputs look good!');
@@ -180,6 +197,16 @@ const updateStore = async() =>{
             value={secondaryAuthority}
             onChangeText={setSecondaryAuthority}/>
         </View>
+
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Status</Text>
+          <RadioGroup 
+              radioButtons={storeStatusChoices} 
+              onPress={setStoreStatusChoices} 
+              containerStyle={{flexDirection: 'row', justifyContent: 'flex-start'}}
+          />
+        </View>
+        
 
       </ScrollView>
       </View>
