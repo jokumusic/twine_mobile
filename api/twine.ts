@@ -663,7 +663,7 @@ export async function getProductsByName(nameStartsWith: string) {
     else
         return getProducts([{
             memcmp: {
-                offset: 207,
+                offset: 237,
                 bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith.toLowerCase(),'utf8')),
             }
         }]);
@@ -715,7 +715,7 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
         const products = await program.account.product.all(
             [{
                 memcmp: { 
-                    offset: 154,
+                    offset: 184,
                     bytes: storeAddress.toBase58(),
                 }
              }]
@@ -782,7 +782,7 @@ async function getProducts(filters?: Buffer | web3.GetProgramAccountsFilter[], a
                 //console.log(product.account.data);
             }  
         });
-
+console.log('products: ', list);
         resolve(list);
     });
 }

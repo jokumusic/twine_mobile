@@ -528,9 +528,7 @@ export type Twine = {
           },
           {
             "name": "usableSnapshot",
-            "type": {
-              "option": "publicKey"
-            }
+            "type": "publicKey"
           },
           {
             "name": "payTo",
@@ -538,9 +536,7 @@ export type Twine = {
           },
           {
             "name": "store",
-            "type": {
-              "option": "publicKey"
-            }
+            "type": "publicKey"
           },
           {
             "name": "price",
@@ -1342,9 +1338,7 @@ export const IDL: Twine = {
           },
           {
             "name": "usableSnapshot",
-            "type": {
-              "option": "publicKey"
-            }
+            "type": "publicKey"
           },
           {
             "name": "payTo",
@@ -1352,9 +1346,7 @@ export const IDL: Twine = {
           },
           {
             "name": "store",
-            "type": {
-              "option": "publicKey"
-            }
+            "type": "publicKey"
           },
           {
             "name": "price",

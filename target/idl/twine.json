@@ -528,9 +528,7 @@
           },
           {
             "name": "usableSnapshot",
-            "type": {
-              "option": "publicKey"
-            }
+            "type": "publicKey"
           },
           {
             "name": "payTo",
@@ -538,9 +536,7 @@
           },
           {
             "name": "store",
-            "type": {
-              "option": "publicKey"
-            }
+            "type": "publicKey"
           },
           {
             "name": "price",
@@ -811,6 +807,6 @@
     }
   ],
   "metadata": {
-    "address": "FWMbq7gdPD2nYH1gndgtZS8C1Tp4pzLXTRxQ9R61AhHZ"
+    "address": "6snwfnAMf7dwgbwkJc8JuKdnHTRxGr3wRvjVVTevyHsY"
   }
 }
