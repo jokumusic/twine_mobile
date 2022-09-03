@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useRef } from "react";
-import { Alert, Button, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Button, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { CartContext } from "../components/CartProvider";
 import { TextInput } from "../components/Themed";
 import * as twine from "../api/twine";
@@ -10,8 +10,12 @@ export default function CartScreen(props) {
     const [products, setProducts] = useState([] as twine.Product[]);
     let [total, setTotal] = useState(0);
     const {map, itemCount, addItemToCart, removeItemFromCart, getItemsResolved} = useContext(CartContext);
+    const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+
 
     useEffect(() =>{
+        
+        setActivityIndicatorIsVisible(true);
         console.log('refreshing product list');
         console.log('before: ', itemCount);
         getItemsResolved()
@@ -20,7 +24,9 @@ export default function CartScreen(props) {
                 setProducts(items)
                 setTotal(items.reduce((total,item)=>total + (item.count * item.price), 0));
             })
-            .catch(err=>Alert.alert('error', err));    
+            .catch(err=>Alert.alert('error', err))
+            .finally(()=>setActivityIndicatorIsVisible(false));
+
     },[itemCount]);
 
     async function checkOut(){
@@ -81,15 +87,18 @@ export default function CartScreen(props) {
         }
 
     return ( 
-        <FlatList
-            style={styles.itemsList}
-            contentContainerStyle={styles.itemsListContainer}
-            data={products}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.address.toBase58()}
-            ListHeaderComponent={renderTotal}
-        />
+        <>
+            <FlatList
+                style={styles.itemsList}
+                contentContainerStyle={styles.itemsListContainer}
+                data={products}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.address.toBase58()}
+                ListHeaderComponent={renderTotal}
+            />
 
+            <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+        </>
     );
 }
 
