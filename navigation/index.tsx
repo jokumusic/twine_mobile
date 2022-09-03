@@ -9,16 +9,14 @@ import LinkingConfiguration from './LinkingConfiguration';
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import AboutScreen from '../screens/AboutScreen';
-import CreateStoreScreen from '../screens/CreateStoreScreen';
+import EditStoreScreen from '../screens/EditStoreScreen';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import ShopScreen from '../screens/ShopScreen';
 import StoresScreen from '../screens/StoresScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import StoreDetailsScreen from '../screens/StoreDetailsScreen';
-import CreateProductScreen from '../screens/CreateProductScreen';
-import EditStoreScreen from '../screens/EditStoreScreen';
-import ProductDetailsScreen from '../screens/ProductDetailsScreen';
 import EditProductScreen from '../screens/EditProductScreen';
+import ProductDetailsScreen from '../screens/ProductDetailsScreen';
 import CartScreen from '../screens/CartScreen';
 import { CartIcon } from '../components/CartIcon';
 import { ScreenProps } from 'react-native-screens';
@@ -53,9 +51,9 @@ function RootNavigator() {
       <Stack.Group screenOptions={{ presentation: 'modal' }}>
         <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen 
-          name="CreateStore"
-          component={CreateStoreScreen}
-          options={({ navigation }: ScreenProps<'CreateStore'>) => ({
+          name="EditStore"
+          component={EditStoreScreen}
+          options={({ navigation }: ScreenProps<'EditStore'>) => ({
             title: 'Store Create/Update',
             headerShown: true,
           })} 
@@ -72,9 +70,9 @@ function RootNavigator() {
           } 
         />
         <Stack.Screen 
-          name="CreateProduct"
-          component={CreateProductScreen}
-          options={({ navigation }: ScreenProps<'CreateProduct'>) => ({
+          name="EditProduct"
+          component={EditProductScreen}
+          options={({ navigation }: ScreenProps<'EditProduct'>) => ({
             title: 'Product Create/Update',
             headerShown: true,
           })}
@@ -170,7 +168,7 @@ function BottomTabNavigator() {
         name="ContactTab"
         component={ContactScreen}
         options={({ navigation }: RootTabScreenProps<'ContactTab'>) => ({
-          title: 'Contacts',
+          title: 'Community',
           headerShown: true,
           tabBarIcon: ({ color }) => <TabBarIcon name='people-outline' color={color} />,
           headerRight: () => (
@@ -195,34 +193,6 @@ function BottomTabNavigator() {
       />
 
       <BottomTab.Screen
-        name="StoresTab"
-        component={StoresScreen}
-        options={({ navigation }: RootTabScreenProps<'StoresTab'>) => ({
-          title: 'Listings',
-          headerShown: true,
-          tabBarIcon: ({ color }) => <TabBarIcon name='list' color={color} />,
-          headerRight: () => (
-            <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
-            <CartIcon navigation={navigation} />
-            <PressableIcon
-              name="wallet"
-              onPress={()=>connectWallet("stores")}            
-              color={Colors[colorScheme].text}
-              style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
-            />
-            <PressableIcon
-              name="add-circle-outline"
-              color={Colors[colorScheme].text}
-              style={{ marginRight: 15 }}
-              size={34}
-              onPress={() => navigation.navigate('CreateStore')}
-            />
-            </View>
-          ),
-        })}
-      />
-
-      <BottomTab.Screen
         name="CartTab"
         component={CartScreen}
         options={({ navigation }: RootTabScreenProps<'CartTab'>) => ({
@@ -241,6 +211,36 @@ function BottomTabNavigator() {
           )
         })}
       />
+
+      <BottomTab.Screen
+        name="StoresTab"
+        component={StoresScreen}        
+        options={({ navigation }: RootTabScreenProps<'StoresTab'>) => ({
+          title: 'Listings',
+          headerShown: true,
+          tabBarIcon: ({ color }) => <TabBarIcon name='list' color={color} />,
+          headerRight: () => (
+            <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+            <CartIcon navigation={navigation} />
+            <PressableIcon
+              name="wallet"
+              onPress={()=>connectWallet("stores")}            
+              color={Colors[colorScheme].text}
+              style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
+            />
+            <PressableIcon
+              name="add-circle-outline"
+              color={Colors[colorScheme].text}
+              style={{ marginRight: 15 }}
+              size={34}
+              onPress={() => navigation.navigate('EditStore')}
+            />
+            </View>
+          ),
+        })}
+      />
+
+
     </BottomTab.Navigator>
   );
 }

@@ -101,7 +101,7 @@ export default function StoreDetailsScreen(props) {
             { isAuthorizedToEditStore() &&   
               <>
               <Pressable
-                onPress={() => navigation.navigate('CreateStore',{store})}
+                onPress={() => navigation.navigate('EditStore',{store})}
                 style={({ pressed }) => ({
                   opacity: pressed ? 0.5 : 1,
                 })}>
@@ -112,7 +112,7 @@ export default function StoreDetailsScreen(props) {
                 />
               </Pressable>  
               <Pressable
-                onPress={() => navigation.navigate('CreateProduct',{store})}
+                onPress={() => navigation.navigate('EditProduct',{store})}
                 style={({ pressed }) => ({
                   opacity: pressed ? 0.5 : 1,
                 })}>

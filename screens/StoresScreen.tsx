@@ -2,21 +2,26 @@ import { StyleSheet, ImageBackground, Button, Alert } from 'react-native';
 import { Text, View, TextInput } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import ImageCarousel, {ImageCarouselItem} from '../components/ImageCarousel';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as twine from '../api/twine';
+import Navigation from '../navigation';
+import { PressableIcon } from '../components/Pressables';
 
 const SCREEN_DEEPLINK_ROUTE = "stores";
 
 export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresTab'>) {
   const [myStores, setMyStores] = useState([]);
-  const [myPubkey, setMyPubkey] = useState();
 
-  useEffect(()=>{
-    if(!myPubkey)
+  async function refresh() {    
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey()
+    if(!currentWalletPubkey){
+      Alert.alert('', 'not connected to a wallet');
       return;
+    }
 
+    console.log('refreshing stores list')
     twine
-      .getStoresByAuthority(myPubkey, SCREEN_DEEPLINK_ROUTE)
+      .getStoresByAuthority(currentWalletPubkey, SCREEN_DEEPLINK_ROUTE)
       .then(stores=>{
         const carouselItems = stores
           .map(store => ({             
@@ -31,22 +36,11 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
       .catch(err=>{
         Alert.alert("Error", err);
       });
-
-  },[myPubkey])
-
-  async function connectWallet(){
-    const walletPubkey = await twine
-      .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>{
-        Alert.alert('Error', err);
-      });
-    
-    if(walletPubkey){
-      setMyPubkey(walletPubkey);
-    } else {
-      console.log("didn't get wallet public key");
-    }    
   }
+  
+  useEffect(()=>{
+   refresh();
+  },[]);
   
 
   return (  
@@ -56,8 +50,12 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
         source={{
             uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
         }}>  
-        <ImageCarousel data={myStores} />  
-        <Button title="Connect Wallet" onPress={connectWallet} />
+        <ImageCarousel data={myStores} />
+        <PressableIcon
+          name="refresh"
+          size={40}
+          onPress={()=>refresh()}
+        />
       </ImageBackground>      
     </View>
   );
@@ -67,6 +65,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 20,

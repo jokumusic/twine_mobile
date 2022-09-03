@@ -44,7 +44,7 @@ import {
         .then(p=>{setProduct(p);})
         .catch(err=>Alert.alert("error", err))
         .finally(()=>setActivityIndicatorIsVisible(false));
-   },[]);
+   },[product]);
       
   async function addToCart() {  
       addItemToCart(product.address);
@@ -82,7 +82,7 @@ import {
               name="create"
               size={30}
               style={{ marginRight: 15 }}
-              onPress={() => navigation.navigate('CreateProduct',{store, product})}
+              onPress={() => navigation.navigate('EditProduct',{store, product})}
             />
           }
         </View>  

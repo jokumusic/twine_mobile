@@ -14,7 +14,6 @@ import { CartProvider } from './components/CartProvider';
 import {LogBox} from "react-native";
 
 
-
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
@@ -22,7 +21,8 @@ export default function App() {
   LogBox.ignoreLogs([
     "ViewPropTypes will be removed",
     "ColorPropType will be removed",
-    ])
+    "Non-serializable values were found in the navigation state"
+  ]);
 
   if (!isLoadingComplete) {
     return null;
