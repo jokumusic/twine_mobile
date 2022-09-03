@@ -749,6 +749,7 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
 
 async function getProducts(filters?: Buffer | web3.GetProgramAccountsFilter[], additionalFilterString?: string) {
     return new Promise<Product[]>(async (resolve, reject) => {
+        console.log('twine.getProducts()');
         const list = [] as Product[];
         const program = getProgram("");
         const products = await program.account.product
@@ -782,7 +783,7 @@ async function getProducts(filters?: Buffer | web3.GetProgramAccountsFilter[], a
                 //console.log(product.account.data);
             }  
         });
-console.log('products: ', list);
+
         resolve(list);
     });
 }
