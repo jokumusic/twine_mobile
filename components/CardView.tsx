@@ -1,6 +1,6 @@
 import React from "react";
 import { View, ScrollView, Pressable, Image, StyleSheet, Dimensions, Text, Linking } from "react-native";
-import PressableImage from './PressableImage';
+import {PressableImage} from './Pressables';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import {clusterApiUrl, Connection, PublicKey} from "@solana/web3.js";
 import * as anchor from "../dist/browser/index";

@@ -16,7 +16,7 @@ import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import { Card } from 'react-native-paper';
 import * as twine from '../api/twine';
-import PressableImage from '../components/PressableImage';
+import {PressableImage} from '../components/Pressables';
 import { TokenInvalidOwnerError } from '@solana/spl-token';
 
 const SCREEN_DEEPLINK_ROUTE = "store_details";

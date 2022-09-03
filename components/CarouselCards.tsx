@@ -1,37 +1,26 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { View } from "react-native"
 import Carousel, { Pagination } from 'react-native-snap-carousel'
-import CarouselCardItem, { SLIDER_WIDTH, ITEM_WIDTH } from './CarouselCardItem'
+
 import { SearchString } from './CardView';
 import { getTopStores } from '../api/twine';
 
-const CarouselCards = (props) => {
-  const navigation = useRef(props.navigation);
-  const isCarousel = React.useRef(null);
-  const [index, setIndex] = React.useState(0);
-  const [favorites, updateFavorites] = useState([]);
-  
-  useEffect(()=>{
-    getTopStores(10, SearchString)
-    .then(items=> updateFavorites(items))
-    .catch(e=>log(e));
-  }, [SearchString])
-
+const CarouselCards = ({data, renderItem, sliderWidth, itemWidth }) => {
+  //const navigation = useRef(props.navigation);
+  //const renderItem = useCallback(props.renderItem,[]);
+  const isCarousel = useRef(null);
+  const [index, setIndex] = useState(0);
+ 
   return (
     <View>
       <Carousel
         layout="default"
         layoutCardOffset={9}
         ref={isCarousel}
-        data={favorites}
-        renderItem={p=>          
-          CarouselCardItem({
-            ...p,
-            onPress: () => navigation.current.navigate('StoreDetails',{store: p.item})
-          })
-        }
-        sliderWidth={SLIDER_WIDTH}
-        itemWidth={ITEM_WIDTH}
+        data={data}
+        renderItem={renderItem}
+        sliderWidth={sliderWidth}
+        itemWidth={itemWidth}
         inactiveSlideShift={0}
         useScrollView={true}
         onSnapToItem={(index) => setIndex(index)}

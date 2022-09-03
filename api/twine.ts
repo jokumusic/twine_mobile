@@ -526,7 +526,7 @@ export async function createProduct(product: WriteableProduct, deeplinkRoute: st
 }
 
 
-export async function getProductByAddress(address: PublicKey, deeplinkRoute: string) {
+export async function getProductByAddress(address: PublicKey) {
     return new Promise<Product>(async(resolve,reject) => {
 
         if(!address) {
@@ -535,7 +535,7 @@ export async function getProductByAddress(address: PublicKey, deeplinkRoute: str
         }
 
         const currentWalletPubkey = getCurrentWalletPublicKey();
-        const program = getProgram(deeplinkRoute);    
+        const program = getProgram("");    
         const product = await program.account.product.fetchNullable(address);
         if(!product){
             reject(`product doesn't exist at address: ${address.toBase58()}`);        
@@ -656,7 +656,7 @@ export async function getStoresByName(nameStartsWith: string) {
         return getStores([{
             memcmp: {
                 offset: 129,
-                bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith,'utf8')),
+                bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith.toLowerCase(),'utf8')),
             }
         }]);
 }

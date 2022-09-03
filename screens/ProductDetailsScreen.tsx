@@ -18,12 +18,15 @@ import {
  import useColorScheme from '../hooks/useColorScheme';
  import { CartContext } from '../components/CartProvider';
  import * as twine from '../api/twine';
- import { PressableIcon } from '../components/Pressables';
+ import { PressableIcon, PressableImage } from '../components/Pressables';
+ import CarouselCards from '../components/CarouselCards';
  
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
 
- export const WINDOW_WIDTH = Dimensions.get('window').width;
+ const WINDOW_WIDTH = Dimensions.get('window').width;
+ const SLIDER_WIDTH = WINDOW_WIDTH + 80;
+ const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .8);
 
 
  export default function ProductDetailsScreen(props) {
@@ -35,7 +38,7 @@ import {
 
    useEffect(()=>{
       setActivityIndicatorIsVisible(true);
-      console.log('refreshing store...');
+      console.log('refreshing product...');
       twine
         .getProductByAddress(product.address)
         .then(p=>{setProduct(p);})
@@ -56,6 +59,18 @@ import {
     return pkey.equals(product?.authority) || pkey.equals(product?.secondaryAuthority);
   }
 
+  function carouselRenderImage({ item, index}) {
+    return (
+        <PressableImage
+          show={true}
+          source={{uri: item}}
+          style={{width:'100%', height:'100%'}}
+          onPress={()=>
+            console.log('image pressed')
+          }
+        />
+    );
+  }
 
   return (         
     <View style={styles.container}>      
@@ -73,8 +88,13 @@ import {
           }
         </View>  
        
-        <View style={styles.imagesContainer}>         
-          <Image source={{uri:product?.data?.img}} style={styles.productImage}/>
+        <View style={styles.imagesContainer}>
+          <CarouselCards
+            data={product?.data?.images}
+            renderItem={carouselRenderImage}
+            sliderWidth={SLIDER_WIDTH}
+            itemWidth={ITEM_WIDTH}
+          />
           <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>         
         </View>
         <ScrollView style={{marginTop: 10}}>

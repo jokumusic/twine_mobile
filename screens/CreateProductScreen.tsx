@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Image, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
@@ -11,9 +11,15 @@ import { PublicKey } from '@solana/web3.js';
 import { publicKey } from '../dist/browser/types/src/coder/spl-token/buffer-layout';
 import { Modal } from 'react-native-paper';
 import { Twine } from '../target/types/twine';
+import CarouselCards from '../components/CarouselCards';
+import { PressableIcon, PressableImage } from '../components/Pressables';
 
 
 const SCREEN_DEEPLINK_ROUTE = "create_product";
+
+const SLIDER_WIDTH = Dimensions.get('window').width + 80
+const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .4)
+const ITEM_HEIGHT = Math.round(ITEM_WIDTH * .4);
 
 
 export default function CreateProductScreen(props) {
@@ -37,6 +43,7 @@ export default function CreateProductScreen(props) {
   );
   const [secondaryAuthority, setSecondaryAuthority] = useState(product?.secondaryAuthority?.toBase58() ?? "");
   const [payTo, setPayTo] = useState(product?.payTo?.toBase58() ?? "");
+  const [addImageUrl, setAddImageUrl] = useState("");
 
 
   const log = useCallback((log: string, toConsole=true) => {
@@ -189,6 +196,34 @@ export default function CreateProductScreen(props) {
     log('done');
   }
 
+  function carouselRenderImage({ item, index}) {
+    const borderColor = product?.data?.img == item ? 'lime' : 'black'
+    return (
+      <>
+        <PressableImage
+          show={true}
+          source={{uri: item}}
+          style={{width:100, height:100, borderWidth:4, borderColor}}
+          onPress={()=>
+            setProduct({...product, data:{...product.data, img: item}})
+          }
+        />
+        <PressableIcon
+          name="remove-circle"
+          color="red"
+          onPress={()=>{
+            let img = product?.data?.img;
+            if(img == item)
+              img = "";
+
+            const images = product?.data?.images?.filter(i=>i!=item);
+            setProduct({...product, data:{...product.data, img, images}});
+          }}
+        />
+      </>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
@@ -224,15 +259,35 @@ export default function CreateProductScreen(props) {
               onPress={setRedemptionTypeChoices} 
               containerStyle={{flexDirection: 'row', justifyContent: 'flex-start'}}
           />
-        </View>
+        </View>        
 
         <View style={styles.inputRow}>
-          <Text style={styles.inputLabel}>Image URL</Text>
-          <TextInput
-            style={styles.inputBox}
-            placeholder='http://'
-            value={product?.data?.img}
-            onChangeText={(t)=>setProduct({...product, data:{...product?.data, img: t}})} 
+          <View style={{flexDirection: 'row'}}>            
+            <TextInput
+              placeholder='addition image url'
+              style={[styles.inputBox,{marginRight:2, width:'92%'}]}
+              value={addImageUrl}
+              onChangeText={setAddImageUrl}
+            />
+
+            <PressableIcon
+              name="add-circle"
+              size={30}
+              color="green"
+              onPress={()=>{
+                const images = product.data.images ?? [];
+                images.push(addImageUrl);
+                setProduct({...product, data:{...product.data, images}});
+                setAddImageUrl("");
+              }}
+            />
+          </View>
+
+          <CarouselCards
+              data={product?.data?.images}
+              renderItem={carouselRenderImage}
+              sliderWidth={SLIDER_WIDTH}
+              itemWidth={100}
           />
         </View>
 

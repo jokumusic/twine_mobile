@@ -4,6 +4,8 @@ import ImageCarousel from '../components/ImageCarousel';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import CarouselCards from '../components/CarouselCards'
+import {CarouselCardItem} from '../components/CarouselCardItem';
+import * as carouselCardItem from '../components/CarouselCardItem';
 import { HorizontalScrollView, SearchString, setSearchString, CardView } from '../components/CardView';
 import { blue100 } from 'react-native-paper/lib/typescript/styles/colors';
 import MarqueeText from 'react-native-marquee';
@@ -22,6 +24,15 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
   const [searchText, setSearchText] = useState("");
   const [items, setItems] = useState([] as twine.Store[]);
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+  const [favorites, updateFavorites] = useState([]);
+  
+  useEffect(()=>{
+    twine
+      .getTopStores(10, SearchString)
+      .then(items=> updateFavorites(items))
+      .catch(e=>console.log(e));
+  }, [])
+
 
   async function runSearch() {
     setActivityIndicatorIsVisible(true);
@@ -88,7 +99,18 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
             source={{
               uri: favorites_uri,
             }}>  
-              <CarouselCards navigation={navigation}/>
+              <CarouselCards
+               data={favorites}
+               navigation={navigation}
+               renderItem={p=>          
+                CarouselCardItem({
+                  ...p,
+                  onPress: () => navigation.navigate('StoreDetails',{store: p.item})
+                })
+              }
+              sliderWidth={carouselCardItem.SLIDER_WIDTH}
+              itemWidth={carouselCardItem.ITEM_WIDTH}
+              />
               <MarqueeText
                 style={{ fontSize: 10, color: 'red', fontWeight: 'bold', }}
                 speed={.5}

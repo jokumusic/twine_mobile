@@ -1,6 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, StyleSheetProperties, Text } from "react-native";
+import { Image, Pressable, StyleSheet, StyleSheetProperties, Text, View } from "react-native";
 import NamespaceFactory from "../dist/browser/types/src/program/namespace";
+
+
+export function PressableImage({show, source, style, onPress}) { 
+  if(show){
+    return (
+    <Pressable 
+      onPress={onPress}
+      style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
+      <Image source={source} style={style}/>
+    </Pressable>
+    );
+  } 
+  else {
+    return (<View/>);
+  }
+};
+
 
 export function PressableIcon(props: {
     name: React.ComponentProps<typeof Ionicons>['name'];
