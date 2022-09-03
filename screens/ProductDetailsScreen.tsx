@@ -60,6 +60,7 @@ import {
 
   function carouselRenderImage({ item, index}) {
     return (
+      item ?
         <PressableImage
           show={true}
           source={{uri: item}}
@@ -68,6 +69,8 @@ import {
             console.log('image pressed')
           }
         />
+      :
+      <></>
     );
   }
 
