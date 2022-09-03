@@ -16,7 +16,7 @@ import {
 
 if (typeof BigInt === 'undefined') global.BigInt = require('big-integer') //fixes an issue with react native not supporting bigint. added package big-integer to project and then added this
 
-const network = clusterApiUrl("testnet")
+const network = clusterApiUrl("devnet")
 const connection = new Connection(network);
 const programId = new PublicKey(idl.metadata.address);
 

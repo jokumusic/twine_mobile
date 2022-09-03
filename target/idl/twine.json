@@ -756,61 +756,66 @@
     },
     {
       "code": 6005,
-      "name": "StoreNumberDoesntMatchCompanyStoreCount",
-      "msg": "StoreNumberDoesntMatchCompanyStoreCount"
-    },
-    {
-      "code": 6006,
       "name": "NotMutable",
       "msg": "NotMutable"
     },
     {
-      "code": 6007,
+      "code": 6006,
       "name": "AuthorityDoesntExist",
       "msg": "authority Doesn't Exist"
     },
     {
-      "code": 6008,
+      "code": 6007,
       "name": "PayToDoesntExist",
       "msg": "pay_to Doesn't Exist"
     },
     {
-      "code": 6009,
+      "code": 6008,
       "name": "PriceIsGreaterThanPayment",
-      "msg": "Price Is Greater Payment"
+      "msg": "price is greater than payment"
     },
     {
-      "code": 6010,
+      "code": 6009,
       "name": "NameIsTooLong",
       "msg": "name is too long"
     },
     {
-      "code": 6011,
+      "code": 6010,
       "name": "DescriptionIsTooLong",
       "msg": "description is too long"
     },
     {
-      "code": 6012,
+      "code": 6011,
       "name": "NotEnoughInventory",
       "msg": "not enough inventory"
     },
     {
-      "code": 6013,
+      "code": 6012,
       "name": "InsufficientFunds",
       "msg": "insufficient funds"
     },
     {
-      "code": 6014,
+      "code": 6013,
       "name": "UnableToDeductFromBuyerAccount",
       "msg": "unable to deduct from buyer account"
     },
     {
-      "code": 6015,
+      "code": 6014,
       "name": "UnableToAddToPayToAccount",
       "msg": "unable to add to pay_to account"
+    },
+    {
+      "code": 6015,
+      "name": "ProductIsNotActive",
+      "msg": "product is not active"
+    },
+    {
+      "code": 6016,
+      "name": "StoreIsNotActive",
+      "msg": "store is not active"
     }
   ],
   "metadata": {
-    "address": "4DbTqTvrVmP5MeGMW2vJJAYwxAQjR2r9KJwRAqZnahQy"
+    "address": "DHvX2ufjEgriS4u9QkTTZ4XLkz9i3EkBVmGK2fZpHnF"
   }
 }

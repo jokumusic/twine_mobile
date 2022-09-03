@@ -30,8 +30,8 @@ interface RegisteredCallbackHandler extends CallbackHandler {
 }
 
 const context = {
-    network:  clusterApiUrl('testnet'),
-    cluster: 'testnet',
+    network:  clusterApiUrl('devnet'),
+    cluster: 'devnet',
     phantom_app_url: 'https://phantom.app',
 };
 
