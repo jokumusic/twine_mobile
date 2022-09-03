@@ -11,11 +11,18 @@ import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
 import {ActivityIndicator, DarkTheme as PaperDarkTheme, DefaultTheme as PaperDefaultTheme, Provider as PaperProvider } from 'react-native-paper';
 import { CartProvider } from './components/CartProvider';
+import {LogBox} from "react-native";
+
 
 
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
+
+  LogBox.ignoreLogs([
+    "ViewPropTypes will be removed",
+    "ColorPropType will be removed",
+    ])
 
   if (!isLoadingComplete) {
     return null;
