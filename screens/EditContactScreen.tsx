@@ -4,6 +4,8 @@ import { ActivityIndicator, Button, Platform, Pressable, StyleSheet, TextInput, 
 import { Text, View } from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
 import * as solchat from '../api/solchat';
+import { Avatar } from "@rneui/themed";
+import { PressableIcon } from '../components/Pressables';
 
 const SCREEN_DEEPLINK_ROUTE = "edit_contact";
 
@@ -51,22 +53,24 @@ export default function EditContactScreen(props) {
         <View style={styles.inputSection}>
             
             <View style={{flexDirection: 'row'}}>
+              <View style={{width:'60%', flexDirection: 'column', marginRight: 4}}>
                 <Text style={styles.inputLabel}>Address</Text>
-                <Pressable
-                    onPress={() =>Clipboard.setString(contact?.address?.toBase58())}
-                    style={[{marginLeft: 5}, 
-                        ({ pressed }) => ({opacity: pressed ? 0.5 : 1,})
-                    ]}
-                >
-                    <FontAwesome5
-                        name="copy"
-                        size={20}
-                        color={'black'}
-                        style={{ marginRight: 15 }}
-                    />
-                </Pressable>
+                <PressableIcon
+                  name="copy"
+                  size={20}
+                  onPress={() =>Clipboard.setString(contact?.address?.toBase58())}
+                  style={{marginLeft: 5}}
+                />
+                <Text style={{fontSize: 16, marginBottom:8}}>{contact?.address?.toBase58()}</Text>
+              </View>              
+              <Avatar
+                size={105}
+                rounded
+                source={contact.data?.img ? { uri: contact.data?.img } : {}}
+                key={contact?.address?.toBase58() ?? "1"}
+              />
             </View>
-            <Text style={{fontSize: 10, marginBottom:8,}}>{contact?.address?.toBase58()}</Text>
+            
 
 
             <Text style={styles.inputLabel}>Name</Text>
