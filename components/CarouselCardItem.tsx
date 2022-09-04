@@ -78,6 +78,7 @@ const styles = StyleSheet.create({
   image: {    
     width: ITEM_WIDTH * .5,
     height: ITEM_HEIGHT * .5,
+    resizeMode: 'contain',
   },
   header: {
     color: "#222",

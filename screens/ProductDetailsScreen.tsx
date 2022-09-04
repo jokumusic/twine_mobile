@@ -26,7 +26,7 @@ import {
 
  const WINDOW_WIDTH = Dimensions.get('window').width;
  const SLIDER_WIDTH = WINDOW_WIDTH;
- const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .8);
+ const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .70);
 
 
  export default function ProductDetailsScreen(props) {
@@ -64,7 +64,7 @@ import {
         <PressableImage
           show={true}
           source={{uri: item}}
-          style={{width:'100%', height:'100%'}}
+          style={{height:'100%', resizeMode:'stretch', aspectRatio: 1.2}}
           onPress={()=>
             console.log('image pressed')
           }
@@ -165,19 +165,19 @@ import {
          borderRadius: 8,
          resizeMode: 'cover',
       },
-      imagesContainer: {
-        backgroundColor: 'rgba(52, 52, 52, .025)',
-        height: '25%',
-        width: '100%',
-        marginTop: 5,
-        marginBottom: 10,
-      },
-      productImage: {
-        //width: WINDOW_WIDTH /2,
-        //height: WINDOW_WIDTH /2
-        width: WINDOW_WIDTH/2,
-        height: '100%',
-      },
+    imagesContainer: {
+      backgroundColor: 'rgba(52, 52, 52, .025)',
+      height: '32%',
+      width: '100%',
+      marginTop: 5,
+      marginBottom: 10,
+    },
+    productImage: {
+      //width: WINDOW_WIDTH /2,
+      //height: WINDOW_WIDTH /2
+      width: WINDOW_WIDTH/2,
+      height: '100%',
+    },
 
    });
    

@@ -31,7 +31,7 @@ export const CardView = (item: any) => {
             { item?.data.img ?
             <Image 
               source={{uri:item.data.img}}
-              style={{width:80, height: 80}}/>
+              style={{width:80, height: 80, resizeMode: 'contain'}}/>
               :
               <View style={{width:80,height:80}}/>
             }

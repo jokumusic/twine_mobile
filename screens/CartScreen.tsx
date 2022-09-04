@@ -39,9 +39,7 @@ export default function CartScreen(props) {
             return;
         }
 
-        setActivityIndicatorIsVisible(true);
-
-        
+        setActivityIndicatorIsVisible(true);        
 
         const tickets = await twine
             .getPurchaseTicketsByAuthority(currentWalletPubkey)
@@ -61,6 +59,7 @@ export default function CartScreen(props) {
             refreshedPurchases.push({ticket,snapshot});
         }
 
+        refreshedPurchases.sort((a,b)=> b?.ticket?.timestamp - a?.ticket?.timestamp);
         setPurchases(refreshedPurchases);
         setActivityIndicatorIsVisible(false);        
     }
@@ -156,6 +155,7 @@ export default function CartScreen(props) {
             return (
                 <View key={item.ticket?.address?.toBase58()} style={{height: 200, width:'100%', borderBottomWidth: 2, flexDirection: 'row'}}>
                     <View style={{flexDirection:'column', width: '50%'}}>
+                        <Text style={{fontSize:15}}>price: ${item.snapshot?.price}</Text>
                         <Text style={{fontSize:15}}>quantity: {item.ticket?.quantity?.toString()}</Text>
                         <Text style={{fontSize:15}}>redemptions: {item.ticket?.redeemed?.toString()}</Text>
                         <Text style={{fontSize:15}}>slot: {item.ticket?.slot?.toNumber()}</Text>
