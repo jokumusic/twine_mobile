@@ -13,6 +13,7 @@ import { Modal } from 'react-native-paper';
 import { Twine } from '../target/types/twine';
 import CarouselCards from '../components/CarouselCards';
 import { PressableIcon, PressableImage } from '../components/Pressables';
+import { CheckBox, Icon } from "@rneui/themed";
 
 
 const SCREEN_DEEPLINK_ROUTE = "edit_product";
@@ -29,13 +30,6 @@ export default function EditProductScreen(props) {
   const [product, setProduct] = useState<twine.Product>(props.route.params?.product ?? {store: store?.address});
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
-  const [redemptionTypeChoices, setRedemptionTypeChoices] = useState(
-    Object
-      .values(twine.RedemptionType)
-      .filter(v=> !isNaN(Number(v)))
-      .map(v => ({id:v , label: twine.RedemptionType[v], value: Number(v), selected: product?.redemptionType == v}))
-  );
-
   const [productStatusChoices, setProductStatusChoices] = useState(
     Object
     .values(twine.ProductStatus)
@@ -74,15 +68,9 @@ export default function EditProductScreen(props) {
       return false;
     }
 
-    const selectedRedemptionType = redemptionTypeChoices.find(t=>t.selected == true);
-    console.log('selected: ', selectedRedemptionType);
-    if(!selectedRedemptionType) {
-      Alert.alert('Error', 'Redemption Type is required');
+    if(product.redemptionType < 1) {
+      Alert.alert('Error', 'Accept Exchange Type is required');
       return false;
-    } 
-    else {
-      validatedProduct = {...validatedProduct, redemptionType: selectedRedemptionType.value};
-      //console.log(tempProduct);
     }
 
     if(!product?.data?.img){
@@ -261,12 +249,26 @@ export default function EditProductScreen(props) {
         </View>
 
         <View style={styles.inputRow}>
-          <Text style={styles.inputLabel}>Redemption Type</Text>
-          <RadioGroup 
-              radioButtons={redemptionTypeChoices} 
-              onPress={setRedemptionTypeChoices} 
-              containerStyle={{flexDirection: 'row', justifyContent: 'flex-start'}}
-          />
+          <Text style={styles.inputLabel}>Accepted Exchanges</Text>
+          <View style={{flexDirection:'row', alignContent:'flex-start', justifyContent: 'flex-start'}}>
+            <CheckBox
+              title="Immediate"
+              textStyle={{marginRight:0, paddingRight:0}}
+              iconStyle={{marginRight:0,}}
+              checked={product.redemptionType & twine.RedemptionType.Immediate}
+              onPress={()=>setProduct({...product, redemptionType: product.redemptionType ^ twine.RedemptionType.Immediate})}
+            />
+            <CheckBox
+              title="Ticket"
+              checked={product.redemptionType & twine.RedemptionType.Ticket}
+              onPress={()=>setProduct({...product, redemptionType: product.redemptionType ^ twine.RedemptionType.Ticket})}
+            />
+            <CheckBox
+              title="Confirm"
+              checked={product.redemptionType & twine.RedemptionType.Confirmation}
+              onPress={()=>setProduct({...product, redemptionType: product.redemptionType ^ twine.RedemptionType.Confirmation})}
+            /> 
+          </View>
         </View>        
 
         <View style={styles.inputRow}>

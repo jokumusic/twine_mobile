@@ -22,8 +22,8 @@ export default function CartScreen(props) {
         console.log('refreshing product list');
         console.log('before: ', itemCount);
         getItemsResolved()
-            .then(items=>{         
-                console.log('after: ', itemCount);       
+            .then(items=>{  
+                console.log('after: ', itemCount);
                 setProducts(items)
                 setTotal(items.reduce((total,item)=>total + (item.count * item.price), 0));
             })

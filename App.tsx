@@ -28,6 +28,7 @@ export default function App() {
     return null;
   } else {
     return (
+      
       <Provider store={store}>        
         <PersistGate loading={<Text>Loading...</Text>} persistor={persistor}>
           <SafeAreaProvider>
@@ -85,3 +86,4 @@ const styles = StyleSheet.create({
     height: '100%',
   },
 });
+

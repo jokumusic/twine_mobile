@@ -21,9 +21,9 @@ const connection = new Connection(network);
 const programId = new PublicKey(idl.metadata.address);
 
 export enum RedemptionType {
-    Immediate=0,
-    Ticket=1,
-    DoubleConfirm=2,
+    Immediate=1,
+    Ticket=2,
+    Confirmation=4,
 }
 
 export enum ProductStatus {

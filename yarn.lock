@@ -2056,6 +2056,23 @@
   dependencies:
     nanoid "^3.1.23"
 
+"@rneui/base@^4.0.0-rc.6":
+  version "4.0.0-rc.6"
+  resolved "https://registry.yarnpkg.com/@rneui/base/-/base-4.0.0-rc.6.tgz#bbb05bec567aae9de64ebdb3370b1fcd5fcf1f1f"
+  integrity sha512-vIr+mrmYtSOaqsqwXQ6c1YMQM9aT462VfeiqOu28rsQZRebQffPc3yEolVjEbqYv1ID6ESQAPttzZ1qZSSe0NQ==
+  dependencies:
+    "@types/react-native-vector-icons" "^6.4.10"
+    color "^3.2.1"
+    deepmerge "^4.2.2"
+    hoist-non-react-statics "^3.3.2"
+    react-native-ratings "^8.1.0"
+    react-native-size-matters "^0.4.0"
+
+"@rneui/themed@^4.0.0-rc.6":
+  version "4.0.0-rc.6"
+  resolved "https://registry.yarnpkg.com/@rneui/themed/-/themed-4.0.0-rc.6.tgz#1cc6e23dc1b24e0b60b90acc7a6240cd29a420c2"
+  integrity sha512-iyH+KqbP8wzmrWgnyVtB3uIELZn0kZ8MIvTQ5atxLowO+vqSYSwmuhR2/MQQmpIwnOTMAlGql7Asq2o74Rs6jQ==
+
 "@segment/loosely-validate-event@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@segment/loosely-validate-event/-/loosely-validate-event-2.0.0.tgz#87dfc979e5b4e7b82c5f1d8b722dfd5d77644681"
@@ -2328,6 +2345,14 @@
   version "3.8.5"
   resolved "https://registry.yarnpkg.com/@types/react-native-snap-carousel/-/react-native-snap-carousel-3.8.5.tgz#5b3cb208119e3599d5537b5fc83653a155c6275d"
   integrity sha512-EMBwQo/om2HZM/J6u8Bvz7i0BEO/v6frrpmlvUQ579CMsgYQPlYzQ1ne4KDdRq08+yDSG8/8AwIi1R+185ROsg==
+  dependencies:
+    "@types/react" "*"
+    "@types/react-native" "*"
+
+"@types/react-native-vector-icons@^6.4.10":
+  version "6.4.12"
+  resolved "https://registry.yarnpkg.com/@types/react-native-vector-icons/-/react-native-vector-icons-6.4.12.tgz#4b9c63bf85eb42fca7c5b0a55ec317900e4fb427"
+  integrity sha512-gSXtv3NMOsRwSXJ/gvGebm7CNjHbkeFKCse9h/Pvi+x2yjCLOkJR1FBfec06DhaFJpsK7Y8WRQpwOS0eLqx5Rg==
   dependencies:
     "@types/react" "*"
     "@types/react-native" "*"
@@ -3474,7 +3499,7 @@ color-string@^1.5.3, color-string@^1.6.0, color-string@^1.9.0:
     color-name "^1.0.0"
     simple-swizzle "^0.2.2"
 
-color@^3.1.2:
+color@^3.1.2, color@^3.2.1:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/color/-/color-3.2.1.tgz#3544dc198caf4490c3ecc9a790b54fe9ff45e164"
   integrity sha512-aBl7dZI9ENN6fUGC7mWpMTPNHmWUSNan9tuWN6ahh5ZLNk9baLJOnSMlrQkHcrfFgz2/RigjUVAjdx36VcemKA==
@@ -7994,10 +8019,17 @@ react-native-radio-buttons-group@^2.2.11:
   dependencies:
     lodash.isequal "4.5.0"
 
-react-native-safe-area-context@4.2.4:
-  version "4.2.4"
-  resolved "https://registry.yarnpkg.com/react-native-safe-area-context/-/react-native-safe-area-context-4.2.4.tgz#4df42819759c4d3c74252c8678c2772cfa2271a6"
-  integrity sha512-OOX+W2G4YYufvryonn6Kw6YnyT8ZThkxPHZBD04NLHaZmicUaaDVII/PZ3M5fD1o5N62+T+8K4bCS5Un2ggvkA==
+react-native-ratings@^8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/react-native-ratings/-/react-native-ratings-8.1.0.tgz#3fa9ad29128dc3a88e59518ba151e61c59dd0647"
+  integrity sha512-+QOJ4G3NjVkI1D+tk4EGx1dCvVfbD2nQdkrj9cXrcAoEiwmbep4z4bZbCKmWMpQ5h2dqbxABU8/eBnbDmvAc3g==
+  dependencies:
+    lodash "^4.17.15"
+
+react-native-safe-area-context@^4.3.3:
+  version "4.3.3"
+  resolved "https://registry.yarnpkg.com/react-native-safe-area-context/-/react-native-safe-area-context-4.3.3.tgz#a0f1e3116ded39efc1b78a46a6d89c71169827e4"
+  integrity sha512-xwsloGLDUzeTN40TIh4Te/zRePSnBAuWlLIiEW3RYE9gHHYslqQWpfK7N24SdAQEH3tHZ+huoYNjo2GQJO/vnQ==
 
 react-native-screens@~3.11.1:
   version "3.11.1"
@@ -8018,6 +8050,11 @@ react-native-select-dropdown@^2.0.4:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/react-native-select-dropdown/-/react-native-select-dropdown-2.0.4.tgz#269d1d8d6228d511a2b82a4f110f2a6e655609dd"
   integrity sha512-bv8iznvf04FThqCkkD4kxlbNjo2d69yLcEe3nUwalQ6ea2NXqUJRQ5uUr1SEDSCH8l6IQlmog8rkHthrLEzQ9A==
+
+react-native-size-matters@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/react-native-size-matters/-/react-native-size-matters-0.4.0.tgz#01bfd0d59454318f4e0b13fe9c1eb0523d70f2e0"
+  integrity sha512-8/C0htHrFWeUm9N8JegmadovUfgTWkGBkDPZ1N3YkXtDWb+98Ya2gThiKcu445r8c7YhcrBfnHz/mYsXIusaOQ==
 
 react-native-snap-carousel@^3.9.1:
   version "3.9.1"
