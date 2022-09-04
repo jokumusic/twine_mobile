@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Button, FlatList, Image, Pressable, StyleShee
 import { CartContext } from "../components/CartProvider";
 import { TextInput } from "../components/Themed";
 import * as twine from "../api/twine";
+import { useFocusEffect } from "@react-navigation/native";
 
 const SCREEN_DEEPLINK_ROUTE = "cart";
 
@@ -12,9 +13,9 @@ export default function CartScreen(props) {
     let [total, setTotal] = useState(0);
     const {map, itemCount, addItemToCart, removeItemFromCart, getItemsResolved} = useContext(CartContext);
     const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-    const [viewPurchases, setViewPurchases] = useState(false);
+    const [viewPurchasesVisible, setViewPurchasesVisible] = useState(false);
     const [purchases, setPurchases] = useState([]);
-
+    const walletPubkey = useRef(twine.getCurrentWalletPublicKey());
 
     useEffect(() =>{
         setActivityIndicatorIsVisible(true);
@@ -31,16 +32,42 @@ export default function CartScreen(props) {
 
     },[itemCount]);
 
-    async function refreshPurchases() {
-        console.log('getting purchases...');
-        const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-        if(!currentWalletPubkey) {
-            console.log('not connected to a wallet.');
+    useEffect(()=>{
+       
+        if(!viewPurchasesVisible)
             return;
+            
+        const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+        if(!currentWalletPubkey){
+            Alert.alert(
+            "connect to wallet",
+            "You must be connected to a wallet to view the purchases associated with it.\nConnect to a wallet?",
+            [
+                {text: 'Yes', onPress: () => twine.connectWallet(true, SCREEN_DEEPLINK_ROUTE)},
+                {text: 'No', onPress: () => {}},
+            ]);
+            return;
+        } 
+        else {       
+            refreshPurchases();            
         }
 
-        setActivityIndicatorIsVisible(true);        
+    },[viewPurchasesVisible])
 
+    useFocusEffect(()=>{
+        const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+        if(walletPubkey.current != currentWalletPubkey) {
+
+            walletPubkey.current = currentWalletPubkey;
+
+            if(viewPurchasesVisible)
+                refreshPurchases();
+        }
+    });
+
+    async function refreshPurchases() {
+        setActivityIndicatorIsVisible(true);        
+        const currentWalletPubkey = twine.getCurrentWalletPublicKey();
         const tickets = await twine
             .getPurchaseTicketsByAuthority(currentWalletPubkey)
             .catch(err=>Alert.alert('error', err))
@@ -172,15 +199,18 @@ export default function CartScreen(props) {
         }
     }
 
+
+
+
     return ( 
         <>
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Button title="Pending Purchases" onPress={()=>setViewPurchases(false)}/>
-            <Button title="Purchased" onPress={async ()=>{refreshPurchases(); setViewPurchases(true);}}/>
+            <Button title="Pending Purchases" onPress={()=>setViewPurchasesVisible(false)}/>
+            <Button title="Purchased" onPress={()=>setViewPurchasesVisible(true)}/>
         </View>
 
         {
-            viewPurchases 
+            viewPurchasesVisible
             ? <FlatList
                 style={styles.itemsList}
                 contentContainerStyle={styles.itemsListContainer}

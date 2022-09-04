@@ -1094,7 +1094,7 @@ export async function getPurchaseTicketsByAuthority(authority: PublicKey) {
 
         if(!tickets)
             return;
-    
+
         tickets.forEach((ticket,i)=>{  
             try{    
                 items.push({...ticket.account, address: ticket.publicKey});                
