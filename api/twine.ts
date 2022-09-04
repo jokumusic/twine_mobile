@@ -682,14 +682,29 @@ export async function getStoresByName(nameStartsWith: string) {
 
 export async function getProductsByName(nameStartsWith: string) {
     if(!nameStartsWith)
-        return getProducts();
-    else
-        return getProducts([{
-            memcmp: {
-                offset: 237,
-                bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith.toLowerCase(),'utf8')),
+        return getProducts([
+            {
+                memcmp: { //not snapshot
+                    offset: 119,
+                    bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
+                }
             }
-        }]);
+        ]);
+    else
+        return getProducts([
+            {
+                memcmp: {
+                    offset: 237,
+                    bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith.toLowerCase(),'utf8')),
+                }
+                },
+                {
+                    memcmp: { //not snapshot
+                        offset: 119,
+                        bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
+                }
+            },
+        ]);
 }
 
 async function getStores(filters?: Buffer | web3.GetProgramAccountsFilter[]) {
@@ -741,7 +756,14 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
                     offset: 184,
                     bytes: storeAddress.toBase58(),
                 }
-             }]
+             },
+             {
+                memcmp: { //not snapshot
+                    offset: 119,
+                    bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
+                }
+             },
+            ]
         )
         .catch(reject);
 
@@ -903,7 +925,7 @@ async function getMixedItems(searchString: string) {
 
             const tx = new web3.Transaction().add(
                 web3.SystemProgram.transfer({
-                    fromPubkey: currentWalletKey,
+                    fromPubkey: currentWalletPubkey,
                     toPubkey: to,
                     lamports: BigInt(lamports)
                 }),
@@ -1007,7 +1029,7 @@ export function buyProduct(product: Product, quantity: number, deeplinkRoute: st
         const signature = await Phantom
             .signAndSendTransaction(tx, false, true, deeplinkRoute)
             .catch(reject);
-            console.log('h');
+console.log('sig: ', signature);
         if(!signature)
             return;
 

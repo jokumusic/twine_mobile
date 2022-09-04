@@ -14,7 +14,7 @@ import {
   } from "@solana/web3.js";
 import { rejects } from 'assert';
 
-const network = clusterApiUrl("testnet")
+const network = clusterApiUrl("devnet")
 const connection = new Connection(network);
 const programId = new PublicKey(idl.metadata.address);
 
