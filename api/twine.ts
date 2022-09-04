@@ -540,8 +540,12 @@ export async function createProduct(product: WriteableProduct, deeplinkRoute: st
         if(!createdProduct)
             return;
    
-        createdProduct.data = decodeData(createdProduct.data);
-        resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber(), inventory: createdProduct.inventory.toNumber()});
+        try{
+            createdProduct.data = decodeData(createdProduct.data);
+            resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber(), inventory: createdProduct.inventory.toNumber()});
+        } catch(e) {
+            reject(e);
+        }    
     });
 }
 
@@ -562,8 +566,12 @@ export async function getProductByAddress(address: PublicKey) {
             return;
         }
 
-        product.data = decodeData(product.data);
-        resolve({...product, address: address, price: product.price.toNumber(), inventory: product.inventory.toNumber()});        
+        try{
+            product.data = decodeData(product.data);       
+            resolve({...product, address: address, price: product.price.toNumber(), inventory: product.inventory.toNumber()});       
+        }catch(err) {
+            reject(err);
+        }        
     });
 }
 

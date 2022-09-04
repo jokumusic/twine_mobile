@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useRef } from "react";
-import { ActivityIndicator, Alert, Button, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Button, FlatList, Image, Pressable, StyleSheet, Text, TouchableNativeFeedback, View } from "react-native";
 import { CartContext } from "../components/CartProvider";
 import { TextInput } from "../components/Themed";
 import * as twine from "../api/twine";
@@ -13,7 +13,7 @@ export default function CartScreen(props) {
     const {map, itemCount, addItemToCart, removeItemFromCart, getItemsResolved} = useContext(CartContext);
     const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
     const [viewPurchases, setViewPurchases] = useState(false);
-    const [purchases, setPurchases] = useState([] as twine.PurchaseTicket[]);
+    const [purchases, setPurchases] = useState([]);
 
 
     useEffect(() =>{
@@ -41,14 +41,28 @@ export default function CartScreen(props) {
 
         setActivityIndicatorIsVisible(true);
 
-        twine
+        
+
+        const tickets = await twine
             .getPurchaseTicketsByAuthority(currentWalletPubkey)
-            .then(tickets=>{
-                console.log('tickets: ', tickets);
-                setPurchases(tickets);
-            })
             .catch(err=>Alert.alert('error', err))
             .finally(()=>setActivityIndicatorIsVisible(false));
+        
+        if(!tickets)
+            return;
+
+        const refreshedPurchases = [];
+        
+        for(const ticket of tickets){            
+            const snapshot = await twine
+                .getProductByAddress(ticket.productSnapshot)
+                .catch(err=>console.log(err));
+            
+            refreshedPurchases.push({ticket,snapshot});
+        }
+
+        setPurchases(refreshedPurchases);
+        setActivityIndicatorIsVisible(false);        
     }
 
     async function checkOut(){
@@ -137,37 +151,45 @@ export default function CartScreen(props) {
     }
 
     function renderPurchaseItem({item}) {
-        console.log(item);
-        const purchaseDate = new Date(item.timestamp.toNumber() *1000);
-        return (
-            <View key={item.address.toBase58()} style={{height: 200, width:'100%', borderBottomWidth: 2,}}>
-                <Text style={{fontSize:30}}>quantity: {item.quantity?.toString()}</Text>
-                <Text style={{fontSize:30}}>slot: {item.slot.toNumber()}</Text>
-                <Text style={{fontSize:30}}>date: {purchaseDate.toLocaleDateString("en-us")}</Text>
-                <Text style={{fontSize:30}}>time: {purchaseDate.toLocaleTimeString("en-us")}</Text>
-            </View>
-        );
+        if(item?.ticket && item?.snapshot) {
+            const purchaseDate = new Date(item.ticket?.timestamp?.toNumber() *1000);
+            return (
+                <View key={item.ticket?.address?.toBase58()} style={{height: 200, width:'100%', borderBottomWidth: 2, flexDirection: 'row'}}>
+                    <View style={{flexDirection:'column', width: '50%'}}>
+                        <Text style={{fontSize:15}}>quantity: {item.ticket?.quantity?.toString()}</Text>
+                        <Text style={{fontSize:15}}>redemptions: {item.ticket?.redeemed?.toString()}</Text>
+                        <Text style={{fontSize:15}}>slot: {item.ticket?.slot?.toNumber()}</Text>
+                        <Text style={{fontSize:15}}>date: {purchaseDate.toLocaleDateString("en-us")}</Text>
+                        <Text style={{fontSize:15}}>time: {purchaseDate.toLocaleTimeString("en-us")}</Text>
+                    </View>
+                    <View style={{flexDirection:'column'}}>
+                        <Image source={{uri:item.snapshot?.data?.img}}  style={{width: 150, height: 150}}/>
+                    </View>
+                </View>
+            );
+        } else{
+            return (<></>);
+        }
     }
 
     return ( 
         <>
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Button title="Pending Purchase" onPress={()=>setViewPurchases(false)}/>
-            <Button title="Purchased" onPress={()=>{refreshPurchases(); setViewPurchases(true);}}/>
+            <Button title="Pending Purchases" onPress={()=>setViewPurchases(false)}/>
+            <Button title="Purchased" onPress={async ()=>{refreshPurchases(); setViewPurchases(true);}}/>
         </View>
 
         {
-            viewPurchases ?
-            <FlatList
+            viewPurchases 
+            ? <FlatList
                 style={styles.itemsList}
                 contentContainerStyle={styles.itemsListContainer}
                 data={purchases}
                 renderItem={renderPurchaseItem}
-                keyExtractor={(item) => item.address.toBase58()}                
+                keyExtractor={(purchase) => purchase?.ticket?.address?.toBase58()}                
             />
-            :
-
-            <FlatList
+            
+            : <FlatList
                 style={styles.itemsList}
                 contentContainerStyle={styles.itemsListContainer}
                 data={products}
