@@ -35,11 +35,19 @@ export default function EditProductScreen(props) {
       .filter(v=> !isNaN(Number(v)))
       .map(v => ({id:v , label: twine.RedemptionType[v], value: Number(v), selected: product?.redemptionType == v}))
   );
+
   const [productStatusChoices, setProductStatusChoices] = useState(
     Object
     .values(twine.ProductStatus)
     .filter(v=> !isNaN(Number(v)))
     .map(v => ({id:v , label: twine.ProductStatus[v], value: Number(v), selected: product?.status == v}))
+  );
+
+  const [pricingChoices, setPricingChoices] = useState(
+    Object
+    .values(twine.PricingStrategy)
+    .filter(v=> !isNaN(Number(v)))
+    .map(v => ({id:v , label: twine.PricingStrategy[v], value: Number(v), selected: product?.pricingStrategy == v}))
   );
   const [secondaryAuthority, setSecondaryAuthority] = useState(product?.secondaryAuthority?.toBase58() ?? "");
   const [payTo, setPayTo] = useState(product?.payTo?.toBase58() ?? "");

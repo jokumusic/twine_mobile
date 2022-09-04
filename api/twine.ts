@@ -22,7 +22,8 @@ const programId = new PublicKey(idl.metadata.address);
 
 export enum RedemptionType {
     Immediate=0,
-    Ticketed=1
+    Ticket=1,
+    DoubleConfirm=2,
 }
 
 export enum ProductStatus {
@@ -34,6 +35,19 @@ export enum StoreStatus {
     Active = 0,
     Inactive = 1,
 }
+
+export enum PricingStrategy {
+    Fixed,
+    Auction
+}
+
+export enum TicketExhaustionType {
+    UsageCount=1,
+    ExpirationDate=2,
+}
+
+
+
 
 export interface WriteableStoreData{
     displayName: string;

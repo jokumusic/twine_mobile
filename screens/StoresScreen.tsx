@@ -2,20 +2,42 @@ import { StyleSheet, ImageBackground, Button, Alert } from 'react-native';
 import { Text, View, TextInput } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import ImageCarousel, {ImageCarouselItem} from '../components/ImageCarousel';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as twine from '../api/twine';
 import Navigation from '../navigation';
 import { PressableIcon } from '../components/Pressables';
+import { useFocusEffect } from '@react-navigation/native';
 
 const SCREEN_DEEPLINK_ROUTE = "stores";
 
 export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresTab'>) {
+  const walletPubkey = useRef(twine.getCurrentWalletPublicKey());
   const [myStores, setMyStores] = useState([]);
+
+  useFocusEffect(()=>{
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+    if(!currentWalletPubkey){
+      Alert.alert(
+        "connect to wallet",
+        "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
+        [
+          {text: 'Yes', onPress: () => twine.connectWallet(true, SCREEN_DEEPLINK_ROUTE)},
+          {text: 'No', onPress: () => {}},
+        ]);
+      return;
+    }
+
+    if(walletPubkey.current != currentWalletPubkey) {
+      refresh();
+      walletPubkey.current = currentWalletPubkey;
+    }
+  });
+
 
   async function refresh() {    
     const currentWalletPubkey = twine.getCurrentWalletPublicKey()
     if(!currentWalletPubkey){
-      Alert.alert('', 'not connected to a wallet');
+      Alert.prompt('connect to wallet', "You must be connected to a wallet to view its stores.\nConnect to a wallet?");
       return;
     }
 
@@ -37,10 +59,6 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
         Alert.alert("Error", err);
       });
   }
-  
-  useEffect(()=>{
-   refresh();
-  },[]);
   
 
   return (  
