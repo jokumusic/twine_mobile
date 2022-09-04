@@ -102,17 +102,23 @@ import {
           <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>         
         </View>
         <ScrollView style={{marginTop: 10}}>
+          <PressableIcon
+            name="share-social"
+            size={30}
+            style={{ marginRight: 5 }}
+            onPress={() => Alert.alert('not implemented', 'Not Implemented.')}
+          />
                      
-              <Text style={styles.title}>{product?.data?.displayName}</Text>
-              <Text>{product?.data?.displayDescription}</Text>
-              <Text>Price: $ {product.price.toString()}</Text>
-              <Text>Available Quantity: {product.inventory.toString()}</Text> 
-              {      
-                product.data?.sku  &&
-                <Text>Sku: {product.data?.sku}</Text>
-              }
+          <Text style={styles.title}>{product?.data?.displayName}</Text>
+          <Text>{product?.data?.displayDescription}</Text>
+          <Text>Price: $ {product.price.toString()}</Text>
+          <Text>Available Quantity: {product.inventory.toString()}</Text> 
+          {      
+            product.data?.sku  &&
+            <Text>Sku: {product.data?.sku}</Text>
+          }
 
-            <Button title="Add To Cart" onPress={addToCart}/>
+          <Button title="Add To Cart" onPress={addToCart}/>
         </ScrollView>
       </ImageBackground>
     </View>

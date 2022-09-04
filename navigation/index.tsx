@@ -61,6 +61,7 @@ function RootNavigator() {
         <Stack.Screen name="StoreDetails" component={StoreDetailsScreen} 
           options={({ navigation }: ScreenProps<'StoreDetails'>) => (
             {
+              title: 'Store Details',
               headerRight: ()=> (
                 <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
                   <CartIcon navigation={navigation} />
@@ -80,6 +81,7 @@ function RootNavigator() {
         <Stack.Screen name="ProductDetails" component={ProductDetailsScreen}
           options={({ navigation }: ScreenProps<'ProductDetails'>) => (
             {
+              title: 'Product Details',
               headerRight: ()=> (
                 <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
                   <CartIcon navigation={navigation} />

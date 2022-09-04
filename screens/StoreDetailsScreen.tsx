@@ -16,14 +16,13 @@ import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import { Card } from 'react-native-paper';
 import * as twine from '../api/twine';
-import {PressableImage} from '../components/Pressables';
+import {PressableIcon, PressableImage} from '../components/Pressables';
 import { TokenInvalidOwnerError } from '@solana/spl-token';
 
 const SCREEN_DEEPLINK_ROUTE = "store_details";
 
 const spacing = 10;
-const width = (Dimensions.get('window').width) / 2;
-const height = width;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function StoreDetailsScreen(props) {
   const [store, setStore] = useState<twine.Store>(props.route.params.store);
@@ -74,10 +73,11 @@ export default function StoreDetailsScreen(props) {
           onPress={() => navigation.navigate('ProductDetails',{store, product: item})}
           style={styles.itemImage} 
         /> 
-
-        <Text style={styles.productCaption}>
-          {item?.data?.displayName}
-        </Text>
+        <View style={styles.cardFooter}>
+          <Text style={styles.productCaption}>
+            {item?.data?.displayName}
+          </Text>
+        </View>
       </View>          
     </View>
   );
@@ -97,7 +97,13 @@ export default function StoreDetailsScreen(props) {
             <View style={styles.headerTitle}>
               <Text style={styles.title}>{store?.data?.displayName}</Text>            
             </View>
-            
+            <PressableIcon
+              name="share-social"
+              size={25}
+              style={{ margin: 5 }}
+              onPress={() => Alert.alert('not implemented', 'Not Implemented.')}
+            />
+
             { isAuthorizedToEditStore() &&   
               <>
               <Pressable
@@ -150,15 +156,15 @@ const styles = StyleSheet.create({
     header: {
       alignItems: 'center',
       flexDirection: 'row',
-      backgroundColor: 'gray',
+      backgroundColor: '#77aaaa',
       height: '10%',
       width: '100%',
       marginBottom: 10,
     },
     headerTitle: {
       flexDirection: 'column',
-      width: 250,
-      backgroundColor: 'gray',
+      width: 230,
+      backgroundColor: '#77aaaa',
       flexWrap: 'wrap',
     },
     rowContainer: {
@@ -174,13 +180,26 @@ const styles = StyleSheet.create({
       flexDirection: 'column',    
       flexShrink: 1,
       backgroundColor: 'rgba(52, 52, 52, 0)',
+      height: 250,
+      width: 250,
     },
     card:{
       backgroundColor: 'yellow',
       margin: 10,
       borderRadius: 4,
       shadowRadius: 2,
-      justifyContent: 'space-around' 
+      justifyContent: 'space-around',
+      height: SCREEN_WIDTH /2.5,
+    },
+    cardFooter:{
+      backgroundColor: '#77aaaa',
+    },
+    productCaption: {
+      fontSize: 16,
+      fontWeight: "bold",
+      paddingLeft: 5,
+      paddingTop: 3,
+      margin: 5,
     },
     title: {
       fontSize: 20,
@@ -198,16 +217,16 @@ const styles = StyleSheet.create({
       width: '90%',
     },
     itemImage: {
-        width: '95%',
+        width: '100%',
         height: '100%',
         borderRadius: 8,
-        resizeMode: 'cover',        
+        resizeMode: 'contain',        
     },
     headerImage:{
-      width: '20%',
+      width: '25%',
       height: '100%',
-      borderRadius: 8,
-      resizeMode: 'cover',
+      borderRadius: 4,
+      resizeMode: 'contain',
       alignSelf: 'flex-start',
     },
     list: {
@@ -217,16 +236,9 @@ const styles = StyleSheet.create({
     column: {
       flexShrink: 1,
       flexDirection: 'column',
-      width: width,
-      height: height,
+      width: SCREEN_WIDTH /2,
+      //height: height,
     },
-    productCaption: {
-      color: "#222",
-      fontSize: 14,
-      fontWeight: "bold",
-      paddingLeft: 5,
-      paddingTop: 3,
-      margin: 5,
-    },
+    
   });
   
