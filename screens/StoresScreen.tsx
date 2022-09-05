@@ -13,26 +13,18 @@ import { getCurrentWalletContact } from '../api/solchat';
 const SCREEN_DEEPLINK_ROUTE = "stores";
 
 export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresTab'>) {
-  const walletPubkey = useRef(twine.getCurrentWalletPublicKey());
+  //const initialized = useRef(false);
+  const [walletPubkey, setWalletPubkey] = useState(twine.getCurrentWalletPublicKey());
   const [stores, setStores] = useState([]);
   const [products, setProducts] = useState([]);
   const [payToSells, setPayToSells] = useState<twine.Purchase[]>([]);
   const [tabIndex, setTabIndex] = useState(0);
 
-  /*
-  useFocusEffect(()=>{
-    console.log('useFocusEffect');
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-    if(walletPubkey.current != currentWalletPubkey){
-      walletPubkey.current = currentWalletPubkey;
-      refresh();
-    }
-    
-    refresh();
-  });*/
-
   useEffect(()=>{
-    console.log('useEffect')
+    refreshTab();
+  },[tabIndex,walletPubkey]);
+
+  async function refreshTab() {
     switch(tabIndex) {
       case 0: refreshStores();
         break;
@@ -41,9 +33,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
       case 2: refreshPayToSells();
         break;
     }
-
-  },[tabIndex])
-
+  }
 
   function walletIsConnected(){
     const currentWalletPubkey = twine.getCurrentWalletPublicKey();
@@ -52,16 +42,22 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
         "connect to wallet",
         "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
         [
-          {text: 'Yes', onPress: () => twine.connectWallet(true, SCREEN_DEEPLINK_ROUTE)},
+          {text: 'Yes', onPress: () => twine
+            .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
+            .then(pubkey=>setWalletPubkey(pubkey))
+            .catch(err=>Alert.alert('error', err))
+          },
           {text: 'No', onPress: () => {}},
         ]);
+
+        return false;
     }
 
     return true;
   }
 
   async function refreshPayToSells() {
-    console.log('refresh payTo sells')
+   
     if(!walletIsConnected())
       return;    
 
@@ -70,6 +66,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
       return;
     }
 
+    console.log('refreshing payTo sells...')
     const purchases = await twine
       .getPurchasesByPayTo(currentWalletPubkey)
       .catch(err=>Alert.alert("Error", err));
@@ -82,13 +79,12 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   }
 
   async function refreshProducts() {
-    console.log('refresh products')
     if(!walletIsConnected())
       return;    
 
     const currentWalletPubkey = twine.getCurrentWalletPublicKey();
 
-    console.log('refreshing products list')
+    console.log('refreshinging products...')
     twine
       .getProductsByAuthority(currentWalletPubkey, true)
       .then(items=>{            
@@ -99,13 +95,12 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   }
 
   async function refreshStores() {    
-    console.log('refresh stores')
     if(!walletIsConnected())
       return;    
 
     const currentWalletPubkey = twine.getCurrentWalletPublicKey();
 
-    console.log('refreshing stores list')
+    console.log('refreshing stores...')
     twine
       .getStoresByAuthority(currentWalletPubkey)
       .then(items=>{
