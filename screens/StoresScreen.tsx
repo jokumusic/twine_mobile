@@ -1,5 +1,5 @@
-import { StyleSheet, ImageBackground, Button, Alert } from 'react-native';
-import { Text, View, TextInput } from '../components/Themed';
+import { StyleSheet, ImageBackground, Button, Alert, ScrollView } from 'react-native';
+import { View, TextInput, FlatList } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import ImageCarousel, {ImageCarouselItem} from '../components/ImageCarousel';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -7,15 +7,43 @@ import * as twine from '../api/twine';
 import Navigation from '../navigation';
 import { PressableIcon } from '../components/Pressables';
 import { useFocusEffect } from '@react-navigation/native';
+import { Tab, Text, TabView, ListItem, Avatar  } from '@rneui/themed';
+import { getCurrentWalletContact } from '../api/solchat';
 
 const SCREEN_DEEPLINK_ROUTE = "stores";
 
 export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresTab'>) {
   const walletPubkey = useRef(twine.getCurrentWalletPublicKey());
-  const [myStores, setMyStores] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [tabIndex, setTabIndex] = useState(0);
 
+  /*
   useFocusEffect(()=>{
+    console.log('useFocusEffect');
     const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+    if(walletPubkey.current != currentWalletPubkey){
+      walletPubkey.current = currentWalletPubkey;
+      refresh();
+    }
+    
+    refresh();
+  });*/
+
+  useEffect(()=>{
+    console.log('useEffect')
+    switch(tabIndex) {
+      case 0: refreshStores();
+        break;
+      case 1: refreshProducts();
+        break;
+    }
+
+  },[tabIndex])
+
+
+  function walletIsConnected(){
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey()
     if(!currentWalletPubkey){
       Alert.alert(
         "connect to wallet",
@@ -24,40 +52,43 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
           {text: 'Yes', onPress: () => twine.connectWallet(true, SCREEN_DEEPLINK_ROUTE)},
           {text: 'No', onPress: () => {}},
         ]);
-      return;
     }
 
-    if(walletPubkey.current != currentWalletPubkey) {
-      refresh();
-      walletPubkey.current = currentWalletPubkey;
-    }
-  });
+    return true;
+  }
 
+  async function refreshProducts() {
+    console.log('refresh products')
+    if(!walletIsConnected())
+      return;    
 
-  async function refresh() {    
     const currentWalletPubkey = twine.getCurrentWalletPublicKey()
-    if(!currentWalletPubkey){
-      Alert.prompt('connect to wallet', "You must be connected to a wallet to view its stores.\nConnect to a wallet?");
-      return;
-    }
+
+    console.log('refreshing products list')
+    twine
+      .getProductsByAuthority(currentWalletPubkey, true)
+      .then(items=>{            
+        items.sort((a,b)=> a.name < b.name ? -1 : 1 );
+        setProducts(items);
+      })
+      .catch(err=>Alert.alert("Error", err));
+  }
+
+  async function refreshStores() {    
+    console.log('refresh stores')
+    if(!walletIsConnected())
+      return;    
+
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey()
 
     console.log('refreshing stores list')
     twine
       .getStoresByAuthority(currentWalletPubkey, SCREEN_DEEPLINK_ROUTE)
-      .then(stores=>{
-        const carouselItems = stores
-          .map(store => ({             
-              id: store.address.toBase58(),
-              uri: store.data.img,
-              title: store.name,
-              onPress: async ()=>{ navigation.navigate('StoreDetails',{store}); }
-          }));
-
-        setMyStores(carouselItems);
+      .then(items=>{
+        const displayStores = items.sort((a,b)=>a.name < b.name ? -11 : 1);
+        setStores(displayStores);
       })
-      .catch(err=>{
-        Alert.alert("Error", err);
-      });
+      .catch(err=>Alert.alert("Error", err));
   }
   
 
@@ -68,12 +99,73 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
         source={{
             uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
         }}>  
-        <ImageCarousel data={myStores} />
-        <PressableIcon
-          name="refresh"
-          size={40}
-          onPress={()=>refresh()}
-        />
+
+          <Tab
+            value={tabIndex}
+            onChange={(e) => setTabIndex(e)}
+            indicatorStyle={{
+              backgroundColor: 'white',
+              height: 3,
+            }}
+            variant="default"
+          >
+            <Tab.Item
+              title="stores"
+              titleStyle={{ fontSize: 12 }}
+              icon={{ name: 'store', type: 'MaterialIcons', color: 'white' }}
+            />
+            <Tab.Item
+              title="products"
+              titleStyle={{ fontSize: 12 }}
+              icon={{ name: 'widgets', type: 'MaterialIcons', color: 'white' }}
+            />
+            <Tab.Item
+              title="sells"
+              titleStyle={{ fontSize: 12 }}
+              icon={{ name: 'attach-money', type: 'MaterialIcons', color: 'white' }}
+            />
+          </Tab>
+          
+          <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
+            <TabView.Item style={{ width: '100%' }}>
+              
+              <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
+              {
+                stores.map((store, i) => (
+                  <ListItem key={i} bottomDivider onPress={()=>navigation.navigate('StoreDetails',{store})}>
+                    <Avatar source={store?.data?.img && {uri: store.data.img}} size={70} />
+                    <ListItem.Content >
+                      <ListItem.Title>{store.data?.displayName}</ListItem.Title>
+                      <ListItem.Subtitle>{store.data?.displayDescription}</ListItem.Subtitle>
+                    </ListItem.Content>
+                  </ListItem>
+                ))
+              }
+              </View>
+                                   
+            </TabView.Item>
+            <TabView.Item style={{ width: '100%' }}>
+            <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
+              {
+                products.map((product, i) => (
+                  <ListItem key={i} bottomDivider  onPress={()=>navigation.navigate('ProductDetails', {product})}>
+                    <Avatar source={product?.data?.img && {uri: product.data.img}} size={70} />
+                    <ListItem.Content>
+                      <ListItem.Title>{product.data?.displayName}</ListItem.Title>
+                      <ListItem.Subtitle>{product.data?.displayDescription}</ListItem.Subtitle>
+                    </ListItem.Content>
+                  </ListItem>
+                ))
+              }
+              </View>
+            </TabView.Item>
+            <TabView.Item style={{ backgroundColor: 'rgba(52, 52, 52, 0)', width: '100%' }}>
+              <Text h1>Sells</Text>
+            </TabView.Item>
+          </TabView>
+
+          
+
       </ImageBackground>      
     </View>
   );
@@ -84,6 +176,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  header:{
+    height: 45,
+    flexDirection: 'row',
+    alignContent: 'space-between',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(52, 52, 52, 0)',
   },
   title: {
     fontSize: 20,

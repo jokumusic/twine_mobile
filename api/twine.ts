@@ -702,6 +702,59 @@ export async function getStoresByName(nameStartsWith: string) {
         }]);
 }
 
+export async function getProductsByAuthority(authority: PublicKey, includeInactive = false) {
+    return new Promise<Product[]>(async (resolve,reject) => {
+        
+        const authorityPromise = getProducts([
+            {
+                memcmp: {
+                    offset: 43, //authority
+                    bytes: authority.toBase58(),
+                }
+                },
+                {
+                    memcmp: { //not snapshot
+                        offset: 119,
+                        bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
+                }
+            },
+        ]);
+
+        const authority2Promise = getProducts([
+            {
+                memcmp: {
+                    offset: 75, //secondarAuthority
+                    bytes: authority.toBase58(),
+                }
+                },
+                {
+                    memcmp: { //not snapshot
+                        offset: 119,
+                        bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
+                }
+            },
+        ]);
+
+        const products = await  Promise
+            .all([authorityPromise,authority2Promise])
+            .catch(err=>reject(err));
+
+        if(!products)
+            return;
+
+        const uniqueProductsMap = new Map<PublicKey,Product>();
+
+        if(products[0].length > 0)
+            products[0].forEach(p=>uniqueProductsMap.set(p.address,p));
+
+        if(products[1].length > 0)
+            products[1].forEach(p=>uniqueProductsMap.set(p.address,p));
+
+        const uniqueProducts = [...uniqueProductsMap.values()];
+        resolve(uniqueProducts);  
+    });
+}
+
 export async function getProductsByName(nameStartsWith: string) {
     if(!nameStartsWith)
         return getProducts([
@@ -816,7 +869,7 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
 
 async function getProducts(filters?: Buffer | web3.GetProgramAccountsFilter[], additionalFilterString?: string) {
     return new Promise<Product[]>(async (resolve, reject) => {
-        console.log('twine.getProducts()');
+        //console.log('twine.getProducts()');
         const list = [] as Product[];
         const program = getProgram("");
         const products = await program.account.product

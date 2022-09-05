@@ -198,7 +198,7 @@ function BottomTabNavigator() {
         name="CartTab"
         component={CartScreen}
         options={({ navigation }: RootTabScreenProps<'CartTab'>) => ({
-          title: 'Cart',
+          title: 'Purchases',
           headerShown: true,
           tabBarIcon: ({ color }) => <TabBarIcon name='cart-outline' color={color} />,
           headerRight: ()=>(

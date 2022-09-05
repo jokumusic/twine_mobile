@@ -198,7 +198,7 @@ export default function EditProductScreen(props) {
       <>
         <PressableImage
           show={true}
-          source={{uri: item}}
+          source={item && {uri: item}}
           style={{width:100, height:100, borderWidth:4, borderColor}}
           onPress={()=>
             setProduct({...product, data:{...product.data, img: item}})
