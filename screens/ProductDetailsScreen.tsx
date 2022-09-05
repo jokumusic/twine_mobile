@@ -63,7 +63,7 @@ import {
       item ?
         <PressableImage
           show={true}
-          source={{uri: item}}
+          source={item && {uri: item}}
           style={{height:'100%', resizeMode:'stretch', aspectRatio: 1.2}}
           onPress={()=>
             console.log('image pressed')

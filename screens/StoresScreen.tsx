@@ -16,6 +16,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   const walletPubkey = useRef(twine.getCurrentWalletPublicKey());
   const [stores, setStores] = useState([]);
   const [products, setProducts] = useState([]);
+  const [payToSells, setPayToSells] = useState<twine.Purchase[]>([]);
   const [tabIndex, setTabIndex] = useState(0);
 
   /*
@@ -37,13 +38,15 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
         break;
       case 1: refreshProducts();
         break;
+      case 2: refreshPayToSells();
+        break;
     }
 
   },[tabIndex])
 
 
   function walletIsConnected(){
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey()
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
     if(!currentWalletPubkey){
       Alert.alert(
         "connect to wallet",
@@ -57,12 +60,33 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     return true;
   }
 
+  async function refreshPayToSells() {
+    console.log('refresh payTo sells')
+    if(!walletIsConnected())
+      return;    
+
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+    if(!currentWalletPubkey) {
+      return;
+    }
+
+    const purchases = await twine
+      .getPurchasesByPayTo(currentWalletPubkey)
+      .catch(err=>Alert.alert("Error", err));
+    
+    if(!purchases)
+      return;
+
+    purchases.sort((a,b)=> b?.purchaseTicket?.timestamp - a?.purchaseTicket?.timestamp);       
+    setPayToSells(purchases);    
+  }
+
   async function refreshProducts() {
     console.log('refresh products')
     if(!walletIsConnected())
       return;    
 
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey()
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
 
     console.log('refreshing products list')
     twine
@@ -79,11 +103,11 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     if(!walletIsConnected())
       return;    
 
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey()
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
 
     console.log('refreshing stores list')
     twine
-      .getStoresByAuthority(currentWalletPubkey, SCREEN_DEEPLINK_ROUTE)
+      .getStoresByAuthority(currentWalletPubkey)
       .then(items=>{
         const displayStores = items.sort((a,b)=>a.name < b.name ? -11 : 1);
         setStores(displayStores);
@@ -127,12 +151,11 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
           </Tab>
           
           <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
-            <TabView.Item style={{ width: '100%' }}>
-              
+            <TabView.Item style={{ width: '100%' }}>              
               <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
               {
                 stores.map((store, i) => (
-                  <ListItem key={i} bottomDivider onPress={()=>navigation.navigate('StoreDetails',{store})}>
+                  <ListItem key={"store" + store.address?.toBase58()} bottomDivider onPress={()=>navigation.navigate('StoreDetails',{store})}>
                     <Avatar source={store?.data?.img && {uri: store.data.img}} size={70} />
                     <ListItem.Content >
                       <ListItem.Title>{store.data?.displayName}</ListItem.Title>
@@ -141,14 +164,13 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
                   </ListItem>
                 ))
               }
-              </View>
-                                   
+              </View>                                   
             </TabView.Item>
             <TabView.Item style={{ width: '100%' }}>
-            <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
+              <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
               {
                 products.map((product, i) => (
-                  <ListItem key={i} bottomDivider  onPress={()=>navigation.navigate('ProductDetails', {product})}>
+                  <ListItem key={"product" + product.address?.toBase58()} bottomDivider  onPress={()=>navigation.navigate('ProductDetails', {product})}>
                     <Avatar source={product?.data?.img && {uri: product.data.img}} size={70} />
                     <ListItem.Content>
                       <ListItem.Title>{product.data?.displayName}</ListItem.Title>
@@ -160,7 +182,24 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
               </View>
             </TabView.Item>
             <TabView.Item style={{ backgroundColor: 'rgba(52, 52, 52, 0)', width: '100%' }}>
-              <Text h1>Sells</Text>
+              <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
+              {
+                payToSells.map((sell, i) => (
+                  <ListItem key={"sell" + sell.purchaseTicket?.address?.toBase58()} bottomDivider>
+                    <Avatar source={sell.productSnapshot?.data?.img && {uri: sell.productSnapshot.data.img}} size={70} />
+                    <ListItem.Content>
+                      <ListItem.Title>{sell.productSnapshot?.data?.displayName}</ListItem.Title>
+                      <View>
+                        <Text>date: {new Date(sell.purchaseTicket?.timestamp?.toNumber() * 100).toLocaleString("en-us")}</Text>
+                        <Text>price: ${sell.productSnapshot?.price}</Text>
+                        <Text>quantity: {sell.purchaseTicket?.quantity?.toString()}</Text>
+                        <Text>redemptions: {sell.purchaseTicket?.redeemed?.toString()}</Text>
+                      </View>
+                    </ListItem.Content>
+                  </ListItem>
+                ))
+              }
+              </View>
             </TabView.Item>
           </TabView>
 

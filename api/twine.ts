@@ -135,6 +135,11 @@ export interface PurchaseTicket {
     readonly nonce: number;
 }
 
+export interface Purchase {
+    readonly purchaseTicket: PurchaseTicket;
+    readonly productSnapshot: Product;
+}
+
 export enum AssetType{
     SOL,
     LAMPORT,
@@ -153,7 +158,7 @@ export async function connectWallet(force=false, deeplinkRoute: string) {
     });
 }
 
-function getProgram(deeplinkRoute: string){
+function getProgram(deeplinkRoute: string = ""){
     const wallet = {
       signTransaction: (tx: Transaction) => Phantom.signTransaction(tx,false,true, deeplinkRoute),
       signAllTransactions: (txs: Transaction[]) => Phantom.signAllTransactions(txs,false,true,deeplinkRoute),
@@ -742,13 +747,18 @@ export async function getProductsByAuthority(authority: PublicKey, includeInacti
         if(!products)
             return;
 
-        const uniqueProductsMap = new Map<PublicKey,Product>();
+        const uniqueProductsMap = new Map<string,Product>();
 
         if(products[0].length > 0)
-            products[0].forEach(p=>uniqueProductsMap.set(p.address,p));
+            products[0].forEach(p=>uniqueProductsMap.set(p.address.toBase58(),p));
 
-        if(products[1].length > 0)
-            products[1].forEach(p=>uniqueProductsMap.set(p.address,p));
+        if(products[1].length > 0) {
+            products[1].forEach(p=>{
+                //if(!uniqueProductsMap.has(p.address.toBase58()))
+                    uniqueProductsMap.set(p.address.toBase58(),p)
+            });
+        }
+
 
         const uniqueProducts = [...uniqueProductsMap.values()];
         resolve(uniqueProducts);  
@@ -908,6 +918,101 @@ async function getProducts(filters?: Buffer | web3.GetProgramAccountsFilter[], a
     });
 }
 
+async function getPurchaseTickets(filters?: Buffer | web3.GetProgramAccountsFilter[], additionalFilterString?: string) {
+    return new Promise<PurchaseTicket[]>(async (resolve,reject) => {
+        
+        
+        const program = getProgram();
+        const tickets = await program.account.purchaseTicket
+            .all(filters)
+            .catch(reject);
+
+        if(!tickets)
+            return;
+
+        const items = tickets.map(ticket=>{  
+            try {
+                return {...ticket.account, address: ticket.publicKey};                
+            }
+            catch(e){
+                console.log('exception: ', e);
+            }
+        });
+
+        resolve(items);
+    });
+}
+
+export async function getPurchaseTicketsByAuthority(authority: PublicKey) {
+   return new Promise<PurchaseTicket[]>(async (resolve,reject) => {
+        if(!authority){
+            reject('authority not specified');
+            return;
+        }
+        
+        const tickets = getPurchaseTickets([{ memcmp: { offset: 186, bytes: authority.toBase58() }}])
+            .catch(reject);
+        
+        if(tickets)
+            resolve(tickets);                  
+    });  
+}
+
+export async function getPurchaseTicketsByPayTo(payTo: PublicKey) {
+    return new Promise<PurchaseTicket[]>(async (resolve,reject) => {
+         if(!payTo){
+             reject('payTo not specified');
+             return;
+         }
+         
+         const tickets = getPurchaseTickets([{ memcmp: { offset: 154, bytes: payTo.toBase58() }}])
+             .catch(reject);
+         
+         if(tickets)
+             resolve(tickets);                  
+     });  
+}
+
+export async function getPurchasesByPayTo(payTo: PublicKey) {
+    return new Promise<Purchase[]>(async (resolve,reject) => {
+        const tickets = await getPurchaseTicketsByPayTo(payTo)
+            .catch(reject);
+
+        if(!tickets)
+            return;
+
+        const snapshotPromises = tickets.map(ticket=>{
+            return getProductByAddress(ticket.productSnapshot)
+                .catch(err=>console.log(err));
+        });
+
+        const snapshots = await Promise.all(snapshotPromises)
+            .catch(err=>console.log(err));
+
+        if(!snapshots) {
+            reject('failed to retreive puchase ticket product snapshots');
+            return;
+        }
+
+        const uniqueSnapshotsMap = new Map<string,Product>();
+        snapshots.forEach(ss=>{
+            if(ss?.address)
+                uniqueSnapshotsMap.set(ss.address.toBase58(),ss)
+        });
+
+        const purchases = tickets.map(ticket=>{
+            return {
+                purchaseTicket: ticket,
+                productSnapshot: uniqueSnapshotsMap.get(ticket.productSnapshot.toBase58()),
+            } as Purchase;
+        });        
+        
+        resolve(purchases);        
+    });
+}
+
+
+
 async function getMixedItems(searchString: string) {
     return new Promise<Store[]|Product[]>(async (resolve, reject) => {
         const items = [] as Store[]|Product[];
@@ -925,7 +1030,7 @@ async function getMixedItems(searchString: string) {
     });
   }
 
-  export async function getStoresByAuthority(authority: PublicKey, deeplinkRoute: string) {
+  export async function getStoresByAuthority(authority: PublicKey) {
     return new Promise<Store[]>(async (resolve,reject) => {
         let items = [] as Store[];
         if(!authority){
@@ -933,7 +1038,7 @@ async function getMixedItems(searchString: string) {
             return;
         }
         
-        const program = getProgram(deeplinkRoute);
+        const program = getProgram();
         const stores = await program.account.store
             .all([
                     {
@@ -1128,39 +1233,6 @@ console.log('sig: ', signature);
     });
 }
 
-export async function getPurchaseTicketsByAuthority(authority: PublicKey) {
-    return new Promise<PurchaseTicket[]>(async (resolve,reject) => {
-        let items = [] as PurchaseTicket[];
-        if(!authority){
-            reject('authority not specified');
-            return;
-        }
-        
-        const program = getProgram("");
-        const tickets = await program.account.purchaseTicket
-            .all([
-                    {
-                        memcmp: { offset: 186, bytes: authority.toBase58() }
-                    }
-            ])
-            .catch(reject);
-
-        if(!tickets)
-            return;
-
-        tickets.forEach((ticket,i)=>{  
-            try{    
-                items.push({...ticket.account, address: ticket.publicKey});                
-            }
-            catch(e){
-                console.log('exception: ', e);
-                //console.log(store.account.data);
-            }
-        });
-
-        resolve(items);
-    });
-}
 
 
 
