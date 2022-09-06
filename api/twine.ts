@@ -919,8 +919,7 @@ async function getProducts(filters?: Buffer | web3.GetProgramAccountsFilter[], a
 }
 
 async function getPurchaseTickets(filters?: Buffer | web3.GetProgramAccountsFilter[], additionalFilterString?: string) {
-    return new Promise<PurchaseTicket[]>(async (resolve,reject) => {
-        
+    return new Promise<PurchaseTicket[]>(async (resolve,reject) => {        
         
         const program = getProgram();
         const tickets = await program.account.purchaseTicket

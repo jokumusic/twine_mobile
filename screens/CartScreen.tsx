@@ -267,7 +267,7 @@ export default function CartScreen(props) {
                     <ScrollView style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
                     {
                         purchases.map((purchase, i) => (
-                        <ListItem key={"purchase" + purchase.ticket?.address?.toBase58()} bottomDivider onPress={()=>navigation.navigate('ProductDetails',{purchase})}>
+                        <ListItem key={"purchase" + purchase.ticket?.address?.toBase58()} bottomDivider onPress={()=>navigation.navigate('ProductDetails',{product:purchase.snapshot})}>
                             <Avatar source={purchase?.snapshot?.data?.img && {uri: purchase.snapshot?.data.img}} size={70} />
                             <ListItem.Content >
                                 <ListItem.Title>{purchase?.snapshot?.data?.displayName}</ListItem.Title>

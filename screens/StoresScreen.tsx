@@ -25,12 +25,17 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   },[tabIndex,walletPubkey]);
 
   async function refreshTab() {
+    console.log('refreshtab');
     switch(tabIndex) {
-      case 0: refreshStores();
+      case 0:
+        refreshStores();
         break;
-      case 1: refreshProducts();
+      case 1: 
+        refreshProducts();
         break;
-      case 2: refreshPayToSells();
+      case 2: 
+      console.log('refreshPayToSells');
+        refreshPayToSells();
         break;
     }
   }
@@ -184,7 +189,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
                     <Avatar 
                       source={sell.productSnapshot?.data?.img && {uri: sell.productSnapshot.data.img}}
                       size={70}
-                      onPress={navigation.navigate('ProductDetails', {product:sell.productSnapshot})}
+                      onPress={()=>navigation.navigate('ProductDetails', {product:sell.productSnapshot})}
                     />
                     <ListItem.Content>
                       <ListItem.Title>{sell.productSnapshot?.data?.displayName}</ListItem.Title>

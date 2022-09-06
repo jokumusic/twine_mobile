@@ -62,8 +62,11 @@ import {
     const pkey = twine.getCurrentWalletPublicKey();
     if(!pkey)
       return false;
-
-    return !product?.isSnapshot && (pkey.equals(product?.authority) || pkey.equals(product?.secondaryAuthority));
+      
+    if(product.isSnapshot)
+      return false;
+    
+    return pkey.equals(product?.authority) || pkey.equals(product?.secondaryAuthority);
   }
 
   function carouselRenderImage({ item, index}) {
