@@ -181,7 +181,11 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
               {
                 payToSells.map((sell, i) => (
                   <ListItem key={"sell" + sell.purchaseTicket?.address?.toBase58()} bottomDivider>
-                    <Avatar source={sell.productSnapshot?.data?.img && {uri: sell.productSnapshot.data.img}} size={70} />
+                    <Avatar 
+                      source={sell.productSnapshot?.data?.img && {uri: sell.productSnapshot.data.img}}
+                      size={70}
+                      onPress={navigation.navigate('ProductDetails', {product:sell.productSnapshot})}
+                    />
                     <ListItem.Content>
                       <ListItem.Title>{sell.productSnapshot?.data?.displayName}</ListItem.Title>
                       <View>

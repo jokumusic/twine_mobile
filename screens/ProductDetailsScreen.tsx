@@ -37,6 +37,11 @@ import {
    const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
 
    useEffect(()=>{
+      if(!product?.address) {
+        Alert.alert("Product is missing an address. Unable to retrieve product information");
+        return;
+      }
+
       setActivityIndicatorIsVisible(true);
       console.log('refreshing product...');
       twine
@@ -46,7 +51,10 @@ import {
         .finally(()=>setActivityIndicatorIsVisible(false));
    },[]);
       
-  async function addToCart() {  
+  async function addToCart() {
+      if(!product?.address){
+        Alert.alert('Product is missing an address. Unable to add item to cart.')
+      }
       addItemToCart(product.address);
   }
 
@@ -55,7 +63,7 @@ import {
     if(!pkey)
       return false;
 
-    return pkey.equals(product?.authority) || pkey.equals(product?.secondaryAuthority);
+    return !product?.isSnapshot && (pkey.equals(product?.authority) || pkey.equals(product?.secondaryAuthority));
   }
 
   function carouselRenderImage({ item, index}) {
@@ -118,7 +126,9 @@ import {
             <Text>Sku: {product.data?.sku}</Text>
           }
 
+          { product.isSnapshot ||
           <Button title="Add To Cart" onPress={addToCart}/>
+          }
         </ScrollView>
       </ImageBackground>
     </View>
