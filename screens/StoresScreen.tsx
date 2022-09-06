@@ -147,7 +147,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
           
           <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
             <TabView.Item style={{ width: '100%' }}>              
-              <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
+              <ScrollView style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
               {
                 stores.map((store, i) => (
                   <ListItem key={"store" + store.address?.toBase58()} bottomDivider onPress={()=>navigation.navigate('StoreDetails',{store})}>
@@ -159,10 +159,10 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
                   </ListItem>
                 ))
               }
-              </View>                                   
+              </ScrollView>                                   
             </TabView.Item>
             <TabView.Item style={{ width: '100%' }}>
-              <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
+              <ScrollView style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
               {
                 products.map((product, i) => (
                   <ListItem key={"product" + product.address?.toBase58()} bottomDivider  onPress={()=>navigation.navigate('ProductDetails', {product})}>
@@ -174,10 +174,10 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
                   </ListItem>
                 ))
               }
-              </View>
+              </ScrollView>
             </TabView.Item>
             <TabView.Item style={{ backgroundColor: 'rgba(52, 52, 52, 0)', width: '100%' }}>
-              <View style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
+              <ScrollView style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
               {
                 payToSells.map((sell, i) => (
                   <ListItem key={"sell" + sell.purchaseTicket?.address?.toBase58()} bottomDivider>
@@ -194,7 +194,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
                   </ListItem>
                 ))
               }
-              </View>
+              </ScrollView>
             </TabView.Item>
           </TabView>
 

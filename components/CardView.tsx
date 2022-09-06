@@ -102,7 +102,7 @@ export const HorizontalScrollView = (items) => {
  }
 }
 
-const styles = new StyleSheet.create ({
+const styles = StyleSheet.create ({
   card: {
     borderRadius: 4,
     width: ITEM_WIDTH,

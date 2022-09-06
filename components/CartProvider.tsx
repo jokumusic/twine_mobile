@@ -7,7 +7,7 @@ import * as twine from '../api/twine';
 export const CartContext = createContext();
 
 export function CartProvider(props) {
-    const [map, actions] = useMap<String, string>();
+    const [map, actions] = useMap<string, string>();
     const [itemCount, setItemCount] = useState(0);
   
     function addItemToCart(id, cnt = 1) {
