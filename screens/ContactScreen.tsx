@@ -13,6 +13,7 @@ import { AssetType } from '../api/twine';
 import SelectDropdown from 'react-native-select-dropdown'
 import { Asset } from 'expo-asset/build/Asset';
 import * as twine from '../api/twine';
+import { Avatar, Icon, ListItem } from '@rneui/themed';
 
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
@@ -25,6 +26,28 @@ interface SendAsset {
   type: AssetType;
   amount: number;
 }
+
+const mockGroups = [{
+  name: 'U.S. Baseball',
+  img: 'https://upload.wikimedia.org/wikipedia/en/1/1e/Baseball_%28crop%29.jpg',
+  description: 'Everything baseball!'
+},
+{
+  name: 'Sk8 Or Die!',
+  img: 'https://media.npr.org/assets/img/2021/04/15/rubymedina_custom-9c9bdfe709b5d4e47d21c86fdafdd2a45d166d79.jpeg',
+  description: 'Skayyyte!',
+},
+{
+  name: 'Catholic',
+  img: 'https://cdn.vanguardngr.com/wp-content/uploads/2021/03/iStock-1175757869.jpg',
+  description: 'Catholic focused'
+},
+{
+  name: 'Islam',
+  img: 'https://www.reviewofreligions.org/wp-content/uploads/2020/05/god-675994_1280-1024x576.png',
+  description: 'Muslim living'
+}
+];
 
 export default function ContactScreen(props) {
   const navigation = useRef(props.navigation).current;
@@ -39,6 +62,8 @@ export default function ContactScreen(props) {
   const [sendAssetErrorMessage, setSendAssetErrorMessage] = useState('');
   const [chatMessage, setChatMessage] = useState('');
   const [logText, setLogText] = useState<string[]>([]);
+  const [contactAccordionExpanded, setContactAccordionExpanded] = useState(true);
+  const [groupAccordionExpanded, setGroupAccordionExpanded] = useState(true);
   const scrollViewRef = useRef<any>(null);
 
   const log = useCallback((log: string) => { 
@@ -185,12 +210,7 @@ export default function ContactScreen(props) {
 
    return (
     <View style={styles.container}>
-      <View style={styles.leftPanel}>
-        <View style={styles.leftPanelHeader}>
-          <PressableIcon name="person-add" style={{margin: 5}} color={'purple'} onPress={toggleAddContactModalVisibility} />         
-          <PressableIcon name="refresh" style={{margin: 5}} color={'purple'} onPress={updateWalletContact} />
-        </View>
-        <Modal animationType="slide" 
+              <Modal animationType="slide" 
             transparent 
             visible={addContactModalVisible} 
             presentationStyle="overFullScreen" 
@@ -212,15 +232,97 @@ export default function ContactScreen(props) {
             </View>
         </Modal>
 
+      <View style={styles.leftPanel}>
+        <View style={styles.leftPanelHeader}>
+          <PressableIcon name="person-add" style={{margin: 5}} color={'white'} onPress={toggleAddContactModalVisibility} />         
+          <PressableIcon name="refresh" style={{margin: 5}} color={'white'} onPress={updateWalletContact} />
+        </View>
+
         <View style={styles.contactList}>
-          <FlatList
-            contentContainerStyle={styles.contactListContainer}
-            data={allowedContacts}
-            renderItem={renderContactListItem}
-            keyExtractor={(item) => item.address.toBase58()}
-            ListHeaderComponent={renderContactListSummary}
-            ListHeaderComponentStyle={styles.contactListHeader}
-          />
+          <ListItem.Accordion
+              content={
+                <>
+                  <Icon type="ionicon" name="person" size={25} />
+                  <ListItem.Content>
+                    <ListItem.Title>Contacts</ListItem.Title>
+                  </ListItem.Content>
+                </>
+              }
+              isExpanded={contactAccordionExpanded}
+              onPress={() => {
+                setContactAccordionExpanded(!contactAccordionExpanded);
+              }}
+              containerStyle={{padding:3,backgroundColor:'#C1D5EE'}}
+            >
+            <ScrollView>
+            {
+            allowedContacts.map((contact, i) => (
+              <ListItem
+                key={contact.address.toBase58()}
+                containerStyle={{
+                  marginHorizontal: 1,
+                  marginVertical: 1,
+                  borderRadius: 6,
+                  padding:0,
+                  backgroundColor: '#88bed2',
+                }}
+                bottomDivider
+                onPress={()=>setFocusedContact(contact)}
+              >
+                <Avatar rounded source={contact.data?.img && { uri: contact.data.img }} size={45} />
+                <ListItem.Content>
+                  <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 14 }}>
+                    {contact.name}
+                  </Text>
+                </ListItem.Content>
+              </ListItem>
+              )
+            )
+            }
+            </ScrollView>
+          </ListItem.Accordion>
+          <ListItem.Accordion
+              content={
+                <>
+                  <Icon name="groups" size={25} />
+                  <ListItem.Content>
+                    <ListItem.Title>Groups</ListItem.Title>
+                  </ListItem.Content>
+                </>
+              }              
+              isExpanded={groupAccordionExpanded}
+              onPress={() => {
+                setGroupAccordionExpanded(!groupAccordionExpanded);
+              }}
+              containerStyle={{padding:3,backgroundColor:'#C1D5EE'}}
+            >
+            <ScrollView>
+            {
+              mockGroups.map((group, i) => (
+                <ListItem
+                  key={"group" + i}
+                  containerStyle={{
+                    marginHorizontal: 1,
+                    marginVertical: 1,
+                    borderRadius: 6,
+                    padding:0,
+                    backgroundColor: '#84b8ea',
+                  }}
+                  bottomDivider
+                >
+                  <Avatar rounded source={group?.img && { uri: group.img }} size={45} />
+                  <ListItem.Content>
+                    <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 14 }}>
+                      {group.name}
+                    </Text>
+                  </ListItem.Content>
+                </ListItem>
+                )
+              )
+            }
+            </ScrollView>
+            </ListItem.Accordion>
+        </View>
 
           <Modal 
             animationType="slide" 
@@ -264,8 +366,6 @@ export default function ContactScreen(props) {
               </View>
             </View>
           </Modal>
-
-        </View>
         
       </View>
       <View style={styles.rightPanel}>
@@ -380,10 +480,10 @@ const styles = StyleSheet.create({
       width: '100%'      
     },
     leftPanel: {
-      width: WINDOW_WIDTH / 3,
+      width: '35%',
       height: '100%',
       alignSelf: 'flex-start',
-      backgroundColor: 'red',
+      backgroundColor: '#EEEEEE',
     },
     rightPanel: {
       width: '100%',
@@ -394,7 +494,7 @@ const styles = StyleSheet.create({
     leftPanelHeader: {
       width: '100%',
       height: '5%',
-      backgroundColor: 'orange',
+      backgroundColor: '#88bed2',
       flexDirection: 'row',
       alignContent: 'center',
       alignItems: 'center',
@@ -449,7 +549,7 @@ const styles = StyleSheet.create({
       marginBottom: 8,
   },
   contactList: {
-    backgroundColor: 'pink',
+    backgroundColor: '#EEEEEE',
     borderWidth:1,
     flexDirection: 'column',
     //height: WINDOW_HEIGHT,
