@@ -1,25 +1,18 @@
 import {
     Dimensions,
     StyleSheet,
-    Image,
-    Pressable,
-    ColorSchemeName,
     ImageBackground,
-   FlatList,
    ScrollView,
-   SafeAreaView,
    Alert,
    ActivityIndicator
    } from 'react-native';
- import { Text, View, TextInput, Button} from '../components/Themed';
- import { FontAwesome5 } from '@expo/vector-icons';
+ import { Text, View, TextInput} from '../components/Themed';
  import React, { useEffect, useRef, useState, useContext } from 'react';
- import Colors from '../constants/Colors';
- import useColorScheme from '../hooks/useColorScheme';
  import { CartContext } from '../components/CartProvider';
  import * as twine from '../api/twine';
  import { PressableIcon, PressableImage } from '../components/Pressables';
  import CarouselCards from '../components/CarouselCards';
+import { Button } from '@rneui/themed';
  
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
@@ -130,7 +123,12 @@ import {
           }
 
           { product.isSnapshot ||
-          <Button title="Add To Cart" onPress={addToCart}/>
+          <Button 
+            title="Add To Cart"
+            onPress={addToCart}
+            buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center' }}
+            disabled={product.inventory < 1}
+          />
           }
         </ScrollView>
       </ImageBackground>
