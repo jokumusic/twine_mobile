@@ -14,6 +14,7 @@ import SelectDropdown from 'react-native-select-dropdown'
 import { Asset } from 'expo-asset/build/Asset';
 import * as twine from '../api/twine';
 import { Avatar, Icon, ListItem } from '@rneui/themed';
+import { GiftedChat } from 'react-native-gifted-chat'
 
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
@@ -64,6 +65,7 @@ export default function ContactScreen(props) {
   const [logText, setLogText] = useState<string[]>([]);
   const [contactAccordionExpanded, setContactAccordionExpanded] = useState(true);
   const [groupAccordionExpanded, setGroupAccordionExpanded] = useState(true);
+  const [messages, setMessages] = useState([]);
   const scrollViewRef = useRef<any>(null);
 
   const log = useCallback((log: string) => { 
@@ -73,6 +75,25 @@ export default function ContactScreen(props) {
   useEffect(()=>{
    updateWalletContact();
   },[]);
+
+  useEffect(() => {
+    setMessages([
+      {
+        _id: 1,
+        text: 'Hello',
+        createdAt: new Date(),
+        user: {
+          _id: 2,
+          name: 'React Native',
+          avatar: 'https://placeimg.com/140/140/any',
+        },
+      },
+    ])
+  }, [])
+
+  const onSend = useCallback((messages = []) => {
+    setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
+  }, [])
 
   function updateWalletContact(){
     console.log('getCurrentWalletContact...');
@@ -373,12 +394,12 @@ export default function ContactScreen(props) {
           { focusedContact.data && 
           <>
           <Image source={{uri:focusedContact.data.img}} style={{width: '30%', height: '100%'}}/>
-          <View style={{flexDirection: 'column', width: '100%'}}>
+          <View style={{flexDirection: 'column', width: '100%', backgroundColor: '#DDDDDD'}}>
             <Text style={{fontSize: 16, fontWeight: 'bold'}}>{focusedContact.name}</Text>
          
             <Text style={{fontStyle: 'italic', flexWrap: 'wrap', width:'100%'}}>{focusedContact.data.description}</Text>
          
-            <View style={{flexDirection: 'row'}}>
+            <View style={{flexDirection: 'row', backgroundColor: '#DDDDDD'}}>
             <PressableImage
                 source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
                 style={styles.contactIcon}
@@ -418,54 +439,13 @@ export default function ContactScreen(props) {
           }
 
         </View>
-        <View style={{flexDirection: 'column'}}>
-          <View style={{height: '83.5%'}}>
-            <ScrollView
-              contentContainerStyle={{
-                backgroundColor: "#111",
-                padding: 20,
-                paddingTop: 20,
-                flexGrow: 1,
+        <GiftedChat
+              messages={messages}
+              onSend={messages => onSend(messages)}
+              user={{
+                _id: 1,
               }}
-              ref={scrollViewRef}
-              onContentSizeChange={() => {
-                scrollViewRef.current.scrollToEnd({ animated: true });
-              }}
-              style={{ flex: 1 }}
-            >
-              {logText.map((log, i) => (
-                <Text
-                  selectable
-                  key={`t-${i}`}
-                  style={{
-                  fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
-                  color: "#fff",
-                  fontSize: 14,}}
-                >
-                  {log}
-                </Text>
-              ))}
-            </ScrollView>
-          </View>
-          <View style={{flexDirection: 'row', alignContent: 'flex-start', backgroundColor: "#111"}}>
-          <TextInput 
-            value={chatMessage}
-            style={{backgroundColor: 'gray', borderWidth: 2, fontSize: 14,width:'60%', borderRadius: 10, justifyContent: 'flex-start', paddingLeft:10}}
-            multiline={true}
-            numberOfLines={3}
-            onChangeText={setChatMessage}
-          />
-          <View style={{flexDirection: 'column', alignContent:'center', backgroundColor: "#111"}}>
-            <PressableIcon
-              name="md-arrow-redo-circle"
-              color='lime'
-              size={32}
-              onPress={sendChatMessage}
             />
-          </View>
-        </View>
-      </View>
-        
       </View>
     </View>
    )
@@ -488,7 +468,6 @@ const styles = StyleSheet.create({
     rightPanel: {
       width: '100%',
       height: '100%',
-      backgroundColor: 'blue',
       alignSelf: 'flex-start',
     },
     leftPanelHeader: {
@@ -580,8 +559,9 @@ const styles = StyleSheet.create({
   contentHeader: {
     width: '100%',
     height: '15%',
-    backgroundColor: 'lime',
     flexDirection: 'row',
+    backgroundColor: '#DDDDDD',
+    borderBottomWidth:1,
   },
   contactIcon:{
     width:17,
