@@ -190,6 +190,7 @@ export default function CartScreen(props) {
                                 title="Checkout"
                                 buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center' }}
                                 onPress={checkOut}
+                                disabled={checkoutItems.length < 1}
                             />
                         </View>
                         <ScrollView style={{flex:1, width:'100%', height: '100%'}}>
