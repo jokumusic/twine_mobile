@@ -12,6 +12,7 @@ import MarqueeText from 'react-native-marquee';
 import { generateRandomString } from '../utils/random';
 import * as twine from '../api/twine';
 import { PressableIcon } from '../components/Pressables';
+import { SearchBar } from '@rneui/themed';
 
 
 const SCREEN_DEEPLINK_ROUTE = "shop";
@@ -59,23 +60,18 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
         source={{
           uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
         }}>  
-        <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+          <View style={{flexDirection:'row', alignContent: 'flex-end', justifyContent:'flex-start', backgroundColor: 'rgba(52, 52, 52, .025)'}}>      
 
-          <View style={{flexDirection:'row', alignContent: 'flex-end', justifyContent:'flex-start', backgroundColor: 'rgba(52, 52, 52, .025)'}}>
-            <TextInput 
-              placeholder='search...'
-              placeholderTextColor='white'
-              autoCapitalize = 'none'
-              style={styles.searchbox}
+            <SearchBar
+              placeholder="search..."
+              onChangeText={setSearchText}
               value={searchText}
-              onChangeText={setSearchText}/>
-            
-            <PressableIcon
-              name="search"
-              size={31}
-              style={styles.searchIcon}
-              onPress={runSearch}
+              autoCapitalize = 'none'
+              containerStyle={{width:'100%'}}
+              lightTheme
+              searchIcon={{size: 30, onPress:()=> runSearch()}}           
             />
+            
           </View>
           <ScrollView  contentContainerStyle={{flexGrow:1, flexWrap: 'wrap', flexDirection:'row', alignContent: 'space-around'}}>
               {
