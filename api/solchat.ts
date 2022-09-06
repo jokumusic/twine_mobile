@@ -56,7 +56,7 @@ export async function connectWallet(force=false, deeplinkRoute: string) {
   });
 }
 
-function getProgram(deeplinkRoute: string){
+function getProgram(deeplinkRoute: string=""){
   const wallet = {
     signTransaction: (tx: Transaction) => Phantom.signTransaction(tx,false,true, deeplinkRoute),
     signAllTransactions: (txs: Transaction[]) => Phantom.signAllTransactions(txs,false,true,deeplinkRoute),
@@ -92,7 +92,7 @@ function decodeData(data: any) {
   return decompressed;
 }
 
-export function getContactByPubKey(key: PublicKey, deeplinkRoute: string) {
+export function getContactByPubKey(key: PublicKey) {
   return new Promise<Contact>(async (resolve,reject)=>{
     if(!key) {
       reject('key must be specified');
@@ -106,7 +106,7 @@ export function getContactByPubKey(key: PublicKey, deeplinkRoute: string) {
       return;
     }
 
-    const contact = await getContactByPda(contactPda, deeplinkRoute)
+    const contact = await getContactByPda(contactPda)
       .catch(reject);
 
     if(contact)
@@ -116,13 +116,13 @@ export function getContactByPubKey(key: PublicKey, deeplinkRoute: string) {
   });
 }
 
-export async function getContactByPda(contactPda: PublicKey, deeplinkRoute: string) {  
+export async function getContactByPda(contactPda: PublicKey) {  
   return new Promise<Contact>(async (resolve,reject) => {
     if(!contactPda) {
       reject('contactPda not specified');
       return;
     }
-    const program = getProgram(deeplinkRoute);
+    const program = getProgram();
     const contact = await program.account.contact
       .fetchNullable(contactPda)
       .catch(reject);
@@ -135,7 +135,7 @@ export async function getContactByPda(contactPda: PublicKey, deeplinkRoute: stri
   });
 }
 
-export async function getCurrentWalletContact(deeplinkRoute: string) {
+export async function getCurrentWalletContact() {
   return new Promise<Contact>(async(resolve,reject) => {
     const creatorPubkey = getCurrentWalletPublicKey();
     if(!creatorPubkey)
@@ -143,7 +143,7 @@ export async function getCurrentWalletContact(deeplinkRoute: string) {
       reject('not connected to a wallet');
       return;
     }
-    const contact = await getContactByPubKey(creatorPubkey, deeplinkRoute)
+    const contact = await getContactByPubKey(creatorPubkey)
       .catch(reject);
 
     resolve(contact);
@@ -176,7 +176,7 @@ export async function addAllow(contactPda: PublicKey, allow: Allow, deeplinkRout
 
 
     if(contact.data?.allows?.includes(contactPdaString)) {
-      const allowContact = await getContactByPda(contactPda, deeplinkRoute);
+      const allowContact = await getContactByPda(contactPda);
       if(!allowContact) {
         reject('the specified key does not belong to a registered contact. Ask them to create a contact in the system');
       } else {
@@ -196,22 +196,22 @@ export async function addAllow(contactPda: PublicKey, allow: Allow, deeplinkRout
   return await promise;
 }
 
-export async function getContacts(contactPdas: Iterable<PublicKey>, deeplinkRoute: string) {
-  const program = getProgram(deeplinkRoute);
+export async function getContacts(contactPdas: Iterable<PublicKey>) {
+  const program = getProgram();
   let promises = [];
   for(const contactPda of contactPdas) {
-    promises.push(getContactByPda(contactPda, deeplinkRoute));
+    promises.push(getContactByPda(contactPda));
   }
 
   const contacts = await Promise.all(promises)
   return contacts;
 }
 
-export async function getAllowedContacts(contact: Contact, deeplinkRoute: string) : Promise<Contact[]> {
+export async function getAllowedContacts(contact: Contact) : Promise<Contact[]> {
   const allows = contact?.data?.allows;
   if(allows) {
     const allowPdas = allows.map((a)=>new PublicKey(a));
-    const contacts = await getContacts(allowPdas, deeplinkRoute);
+    const contacts = await getContacts(allowPdas);
     return contacts;
   }
 

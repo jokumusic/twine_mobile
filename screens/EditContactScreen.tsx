@@ -16,14 +16,14 @@ export default function EditContactScreen(props) {
    
     useEffect(()=>{
         solchat
-            .getCurrentWalletContact(SCREEN_DEEPLINK_ROUTE)
+            .getCurrentWalletContact()
             .then(c=> c && setContact(c))
             .catch(err=>console.log(err));
     },[]);
 
     const submit = async()=>{
         if(!contact) {
-            console.log("contact doesn't exist");
+            console.log('contact isnt set');
             return;
         }
 
@@ -35,7 +35,7 @@ export default function EditContactScreen(props) {
           .catch(err=>console.log(err));
     
         if(updatedContact) {
-            console.log('got updated contact');
+          console.log('got updated contact');
           setContact(updatedContact);
           console.log(JSON.stringify(updatedContact));
         }
@@ -45,7 +45,7 @@ export default function EditContactScreen(props) {
         
         setActivityIndicatorIsVisible(false);
         console.log('done');
-      }
+  }
 
    return (
     <View style={styles.container}>

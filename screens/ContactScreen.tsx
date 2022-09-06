@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, Button, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Alert, Button, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text, View } from '../components/Themed';
 import {PressableImage} from '../components/Pressables';
 import { AntDesign, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
@@ -67,14 +67,11 @@ export default function ContactScreen(props) {
   const [groupAccordionExpanded, setGroupAccordionExpanded] = useState(true);
   const [messages, setMessages] = useState([]);
   const scrollViewRef = useRef<any>(null);
+  const [walletPubkey,setWalletPubkey] = useState(twine.getCurrentWalletPublicKey());
 
-  const log = useCallback((log: string) => { 
-    setLogText((logs) => [...logs, log])
-  }, []);
- 
   useEffect(()=>{
    updateWalletContact();
-  },[]);
+  },[walletPubkey]);
 
   useEffect(() => {
     setMessages([
@@ -95,10 +92,35 @@ export default function ContactScreen(props) {
     setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
   }, [])
 
+  function walletIsConnected(){
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+    if(!currentWalletPubkey){
+        Alert.alert(
+        "connect to wallet",
+        "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
+        [
+            {text: 'Yes', onPress: () => twine
+            .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
+            .then(pubkey=>setWalletPubkey(pubkey))
+            .catch(err=>Alert.alert('error', err))
+            },
+            {text: 'No', onPress: () => {}},
+        ]);
+
+        return false;
+    }
+
+    return true;
+}
+
   function updateWalletContact(){
     console.log('getCurrentWalletContact...');
+
+    if(!walletIsConnected())
+      return;
+
     solchat
-      .getCurrentWalletContact(SCREEN_DEEPLINK_ROUTE)
+      .getCurrentWalletContact()
       .then((c)=>{console.log('and here'); setContact(c);})
       .catch(err=>console.log(err));
   }
@@ -106,7 +128,7 @@ export default function ContactScreen(props) {
   useEffect(()=>{
     console.log('getAllowedContacts...');
     solchat
-      .getAllowedContacts(contact, SCREEN_DEEPLINK_ROUTE)
+      .getAllowedContacts(contact)
       .then(contacts=>{
         setAllowedContacts(contacts);
         if(!contacts.some(c=>c.address == focusedContact.address))
@@ -127,6 +149,9 @@ export default function ContactScreen(props) {
   }
 
   function allowContact() {
+    if(!walletIsConnected())
+      return;
+
     if(!addContactKey)
       return;
 
@@ -144,37 +169,6 @@ export default function ContactScreen(props) {
         setAddContactKey("");
       });    
   }
-
-
-
-  function renderContactListItem({item}){
-    return (
-      <Pressable
-        onPress={()=>setFocusedContact(item)}
-        style={({ pressed }) => ({
-        opacity: pressed ? 0.5 : 1,
-        })}
-      >
-        <View style={styles.contactListItem}>
-          <Text style={{fontSize: 18}}>{item.name}</Text>    
-        </View>
-      </Pressable>
-    );
-  }
-
-  function renderContactListSummary(){
-    return (
-      <Pressable
-            onPress={() => {}}
-            style={[{margin: 5},
-              ({ pressed }) => ({ opacity: pressed ? 0.5 : 1,})
-            ]}
-            >
-          <Text>{allowedContacts.length} contacts</Text>      
-      </Pressable>
-    );
-  }
-
 
   async function sendAssetToFocusedContact(){
     console.log('sending= type: ', sendAsset.type, ', amount: ', sendAsset.amount);
@@ -206,28 +200,6 @@ export default function ContactScreen(props) {
     setActivityIndicatorIsVisible(false);
   }
 
-  async function sendChatMessage(){
-    log(`${contact.name || contact.address.toBase58()}> ${chatMessage}`);
-    setChatMessage("");
-
-    log("[not functional yet...]");
-    return;
-
-    if(!chatMessage)
-      return;
-
-    solchat
-      .sendMessage(chatMessage, contact.address, focusedContact.address, SCREEN_DEEPLINK_ROUTE)
-      .then(transaction=>{
-          log(chatMessage);
-      })
-      .catch(err=>{
-        log(err);
-      })
-      .finally(()=>{
-        setChatMessage("");
-      });
-  }
 
    return (
     <View style={styles.container}>
