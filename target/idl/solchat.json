@@ -88,12 +88,12 @@
           "isSigner": true
         },
         {
-          "name": "from",
+          "name": "contact1",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "to",
+          "name": "contact2",
           "isMut": false,
           "isSigner": false
         },
@@ -119,12 +119,12 @@
           "isSigner": false
         },
         {
-          "name": "contactA",
+          "name": "contact1",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "contactB",
+          "name": "contact2",
           "isMut": false,
           "isSigner": false
         },
@@ -188,11 +188,11 @@
             "type": "u8"
           },
           {
-            "name": "contactA",
+            "name": "contact1",
             "type": "publicKey"
           },
           {
-            "name": "contactB",
+            "name": "contact2",
             "type": "publicKey"
           },
           {
@@ -222,6 +222,6 @@
     }
   ],
   "metadata": {
-    "address": "AhqDVkiKVxijhJy3vU9hXFYjcwxaHAkyXsViMa4mEJc7"
+    "address": "9Nu7PXgDQuaT1gJ6mHKMTyp1xrUbC8GeaVCN9kGuuUBs"
   }
 }

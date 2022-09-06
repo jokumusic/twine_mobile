@@ -14,7 +14,9 @@ import SelectDropdown from 'react-native-select-dropdown'
 import { Asset } from 'expo-asset/build/Asset';
 import * as twine from '../api/twine';
 import { Avatar, Icon, ListItem } from '@rneui/themed';
-import { GiftedChat } from 'react-native-gifted-chat'
+import { GiftedChat, IMessage } from 'react-native-gifted-chat';
+import uuid from 'react-native-uuid';
+import { parse } from 'expo-linking';
 
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
@@ -61,12 +63,10 @@ export default function ContactScreen(props) {
   const [focusedContact, setFocusedContact] = useState({} as solchat.Contact);
   const [sendAsset, setSendAsset] = useState({type: AssetType.SOL, amount:0} as SendAsset);
   const [sendAssetErrorMessage, setSendAssetErrorMessage] = useState('');
-  const [chatMessage, setChatMessage] = useState('');
   const [logText, setLogText] = useState<string[]>([]);
   const [contactAccordionExpanded, setContactAccordionExpanded] = useState(true);
   const [groupAccordionExpanded, setGroupAccordionExpanded] = useState(true);
   const [messages, setMessages] = useState([]);
-  const scrollViewRef = useRef<any>(null);
   const [walletPubkey,setWalletPubkey] = useState(twine.getCurrentWalletPublicKey());
 
   useEffect(()=>{
@@ -74,22 +74,100 @@ export default function ContactScreen(props) {
   },[walletPubkey]);
 
   useEffect(() => {
-    setMessages([
-      {
-        _id: 1,
-        text: 'Hello',
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: 'React Native',
-          avatar: 'https://placeimg.com/140/140/any',
-        },
-      },
-    ])
-  }, [])
+    setMessages([]);
+    if(!focusedContact?.address)
+      return;
 
-  const onSend = useCallback((messages = []) => {
-    setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
+    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+    if(!currentWalletPubkey)
+      return;
+
+      console.log('getting direct messages...');
+      solchat
+        .getDirectMessages(currentWalletPubkey, focusedContact.address)
+        .then(conversation=>{
+          
+          const parsedMessages = conversation.messages.map(m=> {
+            const parsedMessage = JSON.parse(m);
+            if(parsedMessage.user._id == contact?.address?.toBase58()) {
+              return {
+                ...parsedMessage,
+                user: {
+                  _id: contact?.address?.toBase58(),
+                  name: contact?.name,
+                  avatar: contact?.data?.img,
+                }
+
+              };
+            }
+            else if(parsedMessage.user._id == focusedContact?.address?.toBase58()) {
+              return {
+                ...parsedMessage,
+                user: {
+                  _id: focusedContact?.address?.toBase58(),
+                  name: focusedContact?.name,
+                  avatar: focusedContact?.data?.img,
+                }
+
+              };
+            }
+            return parsedMessage;
+          });
+          
+          setMessages(previousMessages => GiftedChat.append(previousMessages, parsedMessages));            
+        })
+        .catch(appendSystemErrorMessage);
+
+  }, [focusedContact]);
+
+  function appendSystemErrorMessage(text:string) {
+    const errMessage = {
+      _id: uuid.v4().toString(),
+      text,
+      createdAt: new Date().getUTCDate(),
+      system: true
+    };
+
+    setMessages(previousMessages => GiftedChat.append(previousMessages, errMessage));
+  }
+
+  const onSend = useCallback(async (messages = []) => {
+    if(messages.length < 1)
+      return;
+
+    if(!contact?.address) {
+      console.log('contact: ', contact);
+      appendSystemErrorMessage("You're not associated with a contact right now.");
+      return;
+    }
+
+    if(!focusedContact?.address) {
+      appendSystemErrorMessage("You must select a contact to send a message to");
+      return;
+    }
+
+    const message = {... messages[0], user: { _id: contact?.address?.toBase58()}};
+    console.log('sending message: ', message);
+    const messageString = JSON.stringify(message);
+
+    const signature = await solchat
+      .sendDirectMessage(messageString, contact.address, focusedContact.address, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>{
+        const errMessage = {
+          _id: uuid.v4().toString(),
+          text: err ?? "an error occurred when sending a direct message",
+          createdAt: new Date(),
+          system: true
+        } as any;
+        console.log('errMessage: ', errMessage);
+
+        setMessages(previousMessages => GiftedChat.append(previousMessages, errMessage));
+      });
+    
+    if(!signature)
+      return;
+    
+    setMessages(previousMessages => GiftedChat.append(previousMessages, message));
   }, [])
 
   function walletIsConnected(){
@@ -111,7 +189,7 @@ export default function ContactScreen(props) {
     }
 
     return true;
-}
+  }
 
   function updateWalletContact(){
     console.log('getCurrentWalletContact...');
@@ -121,7 +199,7 @@ export default function ContactScreen(props) {
 
     solchat
       .getCurrentWalletContact()
-      .then((c)=>{console.log('and here'); setContact(c);})
+      .then((c)=>{setContact(c);})
       .catch(err=>console.log(err));
   }
 
@@ -131,7 +209,7 @@ export default function ContactScreen(props) {
       .getAllowedContacts(contact)
       .then(contacts=>{
         setAllowedContacts(contacts);
-        if(!contacts.some(c=>c.address == focusedContact.address))
+        if(!contacts.some(c=>c.address.equals(focusedContact?.address)))
         {
           console.log('no contacts');
           setFocusedContact({} as solchat.Contact);
@@ -203,28 +281,6 @@ export default function ContactScreen(props) {
 
    return (
     <View style={styles.container}>
-              <Modal animationType="slide" 
-            transparent 
-            visible={addContactModalVisible} 
-            presentationStyle="overFullScreen" 
-            onDismiss={toggleAddContactModalVisibility}>
-            <View style={styles.viewWrapper}>
-              <View style={styles.modalView}>
-                <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
-                <TextInput 
-                  placeholder="Contact Public Key" 
-                  value={addContactKey} style={styles.textInput} 
-                  onChangeText={(value) => setAddContactKey(value)} 
-                />
-
-                <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
-                  <Button title="Add" onPress={allowContact} />
-                  <Button title="Cancel" onPress={toggleAddContactModalVisibility} />
-                </View>
-              </View>
-            </View>
-        </Modal>
-
       <View style={styles.leftPanel}>
         <View style={styles.leftPanelHeader}>
           <PressableIcon name="person-add" style={{margin: 5}} color={'white'} onPress={toggleAddContactModalVisibility} />         
@@ -249,7 +305,7 @@ export default function ContactScreen(props) {
             >
             <ScrollView>
             {
-            allowedContacts.map((contact, i) => (
+            allowedContacts.map((contact) => (
               <ListItem
                 key={contact.address.toBase58()}
                 containerStyle={{
@@ -315,50 +371,7 @@ export default function ContactScreen(props) {
             }
             </ScrollView>
             </ListItem.Accordion>
-        </View>
-
-          <Modal 
-            animationType="slide" 
-            transparent 
-            visible={sendAssetModalVisible} 
-            presentationStyle="overFullScreen" 
-            onDismiss={toggleSendAssetModalVisibility}>
-            <View style={styles.viewWrapper}>
-              <View style={styles.sendAssetModalView}>
-                <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
-                <Text style={{color: 'red', fontStyle: 'italic'}}>{sendAssetErrorMessage}</Text>
-                <View style={{flexDirection: 'row', alignContent: 'center', justifyContent: 'center'}}>
-                  <Text>Send to:</Text>
-                  <Text style={{fontSize: 18, fontWeight: 'bold'}}>{focusedContact.name}</Text>
-                </View>
-                <View style={{flexDirection: 'row'}}>
-                  <Text>Address:</Text>
-                  <Text style={{fontSize: 10, fontStyle: 'italic'}}>{focusedContact.receiver?.toBase58()}</Text>
-                </View>
-    
-                <SelectDropdown 
-                  data={Object.keys(AssetType).filter(v=>isNaN(Number(v)))}
-                  onSelect={(val,index)=>{ 
-                    setSendAsset({...sendAsset, type: AssetType[val]});
-                  }}
-                  buttonStyle={{margin: 5}}
-                  defaultValue={"SOL"}
-                />
-                <TextInput 
-                  placeholder="amount to send" 
-                  value={sendAsset.amount?.toString()}
-                  style={styles.textInput} 
-                  keyboardType='numeric'
-                  onChangeText={(value) => setSendAsset({...sendAsset, amount: Number(value)})} 
-                />
-
-                <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
-                  <Button title="Send" onPress={sendAssetToFocusedContact} />
-                  <Button title="Cancel" onPress={cancelSendAssetToFocusedContact} />
-                </View>
-              </View>
-            </View>
-          </Modal>
+        </View>          
         
       </View>
       <View style={styles.rightPanel}>
@@ -411,14 +424,83 @@ export default function ContactScreen(props) {
           }
 
         </View>
-        <GiftedChat
-              messages={messages}
-              onSend={messages => onSend(messages)}
-              user={{
-                _id: 1,
-              }}
-            />
+        <View style={{width:'65%',height: '85%'}}>
+          <GiftedChat
+            messagesContainerStyle={{ backgroundColor: 'white'}}
+            alwaysShowSend
+            messages={messages}
+            onSend={messages => onSend(messages)}
+            user={{
+              _id: 1,
+            }}
+          />
+        </View>
       </View>
+
+      <Modal animationType="slide" 
+        transparent 
+        visible={addContactModalVisible} 
+        presentationStyle="overFullScreen" 
+        onDismiss={toggleAddContactModalVisibility}>
+        <View style={styles.viewWrapper}>
+          <View style={styles.modalView}>
+            <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+            <TextInput 
+              placeholder="Contact Public Key" 
+              value={addContactKey} style={styles.textInput} 
+              onChangeText={(value) => setAddContactKey(value)} 
+            />
+
+            <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
+              <Button title="Add" onPress={allowContact} />
+              <Button title="Cancel" onPress={toggleAddContactModalVisibility} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal 
+            animationType="slide" 
+            transparent 
+            visible={sendAssetModalVisible} 
+            presentationStyle="overFullScreen" 
+            onDismiss={toggleSendAssetModalVisibility}>
+            <View style={styles.viewWrapper}>
+              <View style={styles.sendAssetModalView}>
+                <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+                <Text style={{color: 'red', fontStyle: 'italic'}}>{sendAssetErrorMessage}</Text>
+                <View style={{flexDirection: 'row', alignContent: 'center', justifyContent: 'center'}}>
+                  <Text>Send to:</Text>
+                  <Text style={{fontSize: 18, fontWeight: 'bold'}}>{focusedContact.name}</Text>
+                </View>
+                <View style={{flexDirection: 'row'}}>
+                  <Text>Address:</Text>
+                  <Text style={{fontSize: 10, fontStyle: 'italic'}}>{focusedContact.receiver?.toBase58()}</Text>
+                </View>
+    
+                <SelectDropdown 
+                  data={Object.keys(AssetType).filter(v=>isNaN(Number(v)))}
+                  onSelect={(val,index)=>{ 
+                    setSendAsset({...sendAsset, type: AssetType[val]});
+                  }}
+                  buttonStyle={{margin: 5}}
+                  defaultValue={"SOL"}
+                />
+                <TextInput 
+                  placeholder="amount to send" 
+                  value={sendAsset.amount?.toString()}
+                  style={styles.textInput} 
+                  keyboardType='numeric'
+                  onChangeText={(value) => setSendAsset({...sendAsset, amount: Number(value)})} 
+                />
+
+                <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
+                  <Button title="Send" onPress={sendAssetToFocusedContact} />
+                  <Button title="Cancel" onPress={cancelSendAssetToFocusedContact} />
+                </View>
+              </View>
+            </View>
+          </Modal>
     </View>
    )
 }

@@ -88,12 +88,12 @@ export type Solchat = {
           "isSigner": true
         },
         {
-          "name": "from",
+          "name": "contact1",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "to",
+          "name": "contact2",
           "isMut": false,
           "isSigner": false
         },
@@ -119,12 +119,12 @@ export type Solchat = {
           "isSigner": false
         },
         {
-          "name": "contactA",
+          "name": "contact1",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "contactB",
+          "name": "contact2",
           "isMut": false,
           "isSigner": false
         },
@@ -188,11 +188,11 @@ export type Solchat = {
             "type": "u8"
           },
           {
-            "name": "contactA",
+            "name": "contact1",
             "type": "publicKey"
           },
           {
-            "name": "contactB",
+            "name": "contact2",
             "type": "publicKey"
           },
           {
@@ -313,12 +313,12 @@ export const IDL: Solchat = {
           "isSigner": true
         },
         {
-          "name": "from",
+          "name": "contact1",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "to",
+          "name": "contact2",
           "isMut": false,
           "isSigner": false
         },
@@ -344,12 +344,12 @@ export const IDL: Solchat = {
           "isSigner": false
         },
         {
-          "name": "contactA",
+          "name": "contact1",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "contactB",
+          "name": "contact2",
           "isMut": false,
           "isSigner": false
         },
@@ -413,11 +413,11 @@ export const IDL: Solchat = {
             "type": "u8"
           },
           {
-            "name": "contactA",
+            "name": "contact1",
             "type": "publicKey"
           },
           {
-            "name": "contactB",
+            "name": "contact2",
             "type": "publicKey"
           },
           {

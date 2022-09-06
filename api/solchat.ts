@@ -43,6 +43,11 @@ export interface Allow {
   directMessage: true,
 }
 
+export interface DirectConversation {
+  readonly address: PublicKey,
+  readonly messages: [],
+}
+
 const getCurrentWalletPublicKey = () => Phantom.getWalletPublicKey();
 
 export async function connectWallet(force=false, deeplinkRoute: string) {
@@ -302,71 +307,136 @@ export async function updateContact(contact: WriteableContact, deeplinkRoute: st
   });
 }
 
-export async function sendMessage(message: string, contact1Pda: PublicKey, contact2Pda: PublicKey, deeplinkRoute: string){
-  const promise = new Promise<string>(async (resolve,reject) => {
+function getConversationPdas(contactA: PublicKey, contactB: PublicKey) {
+  const contacts = [contactA, contactB];
+  contacts.sort();
+
+  const [directConversationPda, directConversationPdaBump] = PublicKey.findProgramAddressSync(
+    [
+      anchor.utils.bytes.utf8.encode("direct_conversation"), 
+      contacts[0].toBuffer(),    
+      contacts[1].toBuffer(),
+    ], programId);
+
+  return {
+    conversation: directConversationPda,
+    contact1: contacts[0],
+    contact2: contacts[1],
+  };
+}
+
+export async function sendDirectMessage(message: string, from: PublicKey, to: PublicKey, deeplinkRoute: string){
+  return new Promise<string>(async (resolve,reject) => {
     const currentWalletKey = getCurrentWalletPublicKey();
-    const program = getProgram(deeplinkRoute);
-    let [directConversationPda, directConversationPdaBump] = PublicKey.findProgramAddressSync(
-      [
-        anchor.utils.bytes.utf8.encode("direct_conversation"), 
-        contact2Pda.toBuffer(),    
-        contact1Pda.toBuffer(),         
-      ], programId);
-    
-
-    let conversation = program.account.directConversation.fetchNullable(directConversationPda);
-    if(!conversation){
-      [directConversationPda, directConversationPdaBump] = PublicKey.findProgramAddressSync(
-        [
-          anchor.utils.bytes.utf8.encode("direct_conversation"), 
-          contact1Pda.toBuffer(),            
-          contact2Pda.toBuffer(),
-        ], programId);
-
-        let conversation = program.account.directConversation.fetchNullable(directConversationPda);  
+    if(!currentWalletKey) {
+      reject('not connected to a wallet');
+      return;
     }
 
-    let errored = false;
+    if(!from) {
+      reject('from contact must be specified');
+      return;      
+    }
+
+    if(!to) {
+      reject('to contact must be specified');
+      return;
+    }
+
+    const conversationPdas = getConversationPdas(from, to);
+    const program = getProgram(deeplinkRoute);
+    
+    let conversation = await program.account.directConversation.fetchNullable(conversationPdas.conversation);
     let tx = null;
+
+    console.log('trying to send message: ', message);
     if(!conversation) {
+      console.log('creating conversation');
       tx = await program.methods
         .startDirectConversation(message)
         .accounts({
-          conversation: directConversationPda,
+          conversation: conversationPdas.conversation,
           payer: currentWalletKey,
-          from: contact1Pda,
-          to: contact2Pda,
+          contact1: conversationPdas.contact1,
+          contact2: conversationPdas.contact2,
         })
         .transaction()
-        .catch(err=>{errored=true; reject(err);});
+        .catch(reject);
     }
     else {
+      console.log('using existing conversation');
       tx = await program.methods
         .sendDirectMessage(message)
         .accounts({
-          conversation: directConversationPda,
+          conversation: conversationPdas.conversation,
           payer: currentWalletKey,
-          contactA: contact1Pda,
-          contactB: contact2Pda,
+          contact1: conversationPdas.contact1,
+          contact2: conversationPdas.contact2,
         })
         .transaction()
-        .catch(err=>{errored=true; reject(err);});
+        .catch(reject);
     }
     
     console.log('getting latest blockhash...');
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     tx.feePayer = currentWalletKey;  
 
-    console.log('signing and sending transaction...');
+    console.log('signing transaction...');
     const signature = await Phantom
       .signAndSendTransaction(tx, false, true, deeplinkRoute) 
-      .catch(err=>{errored=true; reject(err);});
+      .catch(reject);
+    
+/*
+    const signedTransaction = await Phantom.signTransaction(tx, false, true, deeplinkRoute)
+      .catch(reject);
+
+    if(!signedTransaction)
+      return;
+
+    console.log('sending transaction...', signedTransaction);
+    const signature = await anchor.web3
+      .sendAndConfirmRawTransaction(
+        connection, 
+        tx.serialize({ requireAllSignatures: false, verifySignatures: false }), 
+        {skipPreflight: true, commitment:'confirmed'}
+      )
+      .catch(err=>{
+        reject(JSON.stringify(err));
+      });
+*/
+    console.log('signature: ', signature);
+    if(!signature)
+        return;
 
     if(signature)
       resolve(signature);
     else
       reject("didn't receive a signature");
+    
   });
-  
-  return await promise;
+}
+
+export async function getDirectMessages(contactA: PublicKey, contactB: PublicKey){
+  return new Promise<DirectConversation>(async (resolve,reject) => {
+    if(!contactA) {
+      reject('contactA must be specified');
+      return;      
+    }
+
+    if(!contactB) {
+      reject('contactB must be specified');
+      return;
+    }
+
+    const conversationPdas = getConversationPdas(contactA, contactB);
+    const program = getProgram();    
+    const conversation = await program.account.directConversation
+      .fetchNullable(conversationPdas.conversation)
+      .catch(err=>console.log(err));
+    console.log('conversation: ', conversation);
+    return {
+      address: conversationPdas.conversation,
+      messages: conversation?.messages ?? [],
+    } as DirectConversation;
+  });
 }
