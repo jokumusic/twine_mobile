@@ -61,7 +61,10 @@ export default function ContactScreen(props) {
 
   useEffect(()=>{
     console.log('setting current contact');
-    updateWalletContact();
+    getWalletContact()
+      .then(c=>setContact(c))
+      .catch(err=>console.log(err));
+
   },[walletPubkey]);
 
   async function refreshChatWithFocusedContact() {
@@ -94,11 +97,11 @@ export default function ContactScreen(props) {
         })
         .catch(appendSystemErrorMessage);
   }
-
+/*
   useEffect(() => {   
     refreshChatWithFocusedContact();
   }, [focusedContact]);
-
+*/
   function appendSystemErrorMessage(text:string) {
     const errMessage = {
       _id: uuid.v4().toString(),
@@ -140,6 +143,7 @@ export default function ContactScreen(props) {
       return;
 
     if(!contact?.address) {
+      console.log(contact?.address);
       appendSystemErrorMessage("You're not associated with a contact right now.");
       return;
     }
@@ -185,16 +189,26 @@ export default function ContactScreen(props) {
     return true;
   }
 
-  function updateWalletContact(){
+  async function updateWalletContact() {
+    const walletContact = await getWalletContact()
+      .catch(err=>console.log(err));
+
+    if(walletContact)
+      setContact(walletContact);
+  }
+
+  async function getWalletContact(){
     console.log('getCurrentWalletContact...');
 
     if(!walletIsConnected())
       return;
-
-    solchat
+    
+    console.log('refreshing wallet contact');
+    const walletContact = await solchat
       .getCurrentWalletContact()
-      .then((c)=>{setContact(c);})
       .catch(err=>console.log(err));
+
+    return walletContact;
   }
 
   useEffect(()=>{
@@ -210,6 +224,34 @@ export default function ContactScreen(props) {
       })
       .catch(err=>console.log(err));
  }, [contact]);
+
+ useEffect(()=>{
+  allowedContacts.forEach(c=>{
+    if(contact?.address && c?.address) {
+      solchat
+        .subscribeToConversationBetween(contact, c, 
+          async (conversation: solchat.DirectConversation)=> {
+            console.log('got conversation subscription callback')
+            setMessages([]);
+            const parsedMessages = conversation.messages
+            .map(m=>{
+              try {
+                const parsedMessage = JSON.parse(m);
+                return populateMessage(parsedMessage);
+              } catch(err){
+                console.log(err);
+              }
+            })
+            .filter(successfullyParsed=> successfullyParsed);
+
+            parsedMessages.sort((a,b)=> new Date(b?.createdAt) - new Date(a?.createdAt));
+            setMessages(previousMessages => GiftedChat.append(previousMessages, parsedMessages));
+          }
+        )
+        .catch(err=>console.log(err));
+    }
+  });
+ }, [allowedContacts])
 
   async function toggleAddContactModalVisibility() {
     setAddContactModalVisible(!addContactModalVisible);
@@ -271,10 +313,19 @@ export default function ContactScreen(props) {
     setActivityIndicatorIsVisible(false);
   }
 
-  function focusOnContact(contactToFocus){
+  async function focusOnContact(contactToFocus){
     console.log('focusing on contact...');
     setFocusedContact(contactToFocus);
     refreshChatWithFocusedContact();
+
+    if(!contact?.address) {
+      console.log('calling updateWalletContact()');
+      const walletContact = await getWalletContact()
+        .catch(err=>console.log(err));
+
+      if(walletContact)
+        setContact(walletContact);
+    }
   }
 
 

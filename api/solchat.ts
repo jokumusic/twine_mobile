@@ -13,6 +13,11 @@ import {
     Transaction,
   } from "@solana/web3.js";
 import { rejects } from 'assert';
+import { program } from '../dist/browser/types/src/spl/associated-token';
+
+global.SolChatSubscriptionIds = [];
+global.SolChatAccountChangeCallbackHandlers = new Map<string,any>(); 
+
 
 const network = clusterApiUrl("devnet")
 const connection = new Connection(network);
@@ -442,5 +447,48 @@ export async function getDirectMessages(contactA: PublicKey, contactB: PublicKey
       address: conversationPdas.conversation,
       messages: conversation?.messages ?? [],
     } as DirectConversation);
+  });
+}
+
+
+async function onConversationChangeHandler(changeInfo: web3.AccountChangeCallback){
+  const program = getProgram();
+  global.SolChatAccountChangeCallbackHandlers.forEach(f => {
+    program.account.
+    f(changeInfo);
+  });
+}
+
+
+export async function registerOnConversationChangeCallback(f) {
+  global.SolChatAccountChangeCallbackHandlers.push(f);
+}
+
+export async function subscribeToConversationBetween(contactA: Contact, contactB: Contact, fn) {
+  return new Promise<void>(async (resolve,reject) => {
+    if(!contactA?.address) {
+      reject("contactA must be specified");
+      return;
+    }
+
+    if(!contactB?.address) {
+      reject("contactB must be specified");
+      return;
+    }
+
+    const program = getProgram();
+    const conversationAddress = getConversationPdas(contactA.address, contactB.address).conversation;
+    //const subscriptionId = connection.onAccountChange(conversation, receivedSubscriptionCallback, 'finalized');
+    //global.SolChatSubscriptionIds.push(subscriptionId);
+    if(!global.SolChatAccountChangeCallbackHandlers.has(conversationAddress.toBase58())) {
+      program.account
+        .directConversation
+        .subscribe(conversationAddress, 'confirmed')
+        .on('change', fn);
+
+      global.SolChatAccountChangeCallbackHandlers.set(conversationAddress.toBase58(),{});
+    }
+
+    resolve();
   });
 }
