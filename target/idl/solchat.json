@@ -219,9 +219,14 @@
       "code": 6001,
       "name": "MessageIsTooLong",
       "msg": "message is more than 1024 characters"
+    },
+    {
+      "code": 6002,
+      "name": "TestError",
+      "msg": "test error"
     }
   ],
   "metadata": {
-    "address": "9Nu7PXgDQuaT1gJ6mHKMTyp1xrUbC8GeaVCN9kGuuUBs"
+    "address": "FjQr3txvbowVHZud1Ec7QZTYGkmSihvLgyrBmF8FkM5"
   }
 }

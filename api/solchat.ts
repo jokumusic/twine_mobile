@@ -225,6 +225,7 @@ export async function getAllowedContacts(contact: Contact) : Promise<Contact[]> 
 
 export async function updateContact(contact: WriteableContact, deeplinkRoute: string) {
   return new Promise<Contact>(async (resolve,reject)=>{
+    
     let errored = false;
     const creatorPubkey = getCurrentWalletPublicKey();
     if(!creatorPubkey){
@@ -334,12 +335,12 @@ export async function sendDirectMessage(message: string, from: PublicKey, to: Pu
     }
 
     if(!from) {
-      reject('from contact must be specified');
+      reject('"from" contact must be specified');
       return;      
     }
 
     if(!to) {
-      reject('to contact must be specified');
+      reject('"to" contact must be specified');
       return;
     }
 
@@ -376,12 +377,13 @@ export async function sendDirectMessage(message: string, from: PublicKey, to: Pu
         .transaction()
         .catch(reject);
     }
-    
-    console.log('getting latest blockhash...');
+
+    //console.log(`sending contact1: ${conversationPdas.contact1.toBase58()}, contact2: ${conversationPdas.contact2.toBase58()}, payer: ${currentWalletKey.toBase58()}, conversation: ${conversationPdas.conversation.toBase58()}`);
+    //console.log('getting latest blockhash...');
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     tx.feePayer = currentWalletKey;  
 
-    console.log('signing transaction...');
+    console.log('signing and sending transaction...');
     const signature = await Phantom
       .signAndSendTransaction(tx, false, true, deeplinkRoute) 
       .catch(reject);
@@ -404,7 +406,7 @@ export async function sendDirectMessage(message: string, from: PublicKey, to: Pu
         reject(JSON.stringify(err));
       });
 */
-    console.log('signature: ', signature);
+    //console.log('signature: ', signature);
     if(!signature)
         return;
 
@@ -429,14 +431,16 @@ export async function getDirectMessages(contactA: PublicKey, contactB: PublicKey
     }
 
     const conversationPdas = getConversationPdas(contactA, contactB);
+    //console.log(`getting contact1: ${conversationPdas.contact1.toBase58()}, contact2: ${conversationPdas.contact2.toBase58()}, conversation: ${conversationPdas.conversation.toBase58()}`);
     const program = getProgram();    
     const conversation = await program.account.directConversation
       .fetchNullable(conversationPdas.conversation)
       .catch(err=>console.log(err));
-    console.log('conversation: ', conversation);
-    return {
+    //console.log('conversation: ', conversation);
+    
+    resolve({
       address: conversationPdas.conversation,
       messages: conversation?.messages ?? [],
-    } as DirectConversation;
+    } as DirectConversation);
   });
 }

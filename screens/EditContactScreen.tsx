@@ -1,11 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Button, Platform, Pressable, StyleSheet, TextInput, Clipboard} from 'react-native';
+import { ActivityIndicator, Button, Platform, Pressable, StyleSheet, TextInput} from 'react-native';
 import { Text, View } from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
 import * as solchat from '../api/solchat';
 import { Avatar } from "@rneui/themed";
 import { PressableIcon } from '../components/Pressables';
+import * as Clipboard from 'expo-clipboard';
 
 const SCREEN_DEEPLINK_ROUTE = "edit_contact";
 

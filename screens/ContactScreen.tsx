@@ -30,27 +30,7 @@ interface SendAsset {
   amount: number;
 }
 
-const mockGroups = [{
-  name: 'U.S. Baseball',
-  img: 'https://upload.wikimedia.org/wikipedia/en/1/1e/Baseball_%28crop%29.jpg',
-  description: 'Everything baseball!'
-},
-{
-  name: 'Sk8 Or Die!',
-  img: 'https://media.npr.org/assets/img/2021/04/15/rubymedina_custom-9c9bdfe709b5d4e47d21c86fdafdd2a45d166d79.jpeg',
-  description: 'Skayyyte!',
-},
-{
-  name: 'Catholic',
-  img: 'https://cdn.vanguardngr.com/wp-content/uploads/2021/03/iStock-1175757869.jpg',
-  description: 'Catholic focused'
-},
-{
-  name: 'Islam',
-  img: 'https://www.reviewofreligions.org/wp-content/uploads/2020/05/god-675994_1280-1024x576.png',
-  description: 'Muslim living'
-}
-];
+const mockGroups = [];
 
 export default function ContactScreen(props) {
   const navigation = useRef(props.navigation).current;
@@ -69,11 +49,22 @@ export default function ContactScreen(props) {
   const [messages, setMessages] = useState([]);
   const [walletPubkey,setWalletPubkey] = useState(twine.getCurrentWalletPublicKey());
 
+  
+  useFocusEffect(()=>{
+    const currentWalletKey = twine.getCurrentWalletPublicKey();
+    //console.log(`${currentWalletKey} / ${walletPubkey}`);
+    if(currentWalletKey != walletPubkey || (currentWalletKey && !contact)){
+      console.log('setting currentWalletKey');
+      setWalletPubkey(currentWalletKey);
+    }
+  });
+
   useEffect(()=>{
-   updateWalletContact();
+    console.log('setting current contact');
+    updateWalletContact();
   },[walletPubkey]);
 
-  useEffect(() => {
+  async function refreshChatWithFocusedContact() {
     setMessages([]);
     if(!focusedContact?.address)
       return;
@@ -84,40 +75,28 @@ export default function ContactScreen(props) {
 
       console.log('getting direct messages...');
       solchat
-        .getDirectMessages(currentWalletPubkey, focusedContact.address)
+        .getDirectMessages(contact.address, focusedContact.address)
         .then(conversation=>{
-          
-          const parsedMessages = conversation.messages.map(m=> {
-            const parsedMessage = JSON.parse(m);
-            if(parsedMessage.user._id == contact?.address?.toBase58()) {
-              return {
-                ...parsedMessage,
-                user: {
-                  _id: contact?.address?.toBase58(),
-                  name: contact?.name,
-                  avatar: contact?.data?.img,
-                }
+         
+          const parsedMessages = conversation.messages
+            .map(m=>{
+              try {
+                const parsedMessage = JSON.parse(m);
+                return populateMessage(parsedMessage);
+              } catch(err){
+                console.log(err);
+              }
+            })
+            .filter(successfullyParsed=> successfullyParsed);
 
-              };
-            }
-            else if(parsedMessage.user._id == focusedContact?.address?.toBase58()) {
-              return {
-                ...parsedMessage,
-                user: {
-                  _id: focusedContact?.address?.toBase58(),
-                  name: focusedContact?.name,
-                  avatar: focusedContact?.data?.img,
-                }
-
-              };
-            }
-            return parsedMessage;
-          });
-          
-          setMessages(previousMessages => GiftedChat.append(previousMessages, parsedMessages));            
+            parsedMessages.sort((a,b)=> new Date(b?.createdAt) - new Date(a?.createdAt));
+            setMessages(previousMessages => GiftedChat.append(previousMessages, parsedMessages));
         })
         .catch(appendSystemErrorMessage);
+  }
 
+  useEffect(() => {   
+    refreshChatWithFocusedContact();
   }, [focusedContact]);
 
   function appendSystemErrorMessage(text:string) {
@@ -131,12 +110,36 @@ export default function ContactScreen(props) {
     setMessages(previousMessages => GiftedChat.append(previousMessages, errMessage));
   }
 
+  function populateMessage(message) {
+      if(message.user._id == contact?.address?.toBase58()) {
+        return {
+          ...message,
+          user: {
+            _id: contact?.address?.toBase58(),
+            name: contact?.name,
+            avatar: contact?.data?.img,
+          }
+        };
+      }
+      else if(message.user._id == focusedContact?.address?.toBase58()) {
+        return {
+          ...message,
+          user: {
+            _id: focusedContact?.address?.toBase58(),
+            name: focusedContact?.name,
+            avatar: focusedContact?.data?.img,
+          }
+        };
+      }
+
+      return message; 
+  }
+
   const onSend = useCallback(async (messages = []) => {
     if(messages.length < 1)
       return;
 
     if(!contact?.address) {
-      console.log('contact: ', contact);
       appendSystemErrorMessage("You're not associated with a contact right now.");
       return;
     }
@@ -147,27 +150,18 @@ export default function ContactScreen(props) {
     }
 
     const message = {... messages[0], user: { _id: contact?.address?.toBase58()}};
-    console.log('sending message: ', message);
     const messageString = JSON.stringify(message);
 
     const signature = await solchat
       .sendDirectMessage(messageString, contact.address, focusedContact.address, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>{
-        const errMessage = {
-          _id: uuid.v4().toString(),
-          text: err ?? "an error occurred when sending a direct message",
-          createdAt: new Date(),
-          system: true
-        } as any;
-        console.log('errMessage: ', errMessage);
-
-        setMessages(previousMessages => GiftedChat.append(previousMessages, errMessage));
-      });
+      .catch(err=>appendSystemErrorMessage(err));
     
     if(!signature)
       return;
     
-    setMessages(previousMessages => GiftedChat.append(previousMessages, message));
+    const populatedMessage = populateMessage(message);
+    
+    setMessages(previousMessages => GiftedChat.append(previousMessages, populatedMessage));
   }, [])
 
   function walletIsConnected(){
@@ -209,10 +203,9 @@ export default function ContactScreen(props) {
       .getAllowedContacts(contact)
       .then(contacts=>{
         setAllowedContacts(contacts);
-        if(!contacts.some(c=>c.address.equals(focusedContact?.address)))
+        if(focusedContact?.address && !contacts.some(c=>c.address.equals(focusedContact?.address)))
         {
-          console.log('no contacts');
-          setFocusedContact({} as solchat.Contact);
+          setFocusedContact({} as solchat.Contact); //unset focused contact, if they're not in the allowed list anymore
         }
       })
       .catch(err=>console.log(err));
@@ -278,6 +271,12 @@ export default function ContactScreen(props) {
     setActivityIndicatorIsVisible(false);
   }
 
+  function focusOnContact(contactToFocus){
+    console.log('focusing on contact...');
+    setFocusedContact(contactToFocus);
+    refreshChatWithFocusedContact();
+  }
+
 
    return (
     <View style={styles.container}>
@@ -316,7 +315,7 @@ export default function ContactScreen(props) {
                   backgroundColor: '#88bed2',
                 }}
                 bottomDivider
-                onPress={()=>setFocusedContact(contact)}
+                onPress={()=>focusOnContact(contact)}
               >
                 <Avatar rounded source={contact.data?.img && { uri: contact.data.img }} size={45} />
                 <ListItem.Content>
@@ -431,8 +430,9 @@ export default function ContactScreen(props) {
             messages={messages}
             onSend={messages => onSend(messages)}
             user={{
-              _id: 1,
+              _id: contact?.address,
             }}
+            showAvatarForEveryMessage
           />
         </View>
       </View>

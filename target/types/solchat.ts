@@ -219,6 +219,11 @@ export type Solchat = {
       "code": 6001,
       "name": "MessageIsTooLong",
       "msg": "message is more than 1024 characters"
+    },
+    {
+      "code": 6002,
+      "name": "TestError",
+      "msg": "test error"
     }
   ]
 };
@@ -444,6 +449,11 @@ export const IDL: Solchat = {
       "code": 6001,
       "name": "MessageIsTooLong",
       "msg": "message is more than 1024 characters"
+    },
+    {
+      "code": 6002,
+      "name": "TestError",
+      "msg": "test error"
     }
   ]
 };
