@@ -1,17 +1,13 @@
-import React, {useMemo, useReducer, useState} from 'react';
+import React, {useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
-import * as Settings from '../reducers/settings';
 import { RootTabScreenProps } from '../types';
 import { StyleSheet } from 'react-native';
 import { Text, View, TextInput, Button, FlatList } from '../components/Themed';
-import Colors from '../constants/Colors';
-import {Keypair, clusterApiUrl, PublicKey, PublicKeyInitData, AccountInfo} from '@solana/web3.js';
-import AccountBalance from '../components/AccountBalance';
+
 
 
 export default function SettingsScreen({ navigation }: RootTabScreenProps<'SettingsTab'>) {
   const settings = useSelector(state=>state);
-  const dispatch = useDispatch();
   const [other, updateOther] = useState('');
 
 

@@ -1,20 +1,16 @@
 import { StyleSheet, ImageBackground, Button, Alert, ScrollView } from 'react-native';
 import { View, TextInput, FlatList } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
-import ImageCarousel, {ImageCarouselItem} from '../components/ImageCarousel';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import * as twine from '../api/twine';
 import Navigation from '../navigation';
-import { PressableIcon } from '../components/Pressables';
-import { useFocusEffect } from '@react-navigation/native';
 import { Tab, Text, TabView, ListItem, Avatar  } from '@rneui/themed';
-import { getCurrentWalletContact } from '../api/solchat';
+import { TwineContext } from '../components/TwineProvider';
 
 const SCREEN_DEEPLINK_ROUTE = "stores";
 
 export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresTab'>) {
-  //const initialized = useRef(false);
-  const [walletPubkey, setWalletPubkey] = useState(twine.getCurrentWalletPublicKey());
+  const twineContext = useContext(TwineContext);
   const [stores, setStores] = useState([]);
   const [products, setProducts] = useState([]);
   const [payToSells, setPayToSells] = useState<twine.Purchase[]>([]);
@@ -22,7 +18,14 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
 
   useEffect(()=>{
     refreshTab();
-  },[tabIndex,walletPubkey]);
+  },[
+    tabIndex,
+    twineContext.walletPubkey,
+    twineContext.lastCreatedStore,
+    twineContext.lastUpdatedStore,
+    twineContext.lastCreatedProduct,
+    twineContext.lastUpdatedProduct
+  ]);
 
   async function refreshTab() {
     console.log('refreshtab');
@@ -41,15 +44,13 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   }
 
   function walletIsConnected(){
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-    if(!currentWalletPubkey){
+    if(!twineContext.walletPubkey){
       Alert.alert(
         "connect to wallet",
         "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
         [
-          {text: 'Yes', onPress: () => twine
+          {text: 'Yes', onPress: () => twineContext
             .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-            .then(pubkey=>setWalletPubkey(pubkey))
             .catch(err=>Alert.alert('error', err))
           },
           {text: 'No', onPress: () => {}},
@@ -66,14 +67,13 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     if(!walletIsConnected())
       return;    
 
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-    if(!currentWalletPubkey) {
+    if(!twineContext.walletPubkey) {
       return;
     }
 
     console.log('refreshing payTo sells...')
-    const purchases = await twine
-      .getPurchasesByPayTo(currentWalletPubkey)
+    const purchases = await twineContext
+      .getPurchasesByPayTo(twineContext.walletPubkey)
       .catch(err=>Alert.alert("Error", err));
     
     if(!purchases)
@@ -87,11 +87,9 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     if(!walletIsConnected())
       return;    
 
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-
     console.log('refreshinging products...')
-    twine
-      .getProductsByAuthority(currentWalletPubkey, true)
+    twineContext
+      .getProductsByAuthority(twineContext.walletPubkey, true)
       .then(items=>{            
         items.sort((a,b)=> a.name < b.name ? -1 : 1 );
         setProducts(items);
@@ -103,11 +101,9 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     if(!walletIsConnected())
       return;    
 
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-
     console.log('refreshing stores...')
-    twine
-      .getStoresByAuthority(currentWalletPubkey)
+    twineContext
+      .getStoresByAuthority(twineContext.walletPubkey)
       .then(items=>{
         const displayStores = items.sort((a,b)=>a.name < b.name ? -11 : 1);
         setStores(displayStores);

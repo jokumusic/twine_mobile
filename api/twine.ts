@@ -825,7 +825,7 @@ async function getStores(filters?: Buffer | web3.GetProgramAccountsFilter[]) {
 }
 
 
-export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute: string) {
+export async function getProductsByStore(storeAddress: PublicKey) {
     return new Promise<Product[]>(async (resolve, reject) => {
         let items = [] as Product[];
 
@@ -834,7 +834,7 @@ export async function getProductsByStore(storeAddress: PublicKey, deeplinkRoute:
             return;            
         }
 
-        const program = getProgram(deeplinkRoute);
+        const program = getProgram();
         const products = await program.account.product.all(
             [{
                 memcmp: { 

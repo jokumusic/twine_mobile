@@ -1,18 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, ImageBackground, FlatList, Image, ScrollView, Pressable, Dimensions, Alert, ActivityIndicator } from 'react-native';
-import ImageCarousel from '../components/ImageCarousel';
-import { Text, View, TextInput, Button} from '../components/Themed';
+import React, { useContext, useEffect, useState } from 'react';
+import { StyleSheet, ImageBackground, ScrollView, Dimensions, Alert } from 'react-native';
+import { View} from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import CarouselCards from '../components/CarouselCards'
 import {CarouselCardItem} from '../components/CarouselCardItem';
 import * as carouselCardItem from '../components/CarouselCardItem';
-import { HorizontalScrollView, SearchString, setSearchString, CardView } from '../components/CardView';
-import { blue100 } from 'react-native-paper/lib/typescript/styles/colors';
+import { CardView } from '../components/CardView';
 import MarqueeText from 'react-native-marquee';
-import { generateRandomString } from '../utils/random';
-import * as twine from '../api/twine';
-import { PressableIcon } from '../components/Pressables';
 import { SearchBar } from '@rneui/themed';
+import { TwineContext } from '../components/TwineProvider';
 
 
 const SCREEN_DEEPLINK_ROUTE = "shop";
@@ -23,32 +19,30 @@ export const ITEM_HEIGHT = Math.round(ITEM_WIDTH/4);
 
 export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>) {
   const [searchText, setSearchText] = useState("");
-  const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [stores, setStores] = useState([] as twine.Store[]);
   const [products, setProducts] = useState([] as twine.Product[]);
+  const twineContext = useContext(TwineContext);
   
   useEffect(()=>{
     runSearch();    
-  }, [])
+  }, []);
 
 
   async function runSearch() {
-    setActivityIndicatorIsVisible(true);
 
     console.log('refreshing shop screen...');
-    const getStoresPromise = twine
+    const getStoresPromise = twineContext
       .getStoresByName(searchText)
       .then(setStores)
       .catch(err=>Alert.alert('error', err));
     
-    const getProductsPromise = twine
+    const getProductsPromise = twineContext
       .getProductsByName(searchText)
       .then(setProducts)
       .catch(err=>Alert.alert('error', err));
 
     Promise.all([getStoresPromise, getProductsPromise])
     .finally(()=>{
-      setActivityIndicatorIsVisible(false);
     });
   }
 

@@ -24,7 +24,8 @@ import ContactScreen from '../screens/ContactScreen';
 import EditContactScreen from '../screens/EditContactScreen';
 import AddContactScreen from '../screens/AddContactScreen';
 import { PressableIcon } from '../components/Pressables';
-import * as twine from '../api/twine';
+//import * as twine from '../api/twine';
+import { TwineContext } from '../components/TwineProvider';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -44,6 +45,8 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
+ 
+  
   return (
     <Stack.Navigator>
       <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
@@ -99,30 +102,7 @@ function RootNavigator() {
 }
 
 
-async function connectWallet(deeplinkRoute) {
-  console.log(deeplinkRoute);
-  await twine
-    .connectWallet(false, deeplinkRoute)
-    .catch(err=>{
-      if(err.includes('error')) {
-        Alert.alert("wallet connect",err);
-      }
-      else {
-        Alert.alert("wallet connect",
-          "You're already connected to a wallet. Do you want to connect to another wallet?",
-          [{
-              text:'Yes',
-              onPress: ()=>{ twine.connectWallet(true, deeplinkRoute).catch(err=>Alert.alert("error", err)); },
-              style: 'OK'
-          },
-          {
-            text: 'No',
-            style: 'cancel',
-          }]
-        );
-      }
-    });
-}
+
 
 /**
  * A bottom tab navigator displays tab buttons on the bottom of the display to switch screens.
@@ -132,6 +112,35 @@ const BottomTab = createBottomTabNavigator<RootTabParamList>();
 
 function BottomTabNavigator() {
   const colorScheme = useColorScheme();
+  const twineContext = React.useContext(TwineContext);
+
+  async function connectWallet(deeplinkRoute) {
+    if(twineContext.walletPubkey) 
+    {
+      Alert.alert("wallet connect",
+        "You're already connected to a wallet. Do you want to connect to another wallet?",
+        [{
+            text:'Yes',
+            onPress: ()=>{ 
+              twineContext
+                .connectWallet(true, deeplinkRoute)
+                .catch(err=>Alert.alert("error", err)); 
+            },
+            style: 'OK'
+        },
+        {
+          text: 'No',
+          style: 'cancel',
+        }]
+      );     
+    }
+    else 
+    {
+      await twineContext
+        .connectWallet(false, deeplinkRoute)
+        .catch(err=> Alert.alert("wallet connect",err));        
+    }   
+  }
 
   return (
     <BottomTab.Navigator

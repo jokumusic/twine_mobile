@@ -1,14 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, findNodeHandle, AccessibilityInfo, KeyboardAvoidingView, Alert } from 'react-native';
 import { useSelector, useDispatch, connect } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
 //import * as Settings from '../reducers/settings'
-import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
-import { getCustomTabsSupportingBrowsersAsync } from 'expo-web-browser';
 import * as twine from '../api/twine';
 import { PublicKey } from '@solana/web3.js';
 import { RadioGroup } from 'react-native-radio-buttons-group';
+import { TwineContext } from '../components/TwineProvider';
 
 const SCREEN_DEEPLINK_ROUTE = "edit_store";
 
@@ -16,6 +15,7 @@ export default function EditStoreScreen(props) {
   const [state, updateState] = useState('')
   const settings = useSelector(state => state);
   const dispatch = useDispatch();
+  const twineContext = useContext(TwineContext);
   const [store, setStore] = useState<twine.Store>(props.route.params?.store ?? {});
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [logText, setLogText] = useState<string[]>([]);
@@ -88,7 +88,7 @@ async function createStore() {
   log('creating store...');
   setActivityIndicatorIsVisible(true);
 
-  twine
+  twineContext
     .createStore(validatedStore, SCREEN_DEEPLINK_ROUTE)
     .then(setStore)
     .catch(log)
@@ -107,7 +107,7 @@ const refreshStore = async () => {
   log('reading store...');
   setActivityIndicatorIsVisible(true);
   
-  const refreshedStore = await twine
+  const refreshedStore = await twineContext
     .getStoreByAddress(store.address)
     .catch(log);
    
@@ -133,7 +133,7 @@ const updateStore = async() =>{
   log('updating store...');
   setActivityIndicatorIsVisible(true);
   
-  const updatedStore = await twine
+  const updatedStore = await twineContext
     .updateStore(validatedStore, SCREEN_DEEPLINK_ROUTE)
     .catch(log);  
 

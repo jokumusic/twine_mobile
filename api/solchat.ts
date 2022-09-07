@@ -50,6 +50,8 @@ export interface Allow {
 
 export interface DirectConversation {
   readonly address: PublicKey,
+  readonly contact1: PublicKey,
+  readonly contact2: PublicKey,
   readonly messages: [],
 }
 
@@ -440,11 +442,13 @@ export async function getDirectMessages(contactA: PublicKey, contactB: PublicKey
     const program = getProgram();    
     const conversation = await program.account.directConversation
       .fetchNullable(conversationPdas.conversation)
-      .catch(err=>console.log(err));
+      .catch(err=>console.error(err));
     //console.log('conversation: ', conversation);
     
     resolve({
       address: conversationPdas.conversation,
+      contact1: conversationPdas.contact1,
+      contact2: conversationPdas.contact2,
       messages: conversation?.messages ?? [],
     } as DirectConversation);
   });

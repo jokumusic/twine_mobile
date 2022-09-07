@@ -1,22 +1,17 @@
-import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, Alert, Button, Dimensions, FlatList, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Alert, Button, Dimensions, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text, View } from '../components/Themed';
 import {PressableImage} from '../components/Pressables';
-import { AntDesign, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import * as solchat from '../api/solchat';
 import { PublicKey } from '@solana/web3.js';
-import { useFocusEffect } from '@react-navigation/native';
-import { Colors } from 'react-native-paper';
 import { PressableIcon, PressableText } from '../components/Pressables';
 import { AssetType } from '../api/twine';
 import SelectDropdown from 'react-native-select-dropdown'
-import { Asset } from 'expo-asset/build/Asset';
-import * as twine from '../api/twine';
 import { Avatar, Icon, ListItem } from '@rneui/themed';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
 import uuid from 'react-native-uuid';
-import { parse } from 'expo-linking';
+import { TwineContext } from '../components/TwineProvider';
+
 
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
@@ -36,7 +31,7 @@ export default function ContactScreen(props) {
   const navigation = useRef(props.navigation).current;
   const [addContactModalVisible, setAddContactModalVisible] = useState(false);
   const [sendAssetModalVisible, setSendAssetModalVisible] = useState(false);
-  const [contact, setContact] = useState({} as solchat.Contact);
+  const [contact, setContact] = useState(null);
   const [addContactKey,setAddContactKey]= useState("");
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [allowedContacts, setAllowedContacts] = useState([] as solchat.Contact[]);
@@ -47,33 +42,48 @@ export default function ContactScreen(props) {
   const [contactAccordionExpanded, setContactAccordionExpanded] = useState(true);
   const [groupAccordionExpanded, setGroupAccordionExpanded] = useState(true);
   const [messages, setMessages] = useState([]);
-  const [walletPubkey,setWalletPubkey] = useState(twine.getCurrentWalletPublicKey());
+  const twineContext = useContext(TwineContext);
+  const focusedContactRef = useRef(focusedContact);
+ 
 
-  
-  useFocusEffect(()=>{
-    const currentWalletKey = twine.getCurrentWalletPublicKey();
-    //console.log(`${currentWalletKey} / ${walletPubkey}`);
-    if(currentWalletKey != walletPubkey || (currentWalletKey && !contact)){
-      console.log('setting currentWalletKey');
-      setWalletPubkey(currentWalletKey);
-    }
-  });
 
   useEffect(()=>{
-    console.log('setting current contact');
-    getWalletContact()
-      .then(c=>setContact(c))
-      .catch(err=>console.log(err));
+    console.log('twineContext.walletPubkey change');
+    if(!walletIsConnected())
+      return;
+  
+      const fetchedContact = solchat
+        .getCurrentWalletContact()
+        .then(setContact)     
+        .catch(console.log);
+        console.info('setting contact');
 
-  },[walletPubkey]);
+  },[twineContext.walletPubkey]);
+
+  useEffect(()=>{
+    if(!contact?.address)
+      return;
+
+    console.log('getAllowedContacts...');
+    solchat
+      .getAllowedContacts(contact)
+      .then(contacts=>{
+        setAllowedContacts(contacts);
+        /*if(focusedContact?.address && !contacts.some(c=>c.address.equals(focusedContact?.address)))
+        {
+          setFocusedContact({} as solchat.Contact); //unset focused contact, if they're not in the allowed list anymore
+        }*/
+      })
+      .catch(err=>console.log(err));
+  }, [contact]);
 
   async function refreshChatWithFocusedContact() {
     setMessages([]);
     if(!focusedContact?.address)
       return;
+    
 
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-    if(!currentWalletPubkey)
+    if(!contact?.address)
       return;
 
       console.log('getting direct messages...');
@@ -97,11 +107,11 @@ export default function ContactScreen(props) {
         })
         .catch(appendSystemErrorMessage);
   }
-/*
+
   useEffect(() => {   
     refreshChatWithFocusedContact();
   }, [focusedContact]);
-*/
+
   function appendSystemErrorMessage(text:string) {
     const errMessage = {
       _id: uuid.v4().toString(),
@@ -114,31 +124,24 @@ export default function ContactScreen(props) {
   }
 
   function populateMessage(message) {
-      if(message.user._id == contact?.address?.toBase58()) {
-        return {
-          ...message,
-          user: {
-            _id: contact?.address?.toBase58(),
-            name: contact?.name,
-            avatar: contact?.data?.img,
-          }
-        };
-      }
-      else if(message.user._id == focusedContact?.address?.toBase58()) {
-        return {
-          ...message,
-          user: {
-            _id: focusedContact?.address?.toBase58(),
-            name: focusedContact?.name,
-            avatar: focusedContact?.data?.img,
-          }
-        };
-      }
+      const c = message.user._id == contact?.address?.toBase58() ? contact
+                  : message.user._id == focusedContactRef.current?.address?.toBase58() ? focusedContactRef.current
+                  : null;
 
-      return message; 
+      if(!c)
+        return message;
+      
+      return {
+        ...message,
+        user: {
+          _id: c?.address?.toBase58(),
+          name: c?.name,
+          avatar: c?.data?.img,
+        }
+      };
   }
 
-  const onSend = useCallback(async (messages = []) => {
+  const onSend = async (messages = []) => {
     if(messages.length < 1)
       return;
 
@@ -153,7 +156,7 @@ export default function ContactScreen(props) {
       return;
     }
 
-    const message = {... messages[0], user: { _id: contact?.address?.toBase58()}};
+    const message = {...messages[0], user: { _id: contact?.address?.toBase58()}};
     const messageString = JSON.stringify(message);
 
     const signature = await solchat
@@ -166,18 +169,16 @@ export default function ContactScreen(props) {
     const populatedMessage = populateMessage(message);
     
     setMessages(previousMessages => GiftedChat.append(previousMessages, populatedMessage));
-  }, [])
+  }
 
   function walletIsConnected(){
-    const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-    if(!currentWalletPubkey){
+    if(!twineContext.walletPubkey){
         Alert.alert(
         "connect to wallet",
         "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
         [
-            {text: 'Yes', onPress: () => twine
+            {text: 'Yes', onPress: () => twineContext
             .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-            .then(pubkey=>setWalletPubkey(pubkey))
             .catch(err=>Alert.alert('error', err))
             },
             {text: 'No', onPress: () => {}},
@@ -189,63 +190,37 @@ export default function ContactScreen(props) {
     return true;
   }
 
-  async function updateWalletContact() {
-    const walletContact = await getWalletContact()
-      .catch(err=>console.log(err));
-
-    if(walletContact)
-      setContact(walletContact);
-  }
-
-  async function getWalletContact(){
-    console.log('getCurrentWalletContact...');
-
-    if(!walletIsConnected())
-      return;
-    
-    console.log('refreshing wallet contact');
-    const walletContact = await solchat
-      .getCurrentWalletContact()
-      .catch(err=>console.log(err));
-
-    return walletContact;
-  }
-
-  useEffect(()=>{
-    console.log('getAllowedContacts...');
-    solchat
-      .getAllowedContacts(contact)
-      .then(contacts=>{
-        setAllowedContacts(contacts);
-        if(focusedContact?.address && !contacts.some(c=>c.address.equals(focusedContact?.address)))
-        {
-          setFocusedContact({} as solchat.Contact); //unset focused contact, if they're not in the allowed list anymore
-        }
-      })
-      .catch(err=>console.log(err));
- }, [contact]);
 
  useEffect(()=>{
+  if(!allowedContacts || allowedContacts.length < 1)
+    return;
+
+  console.log('subscribing to conversations with allowed contacts...');
   allowedContacts.forEach(c=>{
     if(contact?.address && c?.address) {
       solchat
         .subscribeToConversationBetween(contact, c, 
-          async (conversation: solchat.DirectConversation)=> {
-            console.log('got conversation subscription callback')
+          (conversation: solchat.DirectConversation)=> {
+            console.log('got conversation subscription callback');
             setMessages([]);
-            const parsedMessages = conversation.messages
-            .map(m=>{
-              try {
-                const parsedMessage = JSON.parse(m);
-                return populateMessage(parsedMessage);
-              } catch(err){
-                console.log(err);
-              }
-            })
-            .filter(successfullyParsed=> successfullyParsed);
+            
+              if(focusedContactRef.current?.address 
+                  && (conversation.contact1.equals(focusedContactRef.current.address) || conversation.contact2.equals(focusedContactRef.current.address)))
+              {
+                const parsedMessages = conversation.messages.map(m=>{
+                  try {
+                    const parsedMessage = JSON.parse(m);
+                    const populatedMessage = populateMessage(parsedMessage);
+                    return populatedMessage;
+                  } catch(err){
+                    console.log(err);
+                  }
+                })
+                .filter(successfullyParsed=> successfullyParsed);
 
-            parsedMessages.sort((a,b)=> new Date(b?.createdAt) - new Date(a?.createdAt));
-            setMessages(previousMessages => GiftedChat.append(previousMessages, parsedMessages));
+                parsedMessages.sort((a,b)=> new Date(b?.createdAt) - new Date(a?.createdAt));
+                setMessages(previousMessages => GiftedChat.append(previousMessages, parsedMessages));
+            }
           }
         )
         .catch(err=>console.log(err));
@@ -284,6 +259,9 @@ export default function ContactScreen(props) {
   }
 
   async function sendAssetToFocusedContact(){
+    if(!focusedContact?.address)
+      return;
+
     console.log('sending= type: ', sendAsset.type, ', amount: ', sendAsset.amount);
 
     if(sendAsset.amount <= 0)
@@ -294,16 +272,16 @@ export default function ContactScreen(props) {
 
     setActivityIndicatorIsVisible(true);
 
-    twine
-    .sendAsset(sendAsset.type, focusedContact.receiver, sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
-    .catch(err=>setSendAssetErrorMessage(err))
-    .then((tx)=>{
-      setSendAsset({type: AssetType.SOL, amount: 0});
-      toggleSendAssetModalVisibility();
-    })
-    .finally(()=>{
-      setActivityIndicatorIsVisible(true);
-    });
+    twineContext
+      .sendAsset(sendAsset.type, focusedContact.receiver, sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>setSendAssetErrorMessage(err))
+      .then((tx)=>{
+        setSendAsset({type: AssetType.SOL, amount: 0});
+        toggleSendAssetModalVisibility();
+      })
+      .finally(()=>{
+        setActivityIndicatorIsVisible(true);
+      });
   }
 
   async function cancelSendAssetToFocusedContact() {
@@ -313,28 +291,12 @@ export default function ContactScreen(props) {
     setActivityIndicatorIsVisible(false);
   }
 
-  async function focusOnContact(contactToFocus){
-    console.log('focusing on contact...');
-    setFocusedContact(contactToFocus);
-    refreshChatWithFocusedContact();
-
-    if(!contact?.address) {
-      console.log('calling updateWalletContact()');
-      const walletContact = await getWalletContact()
-        .catch(err=>console.log(err));
-
-      if(walletContact)
-        setContact(walletContact);
-    }
-  }
-
-
    return (
     <View style={styles.container}>
       <View style={styles.leftPanel}>
         <View style={styles.leftPanelHeader}>
           <PressableIcon name="person-add" style={{margin: 5}} color={'white'} onPress={toggleAddContactModalVisibility} />         
-          <PressableIcon name="refresh" style={{margin: 5}} color={'white'} onPress={updateWalletContact} />
+          {/*<PressableIcon name="refresh" style={{margin: 5}} color={'white'} onPress={updateWalletContact} />*/}
         </View>
 
         <View style={styles.contactList}>
@@ -355,9 +317,9 @@ export default function ContactScreen(props) {
             >
             <ScrollView>
             {
-            allowedContacts.map((contact) => (
+            allowedContacts.map((c) => (
               <ListItem
-                key={contact.address.toBase58()}
+                key={c.address.toBase58()}
                 containerStyle={{
                   marginHorizontal: 1,
                   marginVertical: 1,
@@ -366,12 +328,12 @@ export default function ContactScreen(props) {
                   backgroundColor: '#88bed2',
                 }}
                 bottomDivider
-                onPress={()=>focusOnContact(contact)}
+                onPress={()=>{focusedContactRef.current = c; setFocusedContact(c);}}
               >
-                <Avatar rounded source={contact.data?.img && { uri: contact.data.img }} size={45} />
+                <Avatar rounded source={c.data?.img && { uri: c.data.img }} size={45} />
                 <ListItem.Content>
                   <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 14 }}>
-                    {contact.name}
+                    {c.name}
                   </Text>
                 </ListItem.Content>
               </ListItem>

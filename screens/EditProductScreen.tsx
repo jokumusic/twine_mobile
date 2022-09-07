@@ -1,19 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, Image, Platform, ScrollView, StyleSheet } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
-//import * as Settings from '../reducers/settings'
-import getStoredStateMigrateV4 from 'redux-persist/lib/integration/getStoredStateMigrateV4';
-import * as twine from '../api/twine';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { PublicKey } from '@solana/web3.js';
-import { publicKey } from '../dist/browser/types/src/coder/spl-token/buffer-layout';
-import { Modal } from 'react-native-paper';
-import { Twine } from '../target/types/twine';
 import CarouselCards from '../components/CarouselCards';
 import { PressableIcon, PressableImage } from '../components/Pressables';
 import { CheckBox, Icon } from "@rneui/themed";
+import { TwineContext } from '../components/TwineProvider';
+import * as twine from '../api/twine';
 
 
 const SCREEN_DEEPLINK_ROUTE = "edit_product";
@@ -26,6 +21,7 @@ const ITEM_HEIGHT = Math.round(ITEM_WIDTH * .4);
 export default function EditProductScreen(props) {
   const [store, setStore] = useState(props.route.params.store);
   const navigation = useRef(props.navigation).current;
+  const twineContext = useContext(TwineContext);
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   const [product, setProduct] = useState<twine.Product>(props.route.params?.product ?? {store: store?.address});
   const [logText, setLogText] = useState<string[]>([]);
@@ -73,8 +69,13 @@ export default function EditProductScreen(props) {
       return false;
     }
 
+    if(product?.data?.images?.length < 1 ){
+      Alert.alert("Error", 'An image is required.');
+      return false;
+    }
+
     if(!product?.data?.img){
-      Alert.alert("Error", 'Image is required');
+      Alert.alert("Error", 'Thumbnail image is required. Select one of the images to be the thumbnail.');
       return false;
     }
 
@@ -131,7 +132,7 @@ export default function EditProductScreen(props) {
     setActivityIndicatorIsVisible(true);
     log('creating product...');
     
-    const createdProduct= await twine
+    const createdProduct= await twineContext
       .createProduct(validatedProduct as twine.WriteableProduct, SCREEN_DEEPLINK_ROUTE)
       .catch(err=>Alert.alert("error", err));
 
@@ -150,7 +151,7 @@ export default function EditProductScreen(props) {
     setActivityIndicatorIsVisible(true);
     console.log('reading product...');
 
-    const refreshedProduct = await twine
+    const refreshedProduct = await twineContext
       .getProductByAddress(product?.address, SCREEN_DEEPLINK_ROUTE)
       .catch(log);
 
@@ -176,7 +177,7 @@ export default function EditProductScreen(props) {
     setActivityIndicatorIsVisible(true);
     log('updating product data...');
     
-    const updatedProduct = await twine
+    const updatedProduct = await twineContext
       .updateProduct(validatedProduct, SCREEN_DEEPLINK_ROUTE)
       .catch(log);
 
@@ -293,12 +294,15 @@ export default function EditProductScreen(props) {
             />
           </View>
 
-          <CarouselCards
-              data={product?.data?.images}
-              renderItem={carouselRenderImage}
-              sliderWidth={SLIDER_WIDTH}
-              itemWidth={100}
-          />
+          {
+            product?.data?.images &&
+            <CarouselCards
+                data={product?.data?.images}
+                renderItem={carouselRenderImage}
+                sliderWidth={SLIDER_WIDTH}
+                itemWidth={100}
+            />
+          }
         </View>
 
         <View style={styles.inputRow}>

@@ -9,10 +9,11 @@ import {
  import { Text, View, TextInput} from '../components/Themed';
  import React, { useEffect, useRef, useState, useContext } from 'react';
  import { CartContext } from '../components/CartProvider';
- import * as twine from '../api/twine';
+ //import * as twine from '../api/twine';
  import { PressableIcon, PressableImage } from '../components/Pressables';
  import CarouselCards from '../components/CarouselCards';
 import { Button } from '@rneui/themed';
+import { TwineContext } from '../components/TwineProvider';
  
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
@@ -28,6 +29,7 @@ import { Button } from '@rneui/themed';
    const navigation = useRef(props.navigation).current;
    const { addItemToCart } = useContext(CartContext);
    const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+   const twineContext = useContext(TwineContext);
 
    useEffect(()=>{
       if(!product?.address) {
@@ -37,12 +39,12 @@ import { Button } from '@rneui/themed';
 
       setActivityIndicatorIsVisible(true);
       console.log('refreshing product...');
-      twine
+      twineContext
         .getProductByAddress(product.address)
         .then(p=>{setProduct(p);})
         .catch(err=>Alert.alert("error", err))
         .finally(()=>setActivityIndicatorIsVisible(false));
-   },[]);
+   },[twineContext.lastUpdatedProduct]);
       
   async function addToCart() {
       if(!product?.address){
@@ -52,14 +54,19 @@ import { Button } from '@rneui/themed';
   }
 
   function isAuthorizedToEditStore() {
-    const pkey = twine.getCurrentWalletPublicKey();
-    if(!pkey)
+    if(!twineContext.walletPubkey)
       return false;
       
     if(product.isSnapshot)
       return false;
+
+    if(!product.authority)
+      return false;
     
-    return pkey.equals(product?.authority) || pkey.equals(product?.secondaryAuthority);
+    if(!product.secondaryAuthority)
+      return false;
+    
+    return twineContext.walletPubkey.equals(product.authority) || twineContext.walletPubkey.equals(product.secondaryAuthority);
   }
 
   function carouselRenderImage({ item, index}) {

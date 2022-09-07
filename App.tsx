@@ -12,6 +12,7 @@ import Navigation from './navigation';
 import {ActivityIndicator, DarkTheme as PaperDarkTheme, DefaultTheme as PaperDefaultTheme, Provider as PaperProvider } from 'react-native-paper';
 import { CartProvider } from './components/CartProvider';
 import {LogBox} from "react-native";
+import { TwineProvider } from './components/TwineProvider';
 
 
 export default function App() {
@@ -42,9 +43,11 @@ export default function App() {
                     />
                   </View>
                 }>
-                <CartProvider>
-                  <Navigation colorScheme={colorScheme}/>
-                </CartProvider>
+                <TwineProvider>
+                  <CartProvider>
+                    <Navigation colorScheme={colorScheme}/>
+                  </CartProvider>
+                </TwineProvider>
                 <StatusBar />
               </Suspense>
             </PaperProvider>

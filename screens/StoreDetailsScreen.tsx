@@ -3,7 +3,6 @@ import {
    StyleSheet,
    Image,
    Pressable,
-   ColorSchemeName,
    ImageBackground,
   FlatList,
   Alert,
@@ -11,13 +10,10 @@ import {
   } from 'react-native';
 import { Text, View, TextInput, Button} from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
-import Colors from '../constants/Colors';
-import useColorScheme from '../hooks/useColorScheme';
-import { Card } from 'react-native-paper';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { TwineContext } from '../components/TwineProvider';
 import * as twine from '../api/twine';
 import {PressableIcon, PressableImage} from '../components/Pressables';
-import { TokenInvalidOwnerError } from '@solana/spl-token';
 
 const SCREEN_DEEPLINK_ROUTE = "store_details";
 
@@ -28,13 +24,14 @@ export default function StoreDetailsScreen(props) {
   const [store, setStore] = useState<twine.Store>(props.route.params.store);
   const [products, setProducts] = useState<twine.Product[]>([]);
   const navigation = useRef(props.navigation).current;
+  const twineContext = useContext(TwineContext);
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   
    useEffect(()=>{
     if(store.address) {
       setActivityIndicatorIsVisible(true);
       console.log('refreshing store...');
-      twine
+      twineContext
         .getStoreByAddress(store.address)
         .then(s=>{setStore(s);})
         .catch(err=>Alert.alert("error", err))
@@ -46,22 +43,31 @@ export default function StoreDetailsScreen(props) {
     if(store.address) {
       setActivityIndicatorIsVisible(true);
       console.log('refreshing store products...');
-      twine
-        .getProductsByStore(store.address, SCREEN_DEEPLINK_ROUTE)
+      twineContext
+        .getProductsByStore(store.address)
         .then(products=>{
           setProducts(products);
         })
         .catch(err=>Alert.alert("error", err))
         .finally(()=>setActivityIndicatorIsVisible(false));
     }
-  },[store.address]);
+  },[store.address,
+     twineContext.lastUpdatedStore,
+     twineContext.lastCreatedProduct,
+     twineContext.lastUpdatedProduct,
+  ]);
       
   function isAuthorizedToEditStore() {
-    const pkey = twine.getCurrentWalletPublicKey();
-    if(!pkey)
+    if(!twineContext.walletPubkey)
       return false;
 
-    return pkey.equals(store?.authority) || pkey.equals(store?.secondaryAuthority);
+    if(!store?.authority)
+      return false;
+
+    if(!store?.secondaryAuthority)
+      return false;
+
+    return twineContext.walletPubkey.equals(store.authority) || twineContext.walletPubkey.equals(store.secondaryAuthority);
   }
 
   const renderItem = ({ item }) => (  
@@ -97,40 +103,31 @@ export default function StoreDetailsScreen(props) {
             <View style={styles.headerTitle}>
               <Text style={styles.title}>{store?.data?.displayName}</Text>            
             </View>
+            <View style={styles.headerIcons}>
             <PressableIcon
-              name="share-social"
-              size={25}
+              name="share-social-outline"
+              size={30}
               style={{ margin: 5 }}
               onPress={() => Alert.alert('not implemented', 'Not Implemented.')}
             />
 
             { isAuthorizedToEditStore() &&   
               <>
-              <Pressable
+              <PressableIcon
+                name="create-outline"
+                size={30}
+                style={{ marginRight: 5 }}
                 onPress={() => navigation.navigate('EditStore',{store})}
-                style={({ pressed }) => ({
-                  opacity: pressed ? 0.5 : 1,
-                })}>
-                <FontAwesome5
-                  name="edit"
-                  size={25}
-                  style={{ marginRight: 5 }}
-                />
-              </Pressable>  
-              <Pressable
+              />
+              <PressableIcon
+                name="add-circle-outline"
+                size={30}
+                style={{ marginRight: 15 }}
                 onPress={() => navigation.navigate('EditProduct',{store})}
-                style={({ pressed }) => ({
-                  opacity: pressed ? 0.5 : 1,
-                })}>
-                <FontAwesome5
-                  name="plus-circle"
-                  size={25}
-                  style={{ marginRight: 15 }}
-                />
-              </Pressable>
+                />      
               </>    
             }
-            
+            </View>
           </View>    
           <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
           
@@ -161,11 +158,24 @@ const styles = StyleSheet.create({
       width: '100%',
       marginBottom: 10,
     },
+    headerImage:{
+      width: '25%',
+      height: '100%',
+      borderRadius: 4,
+      resizeMode: 'contain',
+      alignSelf: 'flex-start',
+    },
     headerTitle: {
       flexDirection: 'column',
-      width: 230,
       backgroundColor: '#77aaaa',
       flexWrap: 'wrap',
+      width: '48%'
+    },
+    headerIcons:{
+      flexDirection: 'row',
+      backgroundColor: '#77aaaa',
+      width: '22%',
+      alignSelf: 'flex-end',
     },
     rowContainer: {
       /*flex: 1,
@@ -221,14 +231,7 @@ const styles = StyleSheet.create({
         height: '100%',
         borderRadius: 8,
         resizeMode: 'contain',        
-    },
-    headerImage:{
-      width: '25%',
-      height: '100%',
-      borderRadius: 4,
-      resizeMode: 'contain',
-      alignSelf: 'flex-start',
-    },
+    },    
     list: {
       justifyContent: 'space-around',
       flexDirection: 'row'

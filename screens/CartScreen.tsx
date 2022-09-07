@@ -2,28 +2,27 @@ import { useState, useContext, useEffect, useRef } from "react";
 import { ActivityIndicator, Alert, Image, ImageBackground, Pressable, ScrollView, StyleSheet, TouchableNativeFeedback, View } from "react-native";
 import { CartContext } from "../components/CartProvider";
 import { TextInput } from "../components/Themed";
-import * as twine from "../api/twine";
 import { useFocusEffect } from "@react-navigation/native";
 import { Tab, Text, TabView, ListItem, Avatar, Button } from '@rneui/themed';
+import { TwineContext } from '../components/TwineProvider';
 
 const SCREEN_DEEPLINK_ROUTE = "cart";
 
 export default function CartScreen(props) {
     const navigation = useRef(props.navigation).current;
+    const twineContext = useContext(TwineContext);
     const {map, itemCount, addItemToCart, removeItemFromCart, getItemsResolved} = useContext(CartContext);
     const [checkoutItems, setCheckoutItems] = useState([] as twine.Product[]);
     const [checkoutItemsTotal, setCheckoutItemsTotal] = useState(0);
     const [purchases, setPurchases] = useState([]);
-
     const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-    const [walletPubkey,setWalletPubkey] = useState(twine.getCurrentWalletPublicKey());
     const [tabIndex, setTabIndex] = useState(0);
 
 
     useEffect(()=> {
             refreshTab();
         },
-        [tabIndex,walletPubkey,itemCount]
+        [tabIndex,twineContext.walletPubkey,itemCount]
     );
 
     async function refreshTab() {
@@ -36,15 +35,13 @@ export default function CartScreen(props) {
     }
 
     function walletIsConnected(){
-        const currentWalletPubkey = twine.getCurrentWalletPublicKey();
-        if(!currentWalletPubkey){
+        if(!twineContext.walletPubkey){
             Alert.alert(
             "connect to wallet",
             "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
             [
-                {text: 'Yes', onPress: () => twine
+                {text: 'Yes', onPress: () => twineContext
                 .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-                .then(pubkey=>setWalletPubkey(pubkey))
                 .catch(err=>Alert.alert('error', err))
                 },
                 {text: 'No', onPress: () => {}},
@@ -76,12 +73,11 @@ export default function CartScreen(props) {
         if(!walletIsConnected())
             return;
 
-        setActivityIndicatorIsVisible(true);        
-        const currentWalletPubkey = twine.getCurrentWalletPublicKey();
+        setActivityIndicatorIsVisible(true);
 
         console.log('refreshing purchased...')
-        const tickets = await twine
-            .getPurchaseTicketsByAuthority(currentWalletPubkey)
+        const tickets = await twineContext
+            .getPurchaseTicketsByAuthority(twineContext.walletPubkey)
             .catch(err=>Alert.alert('error', err))
             .finally(()=>setActivityIndicatorIsVisible(false));
         
@@ -91,7 +87,7 @@ export default function CartScreen(props) {
         const refreshedPurchases = [];
         
         for(const ticket of tickets){            
-            const snapshot = await twine
+            const snapshot = await twineContext
                 .getProductByAddress(ticket.productSnapshot)
                 .catch(err=>console.log(err));
             
@@ -103,9 +99,8 @@ export default function CartScreen(props) {
         setActivityIndicatorIsVisible(false);        
     }
 
-    async function checkOut(){
-        const currentWalletPublicKey = twine.getCurrentWalletPublicKey();
-        if(!currentWalletPublicKey) {
+    async function checkOut() {
+        if(!twineContext.walletPubkey) {
             Alert.alert('error', 'not connected to a wallet');
             return;
         }
@@ -115,7 +110,7 @@ export default function CartScreen(props) {
         const promises = [];
 
         for(const product of products) {
-            const buyPromise = twine
+            const buyPromise = twineContext
                 .buyProduct(product, product.count, SCREEN_DEEPLINK_ROUTE)
                 .then(ticket=>{
                     removeItemFromCart(product.address, product.count);
