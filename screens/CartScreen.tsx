@@ -136,9 +136,7 @@ export default function CartScreen(props) {
         <View style={styles.container}>   
         <ImageBackground 
             style={{width: '100%', height: '100%'}} 
-            source={{
-                uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
-            }}
+            source={require('../assets/images/screen_background.jpg')}
         >  
             <Tab
                 value={tabIndex}

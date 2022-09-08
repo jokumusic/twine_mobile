@@ -49,11 +49,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
 
   return (
     <View style={styles.container}>
-       <ImageBackground 
-        style={{width: '100%', height: '100%'}} 
-        source={{
-          uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
-        }}>  
+       <ImageBackground style={{width: '100%', height: '100%'}} source={require('../assets/images/screen_background.jpg')}>
           <View style={{flexDirection:'row', alignContent: 'flex-end', justifyContent:'flex-start', backgroundColor: 'rgba(52, 52, 52, .025)'}}>      
 
             <SearchBar

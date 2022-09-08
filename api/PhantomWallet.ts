@@ -9,6 +9,8 @@ import {
 import { Buffer } from "buffer";
 import WalletInterface from "./WalletInterface";
 
+global.Buffer = global.Buffer || Buffer;
+
 interface CallbackHandler{
     resolve: Function,
     reject: Function,
@@ -27,7 +29,6 @@ const enum DeepLinkMethod{
     signMessage="signMessage",
 }
 
-global.Buffer = global.Buffer || Buffer;
 
 
 export class PhantomWallet implements WalletInterface {

@@ -113,12 +113,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
 
   return (  
     <View style={styles.container}>   
-      <ImageBackground 
-        style={{width: '100%', height: '100%'}} 
-        source={{
-            uri:'https://raw.githubusercontent.com/AboutReact/sampleresource/master/crystal_background.jpg',
-        }}>  
-
+      <ImageBackground style={{width: '100%', height: '100%'}} source={require('../assets/images/screen_background.jpg')}>
           <Tab
             value={tabIndex}
             onChange={(e) => setTabIndex(e)}
