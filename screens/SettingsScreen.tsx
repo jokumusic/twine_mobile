@@ -1,5 +1,4 @@
 import React, {useState} from 'react';
-import {useSelector, useDispatch} from 'react-redux';
 import { RootTabScreenProps } from '../types';
 import { StyleSheet } from 'react-native';
 import { Text, View, TextInput, Button, FlatList } from '../components/Themed';
@@ -7,7 +6,6 @@ import { Text, View, TextInput, Button, FlatList } from '../components/Themed';
 
 
 export default function SettingsScreen({ navigation }: RootTabScreenProps<'SettingsTab'>) {
-  const settings = useSelector(state=>state);
   const [other, updateOther] = useState('');
 
 

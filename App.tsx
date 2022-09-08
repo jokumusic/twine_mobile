@@ -2,10 +2,7 @@ import "react-native-get-random-values";
 import "react-native-url-polyfill/auto";
 import * as React from 'react';
 import {Suspense} from 'react';
-import { ColorSchemeName, AppRegistry, Text,View, StyleSheet } from 'react-native';
-import { Provider } from 'react-redux';
-import {store,persistor} from './reducers/store';
-import { PersistGate } from 'redux-persist/integration/react';
+import { Text,View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import useCachedResources from './hooks/useCachedResources';
@@ -31,31 +28,26 @@ export default function App() {
     return null;
   } else {
     return (
-      
-      <Provider store={store}>        
-        <PersistGate loading={<Text>Loading...</Text>} persistor={persistor}>
-          <SafeAreaProvider>
-            <PaperProvider theme={PaperDarkTheme}>
-              <Suspense
-                fallback={
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator
-                      size="large"
-                      style={styles.loadingIndicator}
-                    />
-                  </View>
-                }>
-                <TwineProvider>
-                  <CartProvider>
-                    <Navigation colorScheme={colorScheme}/>
-                  </CartProvider>
-                </TwineProvider>
-                <StatusBar />
-              </Suspense>
-            </PaperProvider>
-          </SafeAreaProvider>
-        </PersistGate>
-      </Provider>
+      <SafeAreaProvider>
+        <PaperProvider theme={PaperDarkTheme}>
+          <Suspense
+            fallback={
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator
+                  size="large"
+                  style={styles.loadingIndicator}
+                />
+              </View>
+            }>
+            <TwineProvider>
+              <CartProvider>
+                <Navigation colorScheme={colorScheme}/>
+              </CartProvider>
+            </TwineProvider>
+            <StatusBar />
+          </Suspense>
+        </PaperProvider>
+      </SafeAreaProvider>
     );
   }
 }
