@@ -175,7 +175,7 @@ export default function ContactScreen(props) {
     if(!twineContext.walletPubkey){
         Alert.alert(
         "connect to wallet",
-        "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
+        "You must be connected to a wallet to view its communities.\nConnect to a wallet?",
         [
             {text: 'Yes', onPress: () => twineContext
             .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
