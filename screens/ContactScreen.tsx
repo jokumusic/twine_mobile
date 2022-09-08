@@ -274,13 +274,13 @@ export default function ContactScreen(props) {
 
     twineContext
       .sendAsset(sendAsset.type, focusedContact.receiver, sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
-      .catch(err=>setSendAssetErrorMessage(err))
+      .catch(setSendAssetErrorMessage)
       .then((tx)=>{
         setSendAsset({type: AssetType.SOL, amount: 0});
         toggleSendAssetModalVisibility();
       })
       .finally(()=>{
-        setActivityIndicatorIsVisible(true);
+        setActivityIndicatorIsVisible(false);
       });
   }
 
@@ -503,8 +503,13 @@ export default function ContactScreen(props) {
                   placeholder="amount to send" 
                   value={sendAsset.amount?.toString()}
                   style={styles.textInput} 
-                  keyboardType='numeric'
-                  onChangeText={(value) => setSendAsset({...sendAsset, amount: Number(value)})} 
+                  keyboardType='decimal-pad'
+                  autoCapitalize={sendAsset?.type == AssetType.LAMPORT ? 'none' : 'words'}
+                  onChangeText={(value) => setSendAsset({
+                      ...sendAsset,
+                      amount: value
+                    })
+                  }
                 />
 
                 <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
