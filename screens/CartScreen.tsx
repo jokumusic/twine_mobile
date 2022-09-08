@@ -55,8 +55,6 @@ export default function CartScreen(props) {
 
     async function refreshCheckout() {
         
-        setActivityIndicatorIsVisible(true);
-
         console.log('refreshing checkout items...');
         getItemsResolved()
             .then(items=>{  
@@ -64,20 +62,18 @@ export default function CartScreen(props) {
                 setCheckoutItemsTotal(items.reduce((total,item)=>total + (item.count * item.price), 0));
             })
             .catch(err=>Alert.alert('error', err))
-            .finally(()=>setActivityIndicatorIsVisible(false));
+            .finally(()=>{});
     }
 
     async function refreshPurchases() {
         if(!walletIsConnected("You must be connected to a wallet to view its purchases.\nConnect to a wallet?"))
             return;
 
-        setActivityIndicatorIsVisible(true);
-
         console.log('refreshing purchased...')
         const tickets = await twineContext
             .getPurchaseTicketsByAuthority(twineContext.walletPubkey)
             .catch(err=>Alert.alert('error', err))
-            .finally(()=>setActivityIndicatorIsVisible(false));
+            .finally(()=>{});
         
         if(!tickets)
             return;
@@ -93,8 +89,7 @@ export default function CartScreen(props) {
         }
 
         refreshedPurchases.sort((a,b)=> b?.ticket?.timestamp - a?.ticket?.timestamp);
-        setPurchases(refreshedPurchases);
-        setActivityIndicatorIsVisible(false);        
+        setPurchases(refreshedPurchases);    
     }
 
     async function checkOut() {
@@ -102,7 +97,6 @@ export default function CartScreen(props) {
             return;
 
         console.log('checking out');
-        setActivityIndicatorIsVisible(true);
         const promises = [];
 
         for(const checkoutItem of checkoutItems) {
@@ -120,7 +114,6 @@ export default function CartScreen(props) {
             .all(promises)
             .catch(err=>Alert.alert('error', err))
             .finally(()=>{
-                setActivityIndicatorIsVisible(false);
             });
 
         console.log('done');
@@ -269,7 +262,7 @@ export default function CartScreen(props) {
                                     <Text style={{fontSize:15}}>quantity: {purchase.ticket?.quantity?.toString()}</Text>
                                     <Text style={{fontSize:15}}>redemptions: {purchase.ticket?.redeemed?.toString()}</Text>
                                     <Text style={{fontSize:15}}>slot: {purchase.ticket?.slot?.toNumber()}</Text>
-                                    <Text style={{fontSize:15}}>date: {new Date(purchase.ticket?.timestamp?.toNumber() * 100).toLocaleString("en-us")}</Text>                                    
+                                    <Text style={{fontSize:15}}>date: {new Date(purchase.ticket?.timestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                    
                                 </View>
                             </ListItem.Content>
                         </ListItem>
@@ -278,8 +271,6 @@ export default function CartScreen(props) {
                     </ScrollView>                                   
                 </TabView.Item>
             </TabView>
-
-            <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
         </ImageBackground>
         </View>
     );
