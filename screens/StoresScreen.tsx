@@ -155,6 +155,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
                     <ListItem.Content >
                       <ListItem.Title>{store.data?.displayName}</ListItem.Title>
                       <ListItem.Subtitle>{store.data?.displayDescription}</ListItem.Subtitle>
+                      <Text>Products: {store?.productCount.toString() ?? 0}</Text>
                     </ListItem.Content>
                   </ListItem>
                 ))
@@ -170,6 +171,8 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
                     <ListItem.Content>
                       <ListItem.Title>{product.data?.displayName}</ListItem.Title>
                       <ListItem.Subtitle>{product.data?.displayDescription}</ListItem.Subtitle>
+                      <Text>Price: ${product.price}</Text>
+                      <Text>Inventory: {product.inventory}</Text>
                     </ListItem.Content>
                   </ListItem>
                 ))
