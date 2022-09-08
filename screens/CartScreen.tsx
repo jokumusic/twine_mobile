@@ -109,11 +109,11 @@ export default function CartScreen(props) {
         setActivityIndicatorIsVisible(true);
         const promises = [];
 
-        for(const product of products) {
+        for(const checkoutItem of checkoutItems) {
             const buyPromise = twineContext
-                .buyProduct(product, product.count, SCREEN_DEEPLINK_ROUTE)
+                .buyProduct(checkoutItem, checkoutItem.count, SCREEN_DEEPLINK_ROUTE)
                 .then(ticket=>{
-                    removeItemFromCart(product.address, product.count);
+                    removeItemFromCart(checkoutItem.address, checkoutItem.count);
                 })
                 .catch(err=>Alert.alert("error", err));
 
