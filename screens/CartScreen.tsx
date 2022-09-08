@@ -34,11 +34,11 @@ export default function CartScreen(props) {
         }
     }
 
-    function walletIsConnected(){
+    function walletIsConnected(msg){
         if(!twineContext.walletPubkey){
             Alert.alert(
             "connect to wallet",
-            "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
+            msg,
             [
                 {text: 'Yes', onPress: () => twineContext
                 .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
@@ -54,9 +54,7 @@ export default function CartScreen(props) {
     }
 
     async function refreshCheckout() {
-        if(!walletIsConnected())
-            return;
-
+        
         setActivityIndicatorIsVisible(true);
 
         console.log('refreshing checkout items...');
@@ -70,7 +68,7 @@ export default function CartScreen(props) {
     }
 
     async function refreshPurchases() {
-        if(!walletIsConnected())
+        if(!walletIsConnected("You must be connected to a wallet to view its purchases. Connect to a wallet?"))
             return;
 
         setActivityIndicatorIsVisible(true);
@@ -100,10 +98,8 @@ export default function CartScreen(props) {
     }
 
     async function checkOut() {
-        if(!twineContext.walletPubkey) {
-            Alert.alert('error', 'not connected to a wallet');
+        if(!walletIsConnected("You must be connected to a wallet to checkout.\nConnect to a wallet?"))
             return;
-        }
 
         console.log('checking out');
         setActivityIndicatorIsVisible(true);

@@ -41,7 +41,7 @@ export function CartProvider(props) {
     async function getItemsResolved() {
         const promises = [];
         map.forEach((v,k) => {
-            const promise = twine.getProductByAddress(k, "");
+            const promise = twine.getProductByAddress(k);
             promises.push(promise);
         });
 
