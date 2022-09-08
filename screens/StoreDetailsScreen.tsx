@@ -6,14 +6,15 @@ import {
    ImageBackground,
   FlatList,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView
   } from 'react-native';
-import { Text, View, TextInput, Button} from '../components/Themed';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { View } from '../components/Themed';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { TwineContext } from '../components/TwineProvider';
 import * as twine from '../api/twine';
 import {PressableIcon, PressableImage} from '../components/Pressables';
+import { Text, ListItem, Avatar  } from '@rneui/themed';
 
 const SCREEN_DEEPLINK_ROUTE = "store_details";
 
@@ -25,23 +26,20 @@ export default function StoreDetailsScreen(props) {
   const [products, setProducts] = useState<twine.Product[]>([]);
   const navigation = useRef(props.navigation).current;
   const twineContext = useContext(TwineContext);
-  const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
   
    useEffect(()=>{
     if(store.address) {
-      setActivityIndicatorIsVisible(true);
       console.log('refreshing store...');
       twineContext
         .getStoreByAddress(store.address)
         .then(s=>{setStore(s);})
         .catch(err=>Alert.alert("error", err))
-        .finally(()=>setActivityIndicatorIsVisible(false));
+        .finally(()=>{});
     }
    },[]);
 
    useEffect(()=>{
     if(store.address) {
-      setActivityIndicatorIsVisible(true);
       console.log('refreshing store products...');
       twineContext
         .getProductsByStore(store.address)
@@ -49,7 +47,7 @@ export default function StoreDetailsScreen(props) {
           setProducts(products);
         })
         .catch(err=>Alert.alert("error", err))
-        .finally(()=>setActivityIndicatorIsVisible(false));
+        .finally(()=>{});
     }
   },[store.address,
      twineContext.lastUpdatedStore,
@@ -129,17 +127,22 @@ export default function StoreDetailsScreen(props) {
             }
             </View>
           </View>    
-          <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
           
-          <FlatList
-            data={products}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.address.toBase58()}
-            contentContainerStyle={styles.list}
-            numColumns={2}
-            columnWrapperStyle={styles.column}
-          />
-
+          <ScrollView style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
+            {
+              products.map((product, i) => (
+                <ListItem key={"product" + product.address?.toBase58()} bottomDivider  onPress={()=>navigation.navigate('ProductDetails', {product})}>
+                  <Avatar source={product?.data?.img && {uri: product.data.img}} size={70} />
+                  <ListItem.Content>
+                    <ListItem.Title>{product.data?.displayName}</ListItem.Title>
+                    <ListItem.Subtitle>{product.data?.displayDescription}</ListItem.Subtitle>
+                    <Text>Price: ${product.price}</Text>
+                    <Text>Inventory: {product.inventory}</Text>
+                  </ListItem.Content>
+                </ListItem>
+              ))
+            }
+          </ScrollView>
         </ImageBackground>
       </View>    
   );
@@ -153,10 +156,10 @@ const styles = StyleSheet.create({
     header: {
       alignItems: 'center',
       flexDirection: 'row',
-      backgroundColor: '#77aaaa',
-      height: '10%',
+      backgroundColor: 'rgba(52, 52, 52, 0)',
+      height: '11%',
       width: '100%',
-      marginBottom: 10,
+      marginBottom: 0,
     },
     headerImage:{
       width: '25%',
@@ -167,13 +170,14 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
       flexDirection: 'column',
-      backgroundColor: '#77aaaa',
+      backgroundColor: 'rgba(52, 52, 52, 0)',
       flexWrap: 'wrap',
-      width: '48%'
+      width: '48%',
+      color: 'white',
     },
     headerIcons:{
       flexDirection: 'row',
-      backgroundColor: '#77aaaa',
+      backgroundColor: 'rgba(52, 52, 52, 0)',
       width: '22%',
       alignSelf: 'flex-end',
     },
@@ -212,9 +216,11 @@ const styles = StyleSheet.create({
       margin: 5,
     },
     title: {
-      fontSize: 20,
+      fontSize: 21,
       fontWeight: 'bold',
       alignSelf: 'flex-start',
+      color: '#FFFFFF',
+      paddingLeft: 4,
     },
     body: {
       //flex: 1,
