@@ -1,12 +1,13 @@
-import React, {createContext, useState} from 'react';
+import React, {createContext, useContext, useState} from 'react';
 import {MapOrEntries, useMap} from '../hooks/useMap';
-import * as twine from '../api/twine';
+import { TwineContext } from './TwineProvider';
 
 //import { getProduct } from './services/ProductsService.js';
 
 export const CartContext = createContext();
 
 export function CartProvider(props) {
+    const twineContext = useContext(TwineContext);
     const [map, actions] = useMap<string, string>();
     const [itemCount, setItemCount] = useState(0);
   
@@ -41,7 +42,7 @@ export function CartProvider(props) {
     async function getItemsResolved() {
         const promises = [];
         map.forEach((v,k) => {
-            const promise = twine.getProductByAddress(k);
+            const promise = twineContext.getProductByAddress(k);
             promises.push(promise);
         });
 

@@ -1,19 +1,21 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Button, Platform, Pressable, StyleSheet, TextInput} from 'react-native';
 import { Text, View } from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
-import * as solchat from '../api/solchat';
+import {Contact} from '../api/SolChat';
 import { Avatar } from "@rneui/themed";
 import { PressableIcon } from '../components/Pressables';
 import * as Clipboard from 'expo-clipboard';
+import { TwineContext } from '../components/TwineProvider';
 
 const SCREEN_DEEPLINK_ROUTE = "edit_contact";
 
 export default function EditContactScreen(props) {
-    const [contact, setContact] = useState({data:{}} as solchat.Contact);
+    const [contact, setContact] = useState({data:{}} as Contact);
     const navigation = useRef(props.navigation).current;
     const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+    const {solchat} = useContext(TwineContext);
    
     useEffect(()=>{
         solchat

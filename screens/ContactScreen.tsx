@@ -1,17 +1,16 @@
 import { ActivityIndicator, Alert, Button, Dimensions, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text, View } from '../components/Themed';
 import {PressableImage} from '../components/Pressables';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import * as solchat from '../api/solchat';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { PressableIcon, PressableText } from '../components/Pressables';
-import { AssetType } from '../api/twine';
+import { AssetType } from '../api/Twine';
 import SelectDropdown from 'react-native-select-dropdown'
 import { Avatar, Icon, ListItem } from '@rneui/themed';
+import { TwineContext } from '../components/TwineProvider';
+import { Contact, ContactProfile, DirectConversation} from '../api/SolChat';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
 import uuid from 'react-native-uuid';
-import { TwineContext } from '../components/TwineProvider';
-
 
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
@@ -34,8 +33,8 @@ export default function ContactScreen(props) {
   const [contact, setContact] = useState(null);
   const [addContactKey,setAddContactKey]= useState("");
   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
-  const [allowedContacts, setAllowedContacts] = useState([] as solchat.Contact[]);
-  const [focusedContact, setFocusedContact] = useState({} as solchat.Contact);
+  const [allowedContacts, setAllowedContacts] = useState([] as Contact[]);
+  const [focusedContact, setFocusedContact] = useState({} as Contact);
   const [sendAsset, setSendAsset] = useState({type: AssetType.SOL, amount:0} as SendAsset);
   const [sendAssetErrorMessage, setSendAssetErrorMessage] = useState('');
   const [logText, setLogText] = useState<string[]>([]);
@@ -52,7 +51,7 @@ export default function ContactScreen(props) {
     if(!walletIsConnected())
       return;
   
-      const fetchedContact = solchat
+      const fetchedContact = twineContext.solchat
         .getCurrentWalletContact()
         .then(setContact)     
         .catch(console.log);
@@ -65,7 +64,7 @@ export default function ContactScreen(props) {
       return;
 
     console.log('getAllowedContacts...');
-    solchat
+    twineContext.solchat
       .getAllowedContacts(contact)
       .then(contacts=>{
         setAllowedContacts(contacts);
@@ -87,7 +86,7 @@ export default function ContactScreen(props) {
       return;
 
       console.log('getting direct messages...');
-      solchat
+      twineContext.solchat
         .getDirectMessages(contact.address, focusedContact.address)
         .then(conversation=>{
          
@@ -159,7 +158,7 @@ export default function ContactScreen(props) {
     const message = {...messages[0], user: { _id: contact?.address?.toBase58()}};
     const messageString = JSON.stringify(message);
 
-    const signature = await solchat
+    const signature = await twineContext.solchat
       .sendDirectMessage(messageString, contact.address, focusedContact.address, SCREEN_DEEPLINK_ROUTE)
       .catch(err=>appendSystemErrorMessage(err));
     
@@ -198,9 +197,9 @@ export default function ContactScreen(props) {
   console.log('subscribing to conversations with allowed contacts...');
   allowedContacts.forEach(c=>{
     if(contact?.address && c?.address) {
-      solchat
+      twineContext.solchat
         .subscribeToConversationBetween(contact, c, 
-          (conversation: solchat.DirectConversation)=> {
+          (conversation: DirectConversation)=> {
             console.log('got conversation subscription callback');
             setMessages([]);
             
@@ -246,7 +245,7 @@ export default function ContactScreen(props) {
     setActivityIndicatorIsVisible(true);
     console.log('allowing contact...');
 
-    solchat
+    twineContext.solchat
       .addAllow(new PublicKey(addContactKey), {directMessage: true}, SCREEN_DEEPLINK_ROUTE)
       .then(updatedContact=>setContact(updatedContact))
       .catch(err=>console.log(err))

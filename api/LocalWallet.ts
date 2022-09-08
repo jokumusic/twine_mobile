@@ -1,13 +1,8 @@
 import "react-native-get-random-values";
 import "react-native-url-polyfill/auto";
-import uuid from 'react-native-uuid';
-import * as Linking from "expo-linking";
 import * as anchor from "../dist/browser/index";
 import * as idl from "../target/idl/twine.json";
 import type { Twine } from '../target/types/twine';
-import * as web3 from "@solana/web3.js";
-import {generateRandomString} from '../utils/random';
-import { compress, decompress, trimUndefined, trimUndefinedRecursively } from 'compress-json'
 import {
   clusterApiUrl,
   Connection,
@@ -18,125 +13,128 @@ import {
   AccountInfo,
 } from "@solana/web3.js";
 import { Buffer, resolveObjectURL } from "buffer";
+import WalletInterface from './WalletInterface';
+import { Wallet } from "../dist/browser/types/src";
 
 global.Buffer = global.Buffer || Buffer;
-global.LocalKeypair= (()=>{
-    const keypair = Keypair.generate();
-    return keypair;
-})();
-
-const network = clusterApiUrl("devnet")
-const connection = new Connection(network);
-
-interface CallbackHandler{
-    resolve: Function,
-    reject: Function,
-}
-
-interface RegisteredCallbackHandler extends CallbackHandler {
-    date: Date;
-}
 
 
-/** gets the last retrieved wallet public key*/
-export const getWalletPublicKey = (): PublicKey|null => global.LocalKeypair.publicKey;
-const getWalletKeyPair = () : Keypair => global.LocalKeypair;
 
-/** connects to wallet
- * @param deepLinkReturnRoute deeplink route back to the screen you want to display
-*/
-export const connect = async (force=false, deepLinkReturnRoute = "") => {
-    return new Promise<PublicKey>(async (resolve,reject) => {
-       resolve (getWalletPublicKey());        
-    });
-}
+class LocalWallet implements WalletInterface {
+    private keypair: Keypair;
+    private connection = new Connection(clusterApiUrl("devnet"));
 
-/** signs a transaction
- * @param deepLinkReturnRoute deeplink route back to the screen you want to display
-*/
-export const signTransaction = async (transaction: Transaction, requireAllSignatures = true, verifySignatures = true, deepLinkReturnRoute = "") => {
-    return new Promise<Transaction>(async (resolve, reject) => {
-        const localKeyPair = getWalletKeyPair();
-        if(!localKeyPair){
-            reject('not connected to a wallet');
-            return;
-        }
-
-        transaction.partialSign(localKeyPair);
-        resolve(transaction);     
-    });
-}
-
-/** signs a message
-* @param deepLinkReturnRoute deeplink route back to the screen you want to display
-*/
-export const signMessage = async (message: string, deepLinkReturnRoute = "") => {
-    return new Promise<any>(async (resolve, reject) => {
-        const localKeyPair = getWalletKeyPair();
-        if(!localKeyPair){
-            reject('not connected to a wallet');
-            return;
-        }
-
-        throw new Error("not implemented");
+    constructor(keypair: Keypair) {
+        this.keypair = keypair; 
+    }
     
-    });
+
+    /** gets the last retrieved wallet public key*/
+    getWalletPublicKey = (): PublicKey|null => this.keypair.publicKey;
+    getWalletKeyPair = () : Keypair|null => this.keypair;
+
+    /** connects to wallet
+     * @param deepLinkReturnRoute deeplink route back to the screen you want to display
+    */
+    connect = async (force=false, deepLinkReturnRoute = "") => {
+        return new Promise<PublicKey>(async (resolve,reject) => {
+            const pk = this.getWalletPublicKey();
+            if(!pk)
+                reject('no keypair available');
+            else
+                resolve (pk);        
+        });
+    }
+
+    /** signs a transaction
+     * @param deepLinkReturnRoute deeplink route back to the screen you want to display
+    */
+    signTransaction = async (transaction: Transaction, requireAllSignatures = true, verifySignatures = true, deepLinkReturnRoute = "") => {
+        return new Promise<Transaction>(async (resolve, reject) => {
+            const kp = this.getWalletKeyPair();
+            if(!kp){
+                reject('not connected to a wallet');
+                return;
+            }
+
+            transaction.partialSign(kp);
+            resolve(transaction);     
+        });
+    }
+
+    /** signs a message
+    * @param deepLinkReturnRoute deeplink route back to the screen you want to display
+    *
+    signMessage = async (message: string, deepLinkReturnRoute = "") => {
+        return new Promise<any>(async (resolve, reject) => {
+            const kp = this.getWalletKeyPair();
+            if(!kp){
+                reject('not connected to a wallet');
+                return;
+            }
+
+            throw new Error("not implemented");        
+        });
 };
+*/
 
 /** signs and sends a transaction
 * @param deepLinkReturnRoute deeplink route back to the screen you want to display
 */
-export const signAndSendTransaction = async (transaction: Transaction, requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
-    return new Promise<string>(async (resolve, reject) => {
-        const localKeyPair = getWalletKeyPair();
-        if(!localKeyPair){
-            reject('not connected to a wallet');
-            return;
-        }
+    signAndSendTransaction = async (transaction: Transaction, requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
+        return new Promise<string>(async (resolve, reject) => {
+            const kp = this.getWalletKeyPair();
+            if(!kp){
+                reject('not connected to a wallet');
+                return;
+            }
 
-        const serializedTransaction = transaction.serialize({requireAllSignatures, verifySignatures});
+            const serializedTransaction = transaction.serialize({requireAllSignatures, verifySignatures});
 
-        const signature = await anchor.web3
-            .sendAndConfirmTransaction(connection, transaction, [localKeyPair])
-            .catch(reject);
+            const signature = await anchor.web3
+                .sendAndConfirmTransaction(this.connection, transaction, [kp])
+                .catch(reject);
 
-        if(!signature)
-            return;
+            if(!signature)
+                return;
 
-        resolve(signature);
-    });
-};
+            resolve(signature);
+        });
+    };
 
-/** signs all transactions
-* @param deepLinkReturnRoute deeplink route back to the screen you want to display
-*/
-export const signAllTransactions = async (transactions: Transaction[], requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
-    return new Promise<Transaction[]>(async (resolve, reject) =>{ 
-        const localKeyPair = getWalletKeyPair();
-        if(!localKeyPair){
-            reject('not connected to a wallet');
-            return;
-        }
+    /** signs all transactions
+    * @param deepLinkReturnRoute deeplink route back to the screen you want to display
+    */
+    signAllTransactions = async (transactions: Transaction[], requireAllSignatures=true, verifySignatures=true, deepLinkReturnRoute = "") => {
+        return new Promise<Transaction[]>(async (resolve, reject) =>{ 
+            const kp = this.getWalletKeyPair();
+            if(!kp){
+                reject('not connected to a wallet');
+                return;
+            }
 
-        for(const trans of transactions){
-            trans.partialSign(localKeyPair);
-        }
+            for(const trans of transactions){
+                trans.partialSign(kp);
+            }
 
-        resolve(transactions);
-    });
-};
+            resolve(transactions);
+        });
+    };
 
-/** disconnects session from Phantom wallet
-* @param deepLinkReturnRoute deeplink route back to the screen you want to display
-*/
-export const disconnect = async (deepLinkReturnRoute: string, ) => {
-    return new Promise<void>(async (resolve,reject) =>{
-        const localKeyPair = getWalletKeyPair();
-        if(!localKeyPair){
-            reject('not connected to a wallet');
-            return;
-        }
+    /** disconnects session from Phantom wallet
+    * @param deepLinkReturnRoute deeplink route back to the screen you want to display
+    *
+    disconnect = async (deepLinkReturnRoute: string, ) => {
+        return new Promise<void>(async (resolve,reject) =>{
+            const kp = this.getWalletKeyPair();
+            if(!kp){
+                reject('not connected to a wallet');
+                return;
+            }
 
-        throw new Error("not implemented yet");
-    });
-  };
+            throw new Error("not implemented yet");
+        });
+    }
+    */
+
+}

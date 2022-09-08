@@ -1,3 +1,5 @@
+import "react-native-get-random-values";
+import "react-native-url-polyfill/auto";
 import * as React from 'react';
 import {Suspense} from 'react';
 import { ColorSchemeName, AppRegistry, Text,View, StyleSheet } from 'react-native';

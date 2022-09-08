@@ -4,7 +4,7 @@ import { useSelector, useDispatch, connect } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
 //import * as Settings from '../reducers/settings'
-import * as twine from '../api/twine';
+import * as twine from '../api/Twine';
 import { PublicKey } from '@solana/web3.js';
 import { RadioGroup } from 'react-native-radio-buttons-group';
 import { TwineContext } from '../components/TwineProvider';

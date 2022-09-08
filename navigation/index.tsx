@@ -13,7 +13,6 @@ import EditStoreScreen from '../screens/EditStoreScreen';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import ShopScreen from '../screens/ShopScreen';
 import StoresScreen from '../screens/StoresScreen';
-import SettingsScreen from '../screens/SettingsScreen';
 import StoreDetailsScreen from '../screens/StoreDetailsScreen';
 import EditProductScreen from '../screens/EditProductScreen';
 import ProductDetailsScreen from '../screens/ProductDetailsScreen';
@@ -24,7 +23,6 @@ import ContactScreen from '../screens/ContactScreen';
 import EditContactScreen from '../screens/EditContactScreen';
 import AddContactScreen from '../screens/AddContactScreen';
 import { PressableIcon } from '../components/Pressables';
-//import * as twine from '../api/twine';
 import { TwineContext } from '../components/TwineProvider';
 
 

@@ -8,7 +8,7 @@ import CarouselCards from '../components/CarouselCards';
 import { PressableIcon, PressableImage } from '../components/Pressables';
 import { CheckBox, Icon } from "@rneui/themed";
 import { TwineContext } from '../components/TwineProvider';
-import * as twine from '../api/twine';
+import * as twine from '../api/Twine';
 
 
 const SCREEN_DEEPLINK_ROUTE = "edit_product";
