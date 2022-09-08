@@ -485,12 +485,14 @@ export async function subscribeToConversationBetween(contactA: Contact, contactB
     //const subscriptionId = connection.onAccountChange(conversation, receivedSubscriptionCallback, 'finalized');
     //global.SolChatSubscriptionIds.push(subscriptionId);
     if(!global.SolChatAccountChangeCallbackHandlers.has(conversationAddress.toBase58())) {
-      program.account
+      const eventEmitter = program.account
         .directConversation
-        .subscribe(conversationAddress, 'confirmed')
+        .subscribe(conversationAddress, 'confirmed');
+
+        eventEmitter
         .on('change', fn);
 
-      global.SolChatAccountChangeCallbackHandlers.set(conversationAddress.toBase58(),{});
+      global.SolChatAccountChangeCallbackHandlers.set(conversationAddress.toBase58(),eventEmitter);
     }
 
     resolve();

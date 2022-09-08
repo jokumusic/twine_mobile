@@ -1208,7 +1208,7 @@ export function buyProduct(product: Product, quantity: number, deeplinkRoute: st
         const signature = await Phantom
             .signAndSendTransaction(tx, false, true, deeplinkRoute)
             .catch(reject);
-console.log('sig: ', signature);
+
         if(!signature)
             return;
 
