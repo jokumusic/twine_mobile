@@ -36,18 +36,17 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
       case 1: 
         refreshProducts();
         break;
-      case 2: 
-      console.log('refreshPayToSells');
+      case 2:
         refreshPayToSells();
         break;
     }
   }
 
-  function walletIsConnected(){
+  function walletIsConnected(msg){
     if(!twineContext.walletPubkey){
       Alert.alert(
         "connect to wallet",
-        "You must be connected to a wallet to view its stores.\nConnect to a wallet?",
+        msg,
         [
           {text: 'Yes', onPress: () => twineContext
             .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
@@ -64,7 +63,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
 
   async function refreshPayToSells() {
    
-    if(!walletIsConnected())
+    if(!walletIsConnected("You must be connected to a wallet to view its sells.\nConnect to a wallet?"))
       return;    
 
     if(!twineContext.walletPubkey) {
@@ -84,7 +83,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   }
 
   async function refreshProducts() {
-    if(!walletIsConnected())
+    if(!walletIsConnected("You must be connected to a wallet to view its products.\nConnect to a wallet?"))
       return;    
 
     console.log('refreshinging products...')
@@ -98,7 +97,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   }
 
   async function refreshStores() {    
-    if(!walletIsConnected())
+    if(!walletIsConnected("You must be connected to a wallet to view its stores.\nConnect to a wallet?"))
       return;    
 
     console.log('refreshing stores...')

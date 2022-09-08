@@ -68,7 +68,7 @@ export default function CartScreen(props) {
     }
 
     async function refreshPurchases() {
-        if(!walletIsConnected("You must be connected to a wallet to view its purchases. Connect to a wallet?"))
+        if(!walletIsConnected("You must be connected to a wallet to view its purchases.\nConnect to a wallet?"))
             return;
 
         setActivityIndicatorIsVisible(true);
