@@ -32,6 +32,11 @@ import { TwineContext } from '../components/TwineProvider';
    const twineContext = useContext(TwineContext);
 
    useEffect(()=>{
+    console.log('twinepubkey: ');
+    console.log(twineContext.walletPubkey);
+   },[]);
+
+   useEffect(()=>{
       if(!product?.address) {
         Alert.alert("Product is missing an address. Unable to retrieve product information");
         return;

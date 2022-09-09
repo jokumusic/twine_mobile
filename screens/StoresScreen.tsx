@@ -61,8 +61,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     return true;
   }
 
-  async function refreshPayToSells() {
-   
+  async function refreshPayToSells() {   
     if(!walletIsConnected("You must be connected to a wallet to view its sells.\nConnect to a wallet?"))
       return;    
 
@@ -86,7 +85,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     if(!walletIsConnected("You must be connected to a wallet to view its products.\nConnect to a wallet?"))
       return;    
 
-    console.log('refreshinging products...')
+    console.log('refreshing products...')
     twineContext
       .getProductsByAuthority(twineContext.walletPubkey, true)
       .then(items=>{            
@@ -143,7 +142,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
           <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
             <TabView.Item style={{ width: '100%' }}>              
               <ScrollView style={{flex:1, width:'100%', backgroundColor: 'rgba(52, 52, 52, 0)'}}>
-              {
+              { 
                 stores.map((store, i) => (
                   <ListItem key={"store" + store.address?.toBase58()} bottomDivider onPress={()=>navigation.navigate('StoreDetails',{store})}>
                     <Avatar source={store?.data?.img && {uri: store.data.img}} size={70} />

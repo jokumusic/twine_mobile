@@ -1,36 +1,33 @@
 import "react-native-get-random-values";
 import "react-native-url-polyfill/auto";
 import * as anchor from "../dist/browser/index";
-import * as idl from "../target/idl/twine.json";
-import type { Twine } from '../target/types/twine';
 import {
   clusterApiUrl,
   Connection,
   Keypair,
   PublicKey,
-  SystemProgram,
   Transaction,
-  AccountInfo,
 } from "@solana/web3.js";
-import { Buffer, resolveObjectURL } from "buffer";
 import WalletInterface from './WalletInterface';
-import { Wallet } from "../dist/browser/types/src";
-
+import { Buffer } from "buffer";
 global.Buffer = global.Buffer || Buffer;
 
 
 
-class LocalWallet implements WalletInterface {
+export class LocalWallet implements WalletInterface {
     private keypair: Keypair;
     private connection = new Connection(clusterApiUrl("devnet"));
 
-    constructor(keypair: Keypair) {
+    constructor(keypair: Keypair, network: string) {
+        if(!network)
+            throw new Error("network must be specified");
+
         this.keypair = keypair; 
     }
     
 
     /** gets the last retrieved wallet public key*/
-    getWalletPublicKey = (): PublicKey|null => this.keypair.publicKey;
+    getWalletPublicKey = (): PublicKey|null => {console.log('getting key: ', this.keypair.publicKey); return this.keypair.publicKey;}
     getWalletKeyPair = () : Keypair|null => this.keypair;
 
     /** connects to wallet
@@ -56,6 +53,8 @@ class LocalWallet implements WalletInterface {
                 reject('not connected to a wallet');
                 return;
             }
+
+            console.log('signing with: ', kp.publicKey.toBase58());
 
             transaction.partialSign(kp);
             resolve(transaction);     
@@ -88,6 +87,8 @@ class LocalWallet implements WalletInterface {
                 reject('not connected to a wallet');
                 return;
             }
+
+            console.log('signing and sending with ', kp.publicKey.toBase58());
 
             const serializedTransaction = transaction.serialize({requireAllSignatures, verifySignatures});
 

@@ -2,7 +2,7 @@ import "react-native-get-random-values";
 import "react-native-url-polyfill/auto";
 import * as React from 'react';
 import {Suspense} from 'react';
-import { Text,View, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import useCachedResources from './hooks/useCachedResources';
@@ -12,6 +12,10 @@ import {ActivityIndicator, DarkTheme as PaperDarkTheme, DefaultTheme as PaperDef
 import { CartProvider } from './components/CartProvider';
 import {LogBox} from "react-native";
 import { TwineProvider } from './components/TwineProvider';
+import { Buffer } from "buffer";
+global.Buffer = global.Buffer || Buffer;
+
+if (typeof BigInt === 'undefined') global.BigInt = require('big-integer')
 
 
 export default function App() {

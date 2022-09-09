@@ -6,9 +6,9 @@ import {
     PublicKey,
     Transaction,
   } from "@solana/web3.js";
-import { Buffer } from "buffer";
-import WalletInterface from "./WalletInterface";
 
+import WalletInterface from "./WalletInterface";
+import { Buffer } from "buffer";
 global.Buffer = global.Buffer || Buffer;
 
 interface CallbackHandler{
@@ -45,7 +45,10 @@ export class PhantomWallet implements WalletInterface {
     };
 
 
-    constructor(network = "devnet") {
+    constructor(network:string) {
+        if(!network)
+            throw new Error("network must be specified");
+
         this.context.cluster = network;
     }
 

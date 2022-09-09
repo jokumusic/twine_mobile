@@ -1,31 +1,97 @@
-import React, {createContext, useRef, useState} from 'react';
+import React, {createContext, useEffect, useRef, useState} from 'react';
 import {
     Twine,
     AssetType,
     Store, WriteableStore, StoreData, WriteableStoreData,
     Product, WriteableProduct, ProductData, WriteableProductData 
 } from '../api/Twine';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import { PhantomWallet } from '../api/PhantomWallet';
+import {LocalWallet} from '../api/LocalWallet';
 import { SolChat } from '../api/SolChat';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import WalletInterface from '../api/WalletInterface';
+import { Buffer } from "buffer";
+global.Buffer = global.Buffer || Buffer;
 
 
 //import { getProduct } from './services/ProductsService.js';
+const NETWORK = "devnet";
+
+  
+
 
 export const TwineContext = createContext();
-const wallet = new PhantomWallet("devnet");
+
+const LOCAL_KEYPAIR_LOOKUP_KEY = "@LocalKeyPair";
+//const k = Keypair.generate();
+//AsyncStorage.clear();
 
 export function TwineProvider(props) {
-    const twine = useRef(new Twine(wallet)).current;
-    const solchat = useRef(new SolChat(wallet, "devnet")).current;
+    let wallet = useRef<WalletInterface>(new PhantomWallet(NETWORK)).current;
+    const twine = useRef<Twine>(new Twine(wallet, NETWORK)).current;
+    const solchat = useRef<SolChat>(new SolChat(wallet, NETWORK)).current;
     const [itemCount, setItemCount] = useState(0);
-    const [walletPubkey, setWalletPubkey] = useState(twine.getCurrentWalletPublicKey());
-    const [lastCreatedStore, setLastCreatedStore] = useState<twine.Store>();
-    const [lastUpdatedStore, setLastUpdatedStore] = useState<twine.Store>();
-    const [lastCreatedProduct, setLastCreatedProduct] = useState<twine.Product>();
-    const [lastUpdatedProduct, setLastUpdatedProduct] = useState<twine.Product>();
+    const [walletPubkey, setWalletPubkey] = useState(wallet.getWalletPublicKey());
+    const [lastCreatedStore, setLastCreatedStore] = useState<Store>();
+    const [lastUpdatedStore, setLastUpdatedStore] = useState<Store>();
+    const [lastCreatedProduct, setLastCreatedProduct] = useState<Product>();
+    const [lastUpdatedProduct, setLastUpdatedProduct] = useState<Product>();
+
   
+
+    useEffect(()=>{
+
+        async function f() {
+           
+            let localKeypair;
+            try{
+                const kpData  = await getData(LOCAL_KEYPAIR_LOOKUP_KEY);               
+                
+                if(kpData) {
+                    const parsedKpData = JSON.parse(kpData);
+                    const parseparse = JSON.parse(parsedKpData)
+                    const secretKeyValues = Object.values(parseparse._keypair.secretKey);
+                    const secretKey = new Uint8Array(secretKeyValues);
+                    localKeypair = Keypair.fromSecretKey(secretKey);      
+                } else {
+                    console.log('generating local keypair');
+                    localKeypair = Keypair.generate();
+                    console.log(localKeypair.publicKey.toBase58());
+                    const stringyKp = JSON.stringify(localKeypair);
+                    await storeData(LOCAL_KEYPAIR_LOOKUP_KEY, stringyKp);
+                }
+            
+                console.log('localkeypair: ', localKeypair.publicKey.toBase58());
+                return localKeypair;
+            }
+            catch(e) {
+                console.error(e);
+            }   
+        }   
+
+        f();
+    },[]);
+
+    async function storeData(key:string, value) {
+        try {
+            await AsyncStorage.setItem(key, JSON.stringify(value)); 
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    async function getData(key:string){
+        try {
+            return await AsyncStorage.getItem(key);
+        } catch(e) {
+          console.log(e);
+        }
+      }
+      
+
     async function connectWallet(force=false, deeplinkRoute: string) {
+        console.log('provider connect wallet');
         return wallet
             .connect(force, deeplinkRoute)
             .then(walletKey=>{

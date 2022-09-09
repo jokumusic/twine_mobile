@@ -1,4 +1,3 @@
-//import * as this.wallet from '../api/this.wallet';
 import * as anchor from "../dist/browser/index";
 import * as idl from "../target/idl/twine.json";
 import type { Twine as TwineProgram } from '../target/types/twine';
@@ -156,6 +155,10 @@ export class Twine {
     }
 
     getCurrentWalletPublicKey = () => this.wallet.getWalletPublicKey();
+
+    setWallet(wallet: WalletInterface) {
+        this.wallet = wallet;
+    }
 
     connectWallet = async (force=false, deeplinkRoute: string) => {
         return new Promise<PublicKey>(async (resolve,reject) =>{
