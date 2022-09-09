@@ -41,7 +41,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       EditStore: 'edit_store',
       ProductDetails: 'product_details',
       EditProduct: 'edit_product',
-      AddContact: 'add_contact',
+      ManageWallets: 'manage_wallets',
       EditContact: 'edit_contact',
       NotFound: '*',
     },

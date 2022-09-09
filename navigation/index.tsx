@@ -23,6 +23,7 @@ import ContactScreen from '../screens/ContactScreen';
 import EditContactScreen from '../screens/EditContactScreen';
 import { PressableIcon } from '../components/Pressables';
 import { TwineContext } from '../components/TwineProvider';
+import ManageWalletsScreen from '../screens/ManageWalletsScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -50,6 +51,7 @@ function RootNavigator() {
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
       <Stack.Group screenOptions={{ presentation: 'modal' }}>
         <Stack.Screen name="About" component={AboutScreen} />
+        <Stack.Screen name="ManageWallets" component={ManageWalletsScreen}/>
         <Stack.Screen 
           name="EditStore"
           component={EditStoreScreen}
@@ -117,9 +119,11 @@ function BottomTabNavigator() {
         [{
             text:'Yes',
             onPress: ()=>{ 
-              twineContext
+              /*twineContext
                 .connectWallet(true, deeplinkRoute)
                 .catch(err=>Alert.alert("error", err)); 
+                */
+               Navigation.naviga
             },
             style: 'OK'
         },
@@ -155,7 +159,7 @@ function BottomTabNavigator() {
               <CartIcon navigation={navigation} />             
               <PressableIcon
                 name="wallet"
-                onPress={()=>connectWallet("shop")}            
+                onPress={()=>navigation.navigate("ManageWallets")}            
                 color={Colors[colorScheme].text}
                 style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
               />
@@ -182,7 +186,7 @@ function BottomTabNavigator() {
             <CartIcon navigation={navigation} />
             <PressableIcon
               name="wallet"
-              onPress={()=>connectWallet("contact")}            
+              onPress={()=>navigation.navigate("ManageWallets")}
               color={Colors[colorScheme].text}
               style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
             />
@@ -209,7 +213,7 @@ function BottomTabNavigator() {
             <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
               <PressableIcon
                 name="wallet"
-                onPress={()=>connectWallet("cart")}            
+                onPress={()=>navigation.navigate("ManageWallets")}
                 color={Colors[colorScheme].text}
                 style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}              
               />
@@ -230,7 +234,7 @@ function BottomTabNavigator() {
             <CartIcon navigation={navigation} />
             <PressableIcon
               name="wallet"
-              onPress={()=>connectWallet("stores")}            
+              onPress={()=>navigation.navigate("ManageWallets")}
               color={Colors[colorScheme].text}
               style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
             />

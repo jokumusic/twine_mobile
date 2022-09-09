@@ -223,10 +223,14 @@ export class Twine {
     async createStore(store: WriteableStore, deeplinkRoute: string) {
         return new Promise<Store>(async (resolve,reject) => {
             const currentWalletPubkey = this.getCurrentWalletPublicKey();
+            console.log('twine wallet: ', currentWalletPubkey);
+            
             if(!currentWalletPubkey) {
                 reject('not connected to a wallet');
                 return;
-            }        
+            }
+
+        
         
             if(!store.data.displayName) {
                 reject("store must have a name");
@@ -579,6 +583,10 @@ export class Twine {
     });
 }
 
+
+    async getBalanceByAddress(address: PublicKey) {
+        return this.connection.getBalance(address, 'finalized');
+    }
 
     async getProductByAddress(address: PublicKey) {
         return new Promise<Product>(async(resolve,reject) => {

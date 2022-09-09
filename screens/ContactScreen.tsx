@@ -176,10 +176,7 @@ export default function ContactScreen(props) {
         "connect to wallet",
         "You must be connected to a wallet to view its communities.\nConnect to a wallet?",
         [
-            {text: 'Yes', onPress: () => twineContext
-            .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-            .catch(err=>Alert.alert('error', err))
-            },
+            {text: 'Yes', onPress: () => navigation.navigate("ManageWallets")},
             {text: 'No', onPress: () => {}},
         ]);
 

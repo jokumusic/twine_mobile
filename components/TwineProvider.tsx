@@ -18,12 +18,10 @@ global.Buffer = global.Buffer || Buffer;
 //import { getProduct } from './services/ProductsService.js';
 const NETWORK = "devnet";
 
-  
-
 
 export const TwineContext = createContext();
 
-const LOCAL_KEYPAIR_LOOKUP_KEY = "@LocalKeyPair";
+const LOCAL_KEYPAIRS_LOOKUP_KEY = "@LocalKeyPairs";
 //const k = Keypair.generate();
 //AsyncStorage.clear();
 
@@ -38,44 +36,10 @@ export function TwineProvider(props) {
     const [lastCreatedProduct, setLastCreatedProduct] = useState<Product>();
     const [lastUpdatedProduct, setLastUpdatedProduct] = useState<Product>();
 
-  
-
-    useEffect(()=>{
-
-        async function f() {
-           
-            let localKeypair;
-            try{
-                const kpData  = await getData(LOCAL_KEYPAIR_LOOKUP_KEY);               
-                
-                if(kpData) {
-                    const parsedKpData = JSON.parse(kpData);
-                    const parseparse = JSON.parse(parsedKpData)
-                    const secretKeyValues = Object.values(parseparse._keypair.secretKey);
-                    const secretKey = new Uint8Array(secretKeyValues);
-                    localKeypair = Keypair.fromSecretKey(secretKey);      
-                } else {
-                    console.log('generating local keypair');
-                    localKeypair = Keypair.generate();
-                    console.log(localKeypair.publicKey.toBase58());
-                    const stringyKp = JSON.stringify(localKeypair);
-                    await storeData(LOCAL_KEYPAIR_LOOKUP_KEY, stringyKp);
-                }
-            
-                console.log('localkeypair: ', localKeypair.publicKey.toBase58());
-                return localKeypair;
-            }
-            catch(e) {
-                console.error(e);
-            }   
-        }   
-
-        f();
-    },[]);
 
     async function storeData(key:string, value) {
         try {
-            await AsyncStorage.setItem(key, JSON.stringify(value)); 
+            await AsyncStorage.setItem(key, value); 
         } catch (e) {
             console.log(e);
         }
@@ -87,7 +51,63 @@ export function TwineProvider(props) {
         } catch(e) {
           console.log(e);
         }
-      }
+    }
+
+    async function createLocalWallet(name:string, maxSpend:number){
+        let existingWallets = await getLocalWallets();
+        if(!existingWallets)
+            existingWallets = [];
+
+        const keypair = Keypair.generate();
+        const newEntry = {
+            name,
+            maxSpend,
+            keypair,
+        };
+        
+        existingWallets.push(newEntry);
+        const stringyWallets = JSON.stringify(existingWallets);
+        await storeData(LOCAL_KEYPAIRS_LOOKUP_KEY, stringyWallets);
+        return newEntry;
+    }
+
+    async function getLocalWallets() {
+        const kpData  = await getData(LOCAL_KEYPAIRS_LOOKUP_KEY);
+        if(kpData) {
+            const kpArray = JSON.parse(kpData);
+            //console.log('kpArray: ', kpArray);
+            const kps = kpArray.map(item => {
+                //const parsedItem = JSON.parse(item);
+                //console.log('name: ', item.name);
+                //console.log('item: ', item);
+                const secretKeyValues = Object.values(item.keypair._keypair.secretKey);
+                const secretKey = new Uint8Array(secretKeyValues);
+                const kp = Keypair.fromSecretKey(secretKey);
+                return {
+                    name: item.name,
+                    maxSpend: item?.maxSpend ?? 0,
+                    keypair: kp,
+                };
+            });
+
+            return kps;
+        }
+    }
+
+    async function useLocalWallet(kp: Keypair) {
+        wallet = new LocalWallet(kp, NETWORK);
+        twine.setWallet(wallet);
+        solchat.setWallet(wallet);
+        setWalletPubkey(kp.publicKey);
+        console.log('using localwallet: ', wallet.getWalletPublicKey()?.toBase58());
+    }
+
+    async function usePhantomWallet(){
+        wallet = new PhantomWallet(NETWORK);
+        twine.setWallet(wallet);
+        solchat.setWallet(wallet);
+        setWalletPubkey(null);
+    }
       
 
     async function connectWallet(force=false, deeplinkRoute: string) {
@@ -143,6 +163,7 @@ export function TwineProvider(props) {
     }
 
     async function createStore(store: WriteableStore, deeplinkRoute: string) {
+        console.log('context wallet: ', wallet.getWalletPublicKey());
         return twine
             .createStore(store, deeplinkRoute)
             .then(createdStore=>{
@@ -182,6 +203,10 @@ export function TwineProvider(props) {
         return twine.getStoresByAuthority(authority);
     }
 
+    async function getAccountLamports(account: PublicKey){
+        return twine.getBalanceByAddress(account);
+    }
+
     return (
         <TwineContext.Provider value={{
             connectWallet,
@@ -206,6 +231,11 @@ export function TwineProvider(props) {
             getProductsByAuthority,
             getStoresByAuthority,
             solchat,
+            createLocalWallet,
+            getLocalWallets,
+            getAccountLamports,
+            useLocalWallet,
+            usePhantomWallet,
         }}
         >
             {props.children}

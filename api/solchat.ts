@@ -58,6 +58,9 @@ export class SolChat {
     this.connection = new Connection(clusterApiUrl(network));
   }
 
+  setWallet(wallet: WalletInterface) {
+   this.wallet = wallet;
+  }
   
   getCurrentWalletPublicKey = () => this.wallet.getWalletPublicKey();
 

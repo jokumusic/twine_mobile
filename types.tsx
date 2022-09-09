@@ -20,8 +20,8 @@ export type RootStackParamList = {
   EditStore: undefined;
   ProductDetails: undefined;
   EditProduct: undefined;
-  AddContact: undefined;
   EditContact: undefined;
+  ManageWallets: undefined;
   About: undefined;
   NotFound: undefined;
 };

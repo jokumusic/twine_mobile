@@ -44,10 +44,7 @@ export default function CartScreen(props) {
             "connect to wallet",
             msg,
             [
-                {text: 'Yes', onPress: () => twineContext
-                .connectWallet(true, SCREEN_DEEPLINK_ROUTE)
-                .catch(err=>Alert.alert('error', err))
-                },
+                {text: 'Yes', onPress: () => navigation.navigate("ManageWallets")},
                 {text: 'No', onPress: () => {}},
             ]);
 
