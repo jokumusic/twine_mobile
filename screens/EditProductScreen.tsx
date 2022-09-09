@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, Image, Platform, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Dimensions, Platform, ScrollView, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { PublicKey } from '@solana/web3.js';
 import CarouselCards from '../components/CarouselCards';
 import { PressableIcon, PressableImage } from '../components/Pressables';
-import { CheckBox, Icon } from "@rneui/themed";
+import { CheckBox, Dialog, Icon } from "@rneui/themed";
 import { TwineContext } from '../components/TwineProvider';
 import * as twine from '../api/Twine';
 
@@ -22,7 +22,7 @@ export default function EditProductScreen(props) {
   const [store, setStore] = useState(props.route.params.store);
   const navigation = useRef(props.navigation).current;
   const twineContext = useContext(TwineContext);
-  const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+  const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [product, setProduct] = useState<twine.Product>(props.route.params?.product ?? {store: store?.address});
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
@@ -129,7 +129,7 @@ export default function EditProductScreen(props) {
     if(!validatedProduct)
       return;
 
-    setActivityIndicatorIsVisible(true);
+    setShowLoadingDialog(true);
     log('creating product...');
     
     const createdProduct= await twineContext
@@ -143,12 +143,12 @@ export default function EditProductScreen(props) {
         log('no product was returned');
       }
 
-    setActivityIndicatorIsVisible(false);
+    setShowLoadingDialog(false);
     log('done');
   }
 
   const refreshProduct = async () => {
-    setActivityIndicatorIsVisible(true);
+    setShowLoadingDialog(true);
     console.log('reading product...');
 
     const refreshedProduct = await twineContext
@@ -163,7 +163,7 @@ export default function EditProductScreen(props) {
       log("no product was returned");
     }
 
-    setActivityIndicatorIsVisible(false);
+    setShowLoadingDialog(false);
     log('done');
   }
 
@@ -174,7 +174,7 @@ export default function EditProductScreen(props) {
 
     console.log("validated: ", validatedProduct);
 
-    setActivityIndicatorIsVisible(true);
+    setShowLoadingDialog(true);
     log('updating product data...');
     
     const updatedProduct = await twineContext
@@ -189,7 +189,7 @@ export default function EditProductScreen(props) {
       log("a product wasn't returned")
     }
     
-    setActivityIndicatorIsVisible(false);
+    setShowLoadingDialog(false);
     log('done');
   }
 
@@ -223,7 +223,9 @@ export default function EditProductScreen(props) {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+       <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
+        <Dialog.Loading />
+      </Dialog>
 
       <View style={styles.inputSection}>
       <ScrollView>
@@ -369,8 +371,6 @@ export default function EditProductScreen(props) {
           <Button title={product?.address ? 'Update' : 'Create'} onPress={product?.address ? updateProduct : createProduct} />        
           <Button title='Refresh' onPress={refreshProduct} />               
       </View>
-
-      <Button title="validate" onPress={()=>validateInputs()} /> 
 
       <View style={{width: '95%', height: '20%', margin:5}}>
         <ScrollView

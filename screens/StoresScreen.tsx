@@ -1,10 +1,10 @@
 import { StyleSheet, ImageBackground, Button, Alert, ScrollView } from 'react-native';
-import { View, TextInput, FlatList } from '../components/Themed';
+import { View } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import { useContext, useEffect, useRef, useState } from 'react';
 import * as twine from '../api/twine';
 import Navigation from '../navigation';
-import { Tab, Text, TabView, ListItem, Avatar  } from '@rneui/themed';
+import { Tab, Text, TabView, ListItem, Avatar, Dialog  } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 
 const SCREEN_DEEPLINK_ROUTE = "stores";
@@ -15,6 +15,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   const [products, setProducts] = useState([]);
   const [payToSells, setPayToSells] = useState<twine.Purchase[]>([]);
   const [tabIndex, setTabIndex] = useState(0);
+  const [showLoadingDialog, setShowLoadingDialog] = useState(false);
 
   useEffect(()=>{
     refreshTab();
@@ -29,17 +30,21 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
 
   async function refreshTab() {
     console.log('refreshtab');
+    setShowLoadingDialog(true);
+    
     switch(tabIndex) {
       case 0:
-        refreshStores();
+        await refreshStores();
         break;
       case 1: 
-        refreshProducts();
+        await refreshProducts();
         break;
       case 2:
-        refreshPayToSells();
+        await refreshPayToSells();
         break;
     }
+    
+    setShowLoadingDialog(false);
   }
 
   function walletIsConnected(msg){
@@ -112,6 +117,9 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
 
   return (  
     <View style={styles.container}>   
+      <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
+        <Dialog.Loading />
+      </Dialog>
       <ImageBackground style={{width: '100%', height: '100%'}} source={require('../assets/images/screen_background.jpg')}>
           <Tab
             value={tabIndex}

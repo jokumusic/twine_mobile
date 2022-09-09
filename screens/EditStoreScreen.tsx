@@ -1,19 +1,20 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, findNodeHandle, AccessibilityInfo, KeyboardAvoidingView, Alert } from 'react-native';
+import { Platform, ScrollView, StyleSheet, KeyboardAvoidingView, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TextInput, Button } from '../components/Themed';
-//import * as Settings from '../reducers/settings'
 import * as twine from '../api/Twine';
 import { PublicKey } from '@solana/web3.js';
 import { RadioGroup } from 'react-native-radio-buttons-group';
 import { TwineContext } from '../components/TwineProvider';
+import { Dialog } from '@rneui/themed';
+
 
 const SCREEN_DEEPLINK_ROUTE = "edit_store";
 
 export default function EditStoreScreen(props) {
   const twineContext = useContext(TwineContext);
   const [store, setStore] = useState<twine.Store>(props.route.params?.store ?? {});
-  const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+  const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
   const isProgramInitialized = useRef(true);
@@ -82,14 +83,14 @@ async function createStore() {
     return;
 
   log('creating store...');
-  setActivityIndicatorIsVisible(true);
+  setShowLoadingDialog(true);
 
   twineContext
     .createStore(validatedStore, SCREEN_DEEPLINK_ROUTE)
     .then(setStore)
     .catch(log)
     .finally(()=>{
-      setActivityIndicatorIsVisible(false);
+      setShowLoadingDialog(false);
       log('done');
     })
 }
@@ -101,7 +102,7 @@ const refreshStore = async () => {
   }
 
   log('reading store...');
-  setActivityIndicatorIsVisible(true);
+  setShowLoadingDialog(true);
   
   const refreshedStore = await twineContext
     .getStoreByAddress(store.address)
@@ -112,7 +113,7 @@ const refreshStore = async () => {
     log(JSON.stringify(store));
   }
 
-  setActivityIndicatorIsVisible(false);
+  setShowLoadingDialog(false);
   log('done');
 }
 
@@ -127,7 +128,7 @@ const updateStore = async() =>{
   }
 
   log('updating store...');
-  setActivityIndicatorIsVisible(true);
+  setShowLoadingDialog(true);
   
   const updatedStore = await twineContext
     .updateStore(validatedStore, SCREEN_DEEPLINK_ROUTE)
@@ -140,7 +141,7 @@ const updateStore = async() =>{
     log("didn''t receive store data");
   }  
 
-  setActivityIndicatorIsVisible(false);
+  setShowLoadingDialog(false);
   log('done');
 }
 
@@ -148,7 +149,10 @@ const updateStore = async() =>{
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}>
-      <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+       
+      <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
+        <Dialog.Loading />
+      </Dialog>
       
       <View style={styles.inputSection}>
       <ScrollView>
@@ -210,9 +214,7 @@ const updateStore = async() =>{
       <View style={{flexDirection: 'row', alignContent: 'space-between', justifyContent: 'space-between', padding: 5}}>
         <Button title={store?.address ? 'Update' : 'Create'} onPress={store?.address ? updateStore : createStore} />
         <Button title='Refresh' onPress={refreshStore} />   
-      </View>
-
-      <Button title="validate" onPress={()=>validateInputs()} />       
+      </View>      
 
       <View style={{width: '95%', height: '20%', margin:5}}>
         <ScrollView

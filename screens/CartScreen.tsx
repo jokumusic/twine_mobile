@@ -1,9 +1,7 @@
 import { useState, useContext, useEffect, useRef } from "react";
-import { ActivityIndicator, Alert, Image, ImageBackground, Pressable, ScrollView, StyleSheet, TouchableNativeFeedback, View } from "react-native";
+import { Alert, ImageBackground, ScrollView, StyleSheet, View } from "react-native";
 import { CartContext } from "../components/CartProvider";
-import { TextInput } from "../components/Themed";
-import { useFocusEffect } from "@react-navigation/native";
-import { Tab, Text, TabView, ListItem, Avatar, Button } from '@rneui/themed';
+import { Tab, Text, TabView, ListItem, Avatar, Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 
 const SCREEN_DEEPLINK_ROUTE = "cart";
@@ -15,8 +13,8 @@ export default function CartScreen(props) {
     const [checkoutItems, setCheckoutItems] = useState([] as twine.Product[]);
     const [checkoutItemsTotal, setCheckoutItemsTotal] = useState(0);
     const [purchases, setPurchases] = useState([]);
-    const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
     const [tabIndex, setTabIndex] = useState(0);
+    const [showLoadingDialog, setShowLoadingDialog] = useState(false);
 
 
     useEffect(()=> {
@@ -26,12 +24,18 @@ export default function CartScreen(props) {
     );
 
     async function refreshTab() {
+        setShowLoadingDialog(true);
+
         switch(tabIndex) {
-          case 0: refreshCheckout();
+          case 0: 
+            await refreshCheckout();
             break;
-          case 1: refreshPurchases();
+          case 1: 
+            await refreshPurchases();
             break;
         }
+
+        setShowLoadingDialog(false);    
     }
 
     function walletIsConnected(msg){
@@ -54,9 +58,8 @@ export default function CartScreen(props) {
     }
 
     async function refreshCheckout() {
-        
         console.log('refreshing checkout items...');
-        getItemsResolved()
+        await getItemsResolved()
             .then(items=>{  
                 setCheckoutItems(items)
                 setCheckoutItemsTotal(items.reduce((total,item)=>total + (item.count * item.price), 0));
@@ -89,13 +92,14 @@ export default function CartScreen(props) {
         }
 
         refreshedPurchases.sort((a,b)=> b?.ticket?.timestamp - a?.ticket?.timestamp);
-        setPurchases(refreshedPurchases);    
+        setPurchases(refreshedPurchases);        
     }
 
     async function checkOut() {
         if(!walletIsConnected("You must be connected to a wallet to checkout.\nConnect to a wallet?"))
             return;
 
+        setShowLoadingDialog(true);
         console.log('checking out');
         const promises = [];
 
@@ -116,6 +120,7 @@ export default function CartScreen(props) {
             .finally(()=>{
             });
 
+        setShowLoadingDialog(false);
         console.log('done');
     }
 
@@ -134,6 +139,9 @@ export default function CartScreen(props) {
 
     return ( 
         <View style={styles.container}>   
+        <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
+            <Dialog.Loading />
+        </Dialog>
         <ImageBackground 
             style={{width: '100%', height: '100%'}} 
             source={require('../assets/images/screen_background.jpg')}

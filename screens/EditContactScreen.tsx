@@ -4,7 +4,7 @@ import { ActivityIndicator, Button, Platform, Pressable, StyleSheet, TextInput} 
 import { Text, View } from '../components/Themed';
 import { FontAwesome5 } from '@expo/vector-icons';
 import {Contact} from '../api/SolChat';
-import { Avatar } from "@rneui/themed";
+import { Avatar, Dialog } from "@rneui/themed";
 import { PressableIcon } from '../components/Pressables';
 import * as Clipboard from 'expo-clipboard';
 import { TwineContext } from '../components/TwineProvider';
@@ -14,7 +14,7 @@ const SCREEN_DEEPLINK_ROUTE = "edit_contact";
 export default function EditContactScreen(props) {
     const [contact, setContact] = useState({data:{}} as Contact);
     const navigation = useRef(props.navigation).current;
-    const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+    const [showLoadingDialog, setShowLoadingDialog] = useState(false);
     const {solchat} = useContext(TwineContext);
    
     useEffect(()=>{
@@ -30,7 +30,7 @@ export default function EditContactScreen(props) {
             return;
         }
 
-        setActivityIndicatorIsVisible(true);
+        setShowLoadingDialog(true);
         console.log('submitting contact data...');
         
         const updatedContact = await solchat
@@ -46,13 +46,15 @@ export default function EditContactScreen(props) {
           console.log("a contact wasn't returned")
         }
         
-        setActivityIndicatorIsVisible(false);
+        setShowLoadingDialog(false);
         console.log('done');
   }
 
    return (
     <View style={styles.container}>
-        <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
+      <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
+        <Dialog.Loading />
+      </Dialog>
         <View style={styles.inputSection}>
             
             <View style={{flexDirection: 'row'}}>

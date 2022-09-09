@@ -12,7 +12,7 @@ import {
  //import * as twine from '../api/twine';
  import { PressableIcon, PressableImage } from '../components/Pressables';
  import CarouselCards from '../components/CarouselCards';
-import { Button } from '@rneui/themed';
+import { Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
  
 
@@ -28,7 +28,7 @@ import { TwineContext } from '../components/TwineProvider';
    const [product, setProduct] = useState<twine.Product>(props.route.params.product);
    const navigation = useRef(props.navigation).current;
    const { addItemToCart } = useContext(CartContext);
-   const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+   const [showLoadingDialog, setShowLoadingDialog] = useState(false);
    const twineContext = useContext(TwineContext);
 
    useEffect(()=>{
@@ -42,13 +42,13 @@ import { TwineContext } from '../components/TwineProvider';
         return;
       }
 
-      setActivityIndicatorIsVisible(true);
+      setShowLoadingDialog(true);
       console.log('refreshing product...');
       twineContext
         .getProductByAddress(product.address)
         .then(p=>{setProduct(p);})
         .catch(err=>Alert.alert("error", err))
-        .finally(()=>setActivityIndicatorIsVisible(false));
+        .finally(()=>setShowLoadingDialog(false));
    },[twineContext.lastUpdatedProduct]);
       
   async function addToCart() {
@@ -91,7 +91,11 @@ import { TwineContext } from '../components/TwineProvider';
   }
 
   return (         
-    <View style={styles.container}>      
+    <View style={styles.container}>
+      <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
+        <Dialog.Loading />
+      </Dialog>
+         
       <ImageBackground style={{width: '100%', height: '100%'}} source={require('../assets/images/screen_background.jpg')}>
         <View style={{margin: 10, backgroundColor: 'rgba(52, 52, 52, .025)'}}>
           { isAuthorizedToEditStore() &&    
@@ -112,8 +116,7 @@ import { TwineContext } from '../components/TwineProvider';
               sliderWidth={SLIDER_WIDTH}
               itemWidth={ITEM_WIDTH}
             />
-          }
-          <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>         
+          }        
         </View>
         <ScrollView style={{marginTop: 10}}>
           <PressableIcon

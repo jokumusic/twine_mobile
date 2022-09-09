@@ -14,7 +14,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { TwineContext } from '../components/TwineProvider';
 import * as twine from '../api/twine';
 import {PressableIcon, PressableImage} from '../components/Pressables';
-import { Text, ListItem, Avatar  } from '@rneui/themed';
+import { Text, ListItem, Avatar, Dialog  } from '@rneui/themed';
 
 const SCREEN_DEEPLINK_ROUTE = "store_details";
 
@@ -26,28 +26,32 @@ export default function StoreDetailsScreen(props) {
   const [products, setProducts] = useState<twine.Product[]>([]);
   const navigation = useRef(props.navigation).current;
   const twineContext = useContext(TwineContext);
+  const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   
    useEffect(()=>{
     if(store.address) {
       console.log('refreshing store...');
+      setShowLoadingDialog(true);
       twineContext
         .getStoreByAddress(store.address)
         .then(s=>{setStore(s);})
         .catch(err=>Alert.alert("error", err))
-        .finally(()=>{});
+        .finally(()=>setShowLoadingDialog(false));
     }
    },[]);
 
    useEffect(()=>{
     if(store.address) {
       console.log('refreshing store products...');
+      setShowLoadingDialog(true);
+
       twineContext
         .getProductsByStore(store.address)
         .then(products=>{
           setProducts(products);
         })
         .catch(err=>Alert.alert("error", err))
-        .finally(()=>{});
+        .finally(()=>setShowLoadingDialog(false));
     }
   },[store.address,
      twineContext.lastUpdatedStore,
@@ -68,27 +72,14 @@ export default function StoreDetailsScreen(props) {
     return twineContext.walletPubkey.equals(store.authority) || twineContext.walletPubkey.equals(store.secondaryAuthority);
   }
 
-  const renderItem = ({ item }) => (  
-    <View style={styles.row}>
-      <View style={styles.card}>
-        <PressableImage
-          show={true}
-          source={{uri:item?.data?.img}}
-          onPress={() => navigation.navigate('ProductDetails',{store, product: item})}
-          style={styles.itemImage} 
-        /> 
-        <View style={styles.cardFooter}>
-          <Text style={styles.productCaption}>
-            {item?.data?.displayName}
-          </Text>
-        </View>
-      </View>          
-    </View>
-  );
 
   
     return (    
       <View style={styles.container}>
+        <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
+          <Dialog.Loading />
+        </Dialog>
+
         <ImageBackground 
           style={{width: '100%', height: '100%'}} 
           source={{

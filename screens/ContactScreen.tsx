@@ -6,7 +6,7 @@ import { PublicKey } from '@solana/web3.js';
 import { PressableIcon, PressableText } from '../components/Pressables';
 import { AssetType } from '../api/Twine';
 import SelectDropdown from 'react-native-select-dropdown'
-import { Avatar, Icon, ListItem } from '@rneui/themed';
+import { Avatar, Dialog, Icon, ListItem } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 import { Contact, ContactProfile, DirectConversation} from '../api/SolChat';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
@@ -32,7 +32,7 @@ export default function ContactScreen(props) {
   const [sendAssetModalVisible, setSendAssetModalVisible] = useState(false);
   const [contact, setContact] = useState(null);
   const [addContactKey,setAddContactKey]= useState("");
-  const [activityIndicatorIsVisible, setActivityIndicatorIsVisible] = useState(false);
+  const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [allowedContacts, setAllowedContacts] = useState([] as Contact[]);
   const [focusedContact, setFocusedContact] = useState({} as Contact);
   const [sendAsset, setSendAsset] = useState({type: AssetType.SOL, amount:0} as SendAsset);
@@ -242,7 +242,7 @@ export default function ContactScreen(props) {
     if(!addContactKey)
       return;
 
-    setActivityIndicatorIsVisible(true);
+    setShowLoadingDialog(true);
     console.log('allowing contact...');
 
     twineContext.solchat
@@ -252,7 +252,7 @@ export default function ContactScreen(props) {
       .finally(()=>{
         console.log('done');
         toggleAddContactModalVisibility();
-        setActivityIndicatorIsVisible(false);
+        setShowLoadingDialog(false);
         setAddContactKey("");
       });    
   }
@@ -269,7 +269,7 @@ export default function ContactScreen(props) {
       return;
     }
 
-    setActivityIndicatorIsVisible(true);
+    setShowLoadingDialog(true);
 
     twineContext
       .sendAsset(sendAsset.type, focusedContact.receiver, sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
@@ -279,7 +279,7 @@ export default function ContactScreen(props) {
         toggleSendAssetModalVisibility();
       })
       .finally(()=>{
-        setActivityIndicatorIsVisible(false);
+        setShowLoadingDialog(false);
       });
   }
 
@@ -287,11 +287,14 @@ export default function ContactScreen(props) {
     toggleSendAssetModalVisibility();
     setSendAsset({type: AssetType.SOL, amount: 0});
     setSendAssetErrorMessage("");
-    setActivityIndicatorIsVisible(false);
+    setShowLoadingDialog(false);
   }
 
    return (
     <View style={styles.container}>
+      <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
+        <Dialog.Loading />
+      </Dialog>
       <View style={styles.leftPanel}>
         <View style={styles.leftPanelHeader}>
           <PressableIcon name="person-add" style={{margin: 5}} color={'white'} onPress={toggleAddContactModalVisibility} />         
@@ -456,7 +459,6 @@ export default function ContactScreen(props) {
         onDismiss={toggleAddContactModalVisibility}>
         <View style={styles.viewWrapper}>
           <View style={styles.modalView}>
-            <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
             <TextInput 
               placeholder="Contact Public Key" 
               value={addContactKey} style={styles.textInput} 
@@ -479,7 +481,6 @@ export default function ContactScreen(props) {
             onDismiss={toggleSendAssetModalVisibility}>
             <View style={styles.viewWrapper}>
               <View style={styles.sendAssetModalView}>
-                <ActivityIndicator animating={activityIndicatorIsVisible} size="large"/>
                 <Text style={{color: 'red', fontStyle: 'italic'}}>{sendAssetErrorMessage}</Text>
                 <View style={{flexDirection: 'row', alignContent: 'center', justifyContent: 'center'}}>
                   <Text>Send to:</Text>
