@@ -12,10 +12,7 @@ import { Contact, ContactProfile, DirectConversation} from '../api/SolChat';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
 import uuid from 'react-native-uuid';
 import QRCode from 'react-native-qrcode-svg';
-//import QRCodeScanner from 'react-native-qrcode-scanner';
-//import { RNCamera } from 'react-native-camera';
 import { BarCodeScanner } from 'expo-barcode-scanner';
-import ReactNativeMarquee from 'react-native-marquee';
 
 
 
