@@ -1,17 +1,22 @@
-import { ActivityIndicator, Alert, Button, Dimensions, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, Dimensions, Image, Linking, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity} from 'react-native';
 import { Text, View } from '../components/Themed';
 import {PressableImage} from '../components/Pressables';
-import { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { PressableIcon, PressableText } from '../components/Pressables';
 import { AssetType } from '../api/Twine';
 import SelectDropdown from 'react-native-select-dropdown'
-import { Avatar, Dialog, Icon, ListItem } from '@rneui/themed';
+import { Avatar, Dialog, Icon, ListItem, Button} from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 import { Contact, ContactProfile, DirectConversation} from '../api/SolChat';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
 import uuid from 'react-native-uuid';
 import QRCode from 'react-native-qrcode-svg';
+//import QRCodeScanner from 'react-native-qrcode-scanner';
+//import { RNCamera } from 'react-native-camera';
+import { BarCodeScanner } from 'expo-barcode-scanner';
+import ReactNativeMarquee from 'react-native-marquee';
+
 
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
@@ -32,7 +37,7 @@ export default function ContactScreen(props) {
   const [addContactModalVisible, setAddContactModalVisible] = useState(false);
   const [sendAssetModalVisible, setSendAssetModalVisible] = useState(false);
   const [contact, setContact] = useState(null);
-  const [addContactKey,setAddContactKey]= useState("");
+  const [addContactWalletAddress,setAddContactWalletAddress]= useState("");
   const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [allowedContacts, setAllowedContacts] = useState([] as Contact[]);
   const [focusedContact, setFocusedContact] = useState({} as Contact);
@@ -44,11 +49,26 @@ export default function ContactScreen(props) {
   const [messages, setMessages] = useState([]);
   const twineContext = useContext(TwineContext);
   const focusedContactRef = useRef(focusedContact);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const [showScannerDialog, setShowScannerDialog] = useState(false);
  
+  useEffect(() => {
+    (async () => {
+      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
 
+  const handleBarCodeScanned = ({ type, data }) => {
+      setScanned(true);
+      setAddContactWalletAddress(data);
+      setShowScannerDialog(false);
+      setAddContactModalVisible(true);
+  };
 
   useEffect(()=>{
-    console.log('twineContext.walletPubkey change');
+    //console.log('twineContext.walletPubkey change');
     if(!walletIsConnected("You must be connected to a wallet to view its communities.\nConnect to a wallet?"))
       return;
   
@@ -231,33 +251,29 @@ export default function ContactScreen(props) {
   });
  }, [allowedContacts])
 
-  async function toggleAddContactModalVisibility() {
-    setAddContactModalVisible(!addContactModalVisible);
-  };
-
-  async function toggleSendAssetModalVisibility() {
-    setSendAssetModalVisible(!sendAssetModalVisible);
-  }
 
   function allowContact() {
+    console.log('here');
     if(!walletIsConnected("You must be connected to wallet to add a contact.\nConnect to a wallet?"))
       return;
 
-    if(!addContactKey)
+    if(!addContactWalletAddress){
+      Alert.alert('A contact address must be specified');
       return;
+    }
 
-    setShowLoadingDialog(false);
+    setShowLoadingDialog(true);
     console.log('allowing contact...');
 
     twineContext.solchat
-      .addAllow(new PublicKey(addContactKey), {directMessage: true}, SCREEN_DEEPLINK_ROUTE)
+      .addAllowByWalletAddress(new PublicKey(addContactWalletAddress), {directMessage: true}, SCREEN_DEEPLINK_ROUTE)
       .then(updatedContact=>setContact(updatedContact))
       .catch(err=>console.log(err))
       .finally(()=>{
         console.log('done');
-        toggleAddContactModalVisibility();
+        setAddContactModalVisible(false);
         setShowLoadingDialog(false);
-        setAddContactKey("");
+        setAddContactWalletAddress("");
       });    
   }
 
@@ -280,7 +296,7 @@ export default function ContactScreen(props) {
       .catch(setSendAssetErrorMessage)
       .then((tx)=>{
         setSendAsset({type: AssetType.SOL, amount: 0});
-        toggleSendAssetModalVisibility();
+        setSendAssetModalVisible(false);
       })
       .finally(()=>{
         setShowLoadingDialog(false);
@@ -288,11 +304,12 @@ export default function ContactScreen(props) {
   }
 
   async function cancelSendAssetToFocusedContact() {
-    toggleSendAssetModalVisibility();
+    setSendAssetModalVisible(false);
     setSendAsset({type: AssetType.SOL, amount: 0});
     setSendAssetErrorMessage("");
     setShowLoadingDialog(false);
   }
+
 
    return (
     <View style={styles.container}>
@@ -301,7 +318,12 @@ export default function ContactScreen(props) {
       </Dialog>
       <View style={styles.leftPanel}>
         <View style={styles.leftPanelHeader}>
-          <PressableIcon name="person-add" style={{margin: 5}} color={'white'} onPress={toggleAddContactModalVisibility} />         
+          <Button            
+            style={{margin: 5}}  
+            onPress={()=>{setAddContactModalVisible(true);}}
+          >
+            <Icon type='ionicon' name='person-add' color='white'/>          
+          </Button>
           {/*<PressableIcon name="refresh" style={{margin: 5}} color={'white'} onPress={updateWalletContact} />*/}
         </View>
 
@@ -434,7 +456,7 @@ export default function ContactScreen(props) {
               <PressableIcon
                 name="cash-outline"
                 color={'purple'}                
-                onPress={toggleSendAssetModalVisibility}
+                onPress={()=>setSendAssetModalVisible(true)}
               />
               {focusedContact.receiver &&
                   <QRCode value={focusedContact.receiver?.toBase58()} size={40} style={{marginLeft: 10}} />
@@ -459,33 +481,34 @@ export default function ContactScreen(props) {
         </View>
       </View>
 
-      <Modal animationType="slide" 
-        transparent 
-        visible={addContactModalVisible} 
-        presentationStyle="overFullScreen" 
-        onDismiss={toggleAddContactModalVisibility}>
-        <View style={styles.viewWrapper}>
-          <View style={styles.modalView}>
+      <Dialog isVisible={addContactModalVisible} onBackdropPress={()=>{setAddContactWalletAddress(''); setShowScannerDialog(false); setAddContactModalVisible(false);}}>
+        <Dialog.Title title="Add Contact"/>
+          <Text>allows contact to communicate with you</Text>
+          <View style={{flexDirection: 'row'}}>
             <TextInput 
-              placeholder="Contact Public Key" 
-              value={addContactKey} style={styles.textInput} 
-              onChangeText={(value) => setAddContactKey(value)} 
+              placeholder="Contact Address" 
+              value={addContactWalletAddress} style={styles.textInput} 
+              onChangeText={(value) => setAddContactWalletAddress(value)} 
             />
-
-            <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
-              <Button title="Add" onPress={allowContact} />
-              <Button title="Cancel" onPress={toggleAddContactModalVisibility} />
-            </View>
-          </View>
-        </View>
-      </Modal>
+            <Button
+              onPress={()=>{setAddContactModalVisible(false); setShowScannerDialog(true);}}
+              style={{borderRadius: 6, margin: 5,}}
+            >
+                <Icon type="ionicon" name="scan-outline" color="blue" />
+            </Button>
+          </View>    
+        <Dialog.Actions>
+          <Dialog.Button title="Add" onPress={() => allowContact()}/>
+          <Dialog.Button title="Cancel" onPress={() =>{setAddContactWalletAddress(''); setAddContactModalVisible(false);}}/>
+        </Dialog.Actions>
+    </Dialog>
 
       <Modal 
             animationType="slide" 
             transparent 
             visible={sendAssetModalVisible} 
             presentationStyle="overFullScreen" 
-            onDismiss={toggleSendAssetModalVisibility}>
+            onDismiss={()=>setSendAssetModalVisible(false)}>
             <View style={styles.viewWrapper}>
               <View style={styles.sendAssetModalView}>
                 <Text style={{color: 'red', fontStyle: 'italic'}}>{sendAssetErrorMessage}</Text>
@@ -520,12 +543,26 @@ export default function ContactScreen(props) {
                 />
 
                 <View style={{flexDirection: 'row', alignContent: 'center', width: '40%', justifyContent: 'space-between'}}>
-                  <Button title="Send" onPress={sendAssetToFocusedContact} />
-                  <Button title="Cancel" onPress={cancelSendAssetToFocusedContact} />
+                  <Button onPress={sendAssetToFocusedContact}>Send</Button>
+                  <Button onPress={cancelSendAssetToFocusedContact}>Cancel</Button>
                 </View>
               </View>
             </View>
           </Modal>
+
+          
+          <Dialog
+            isVisible={showScannerDialog}
+            onBackdropPress={()=>setShowScannerDialog(false)}
+          >
+            <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>              
+              <BarCodeScanner
+                onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+                style={StyleSheet.absoluteFill}
+                />
+            </View>  
+          </Dialog>
+          
     </View>
    )
 }
@@ -646,5 +683,22 @@ const styles = StyleSheet.create({
     width:17,
     height:17,
     margin: 1,
+  },
+  centerText: {
+    flex: 1,
+    fontSize: 18,
+    padding: 32,
+    color: '#777'
+  },
+  textBold: {
+    fontWeight: '500',
+    color: '#000'
+  },
+  buttonText: {
+    fontSize: 21,
+    color: 'rgb(0,122,255)'
+  },
+  buttonTouchable: {
+    padding: 16
   },
 });

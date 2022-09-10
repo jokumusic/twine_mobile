@@ -62,19 +62,19 @@ export default function EditContactScreen(props) {
                 <PressableIcon
                   name="copy"
                   size={12}
-                  onPress={() =>Clipboard.setString(contact?.address?.toBase58())}
+                  onPress={() =>Clipboard.setString(contact?.creator?.toBase58())}
                   style={{marginLeft: 5}}
                 />
-                <Text style={{fontSize: 16, marginBottom:8}}>{contact?.address?.toBase58()}</Text>
-                {contact?.address &&
-                    <QRCode value={contact?.address?.toBase58()} size={50} />
+                <Text style={{fontSize: 16, marginBottom:8}}>{contact?.creator?.toBase58()}</Text>
+                {contact?.creator &&
+                    <QRCode value={contact?.creator?.toBase58()} size={50} />
                 }  
               </View>              
               <Avatar
                 size={105}
                 rounded
                 source={contact.data?.img ? { uri: contact.data?.img } : {}}
-                key={contact?.address?.toBase58() ?? "1"}
+                key={contact?.creator?.toBase58() ?? "1"}
               />
             </View>
             

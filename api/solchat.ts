@@ -10,7 +10,6 @@ import {
     PublicKey,
     Transaction,
   } from "@solana/web3.js";
-import { PhantomWallet } from './PhantomWallet';
 import WalletInterface from "./WalletInterface";
 
 export interface ContactProfile {
@@ -52,7 +51,6 @@ export class SolChat {
   private connection;
   private programId = new PublicKey(idl.metadata.address);
 
-
   constructor(network: string, wallet?: WalletInterface){
     this.wallet = wallet;
     this.connection = new Connection(clusterApiUrl(network));
@@ -88,7 +86,6 @@ export class SolChat {
   }
 
   private getContactPda(pubkey: PublicKey) {
-
       const [contactPda] = PublicKey.findProgramAddressSync(
         [
           anchor.utils.bytes.utf8.encode("contact"), 
@@ -111,7 +108,7 @@ export class SolChat {
     return decompressed;
   }
 
-  getContactByPubKey(key: PublicKey) {
+  getContactByWalletPubkey(key: PublicKey) {
     return new Promise<Contact>(async (resolve,reject)=>{
       if(!key) {
         reject('key must be specified');
@@ -162,7 +159,7 @@ export class SolChat {
         reject('not connected to a wallet');
         return;
       }
-      const contact = await this.getContactByPubKey(creatorPubkey)
+      const contact = await this.getContactByWalletPubkey(creatorPubkey)
         .catch(reject);
 
       if(contact)
@@ -174,13 +171,17 @@ export class SolChat {
 
   getCurrentWalletContactPda() {
       const currentWalletPubkey = this.getCurrentWalletPublicKey()
-      if(!currentWalletPubkey)
-      {
+      if(!currentWalletPubkey)      
         return;
-      }
     
       const contactPda = this.getContactPda(currentWalletPubkey);
       return contactPda;
+  }
+
+
+  async addAllowByWalletAddress(walletAddress: PublicKey, allow: Allow, deeplinkRoute: string) {
+    const contactPda = this.getContactPda(walletAddress);
+    return this.addAllow(contactPda, allow, deeplinkRoute);
   }
 
   async addAllow(contactPda: PublicKey, allow: Allow, deeplinkRoute: string) {
