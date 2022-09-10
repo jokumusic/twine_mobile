@@ -27,7 +27,7 @@ export default function EditProductScreen(props) {
   const [product, setProduct] = useState<twine.Product>(props.route.params?.product ?? {store: store?.address});
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
-  const [productPrice, setProductPrice] = useState((props.route.params?.product?.price ?? 0)/ web3.LAMPORTS_PER_SOL);
+  const [productPrice, setProductPrice] = useState(props.route.params?.product?.price ?? 0);
   const [productStatusChoices, setProductStatusChoices] = useState(
     Object
     .values(twine.ProductStatus)
@@ -95,7 +95,7 @@ export default function EditProductScreen(props) {
       Alert.alert("Error", 'Price must be greater than or equal to 0');
       return false;
     } else{
-      validatedProduct = {...validatedProduct, price: productPrice * web3.LAMPORTS_PER_SOL};
+      validatedProduct = {...validatedProduct, price: productPrice};
     }
 
     if(product?.inventory < 1){
@@ -162,7 +162,7 @@ export default function EditProductScreen(props) {
 
     if(refreshedProduct) {
       setProduct(refreshedProduct);
-      setProductPrice(refreshedProduct.price / web3.LAMPORTS_PER_SOL);
+      setProductPrice(refreshedProduct.price);
       log(JSON.stringify(refreshedProduct));
     }
     else {
@@ -325,11 +325,12 @@ export default function EditProductScreen(props) {
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Price</Text>
           <TextInput
-            placeholder='price (SOL)'
+            placeholder='price $USD'
             style={styles.inputBox}
             value={productPrice.toString()}
-            keyboardType='decimal-pad'
-            autoCapitalize={'words'}
+            //keyboardType='decimal-pad'
+            //autoCapitalize={'words'}
+            keyboardType='numeric'
             onChangeText={(t)=> setProductPrice(t)}
           />
         </View>
