@@ -31,6 +31,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
   async function runSearch() {
 
     console.log('refreshing shop screen...');
+    
     const getStoresPromise = twineContext
       .getStoresByName(searchText)
       .then(setStores)
@@ -42,8 +43,9 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
       .catch(err=>Alert.alert('error', err));
 
     Promise.all([getStoresPromise, getProductsPromise])
-    .finally(()=>{
+      .finally(()=>{
     });
+
   }
 
 

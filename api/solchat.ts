@@ -53,7 +53,7 @@ export class SolChat {
   private programId = new PublicKey(idl.metadata.address);
 
 
-  constructor(wallet: WalletInterface, network: string){
+  constructor(network: string, wallet?: WalletInterface){
     this.wallet = wallet;
     this.connection = new Connection(clusterApiUrl(network));
   }
@@ -62,7 +62,7 @@ export class SolChat {
    this.wallet = wallet;
   }
   
-  getCurrentWalletPublicKey = () => this.wallet.getWalletPublicKey();
+  getCurrentWalletPublicKey = () => this.wallet?.getWalletPublicKey();
 
   async connectWallet(force=false, deeplinkRoute: string) {
     return new Promise<PublicKey>(async (resolve,reject) =>{

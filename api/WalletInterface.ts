@@ -1,6 +1,7 @@
 import { PublicKey, Transaction } from "@solana/web3.js";
 
 export default interface WalletInterface {
+    getWalletName(): string;
     getWalletPublicKey(): PublicKey|null;
     connect(force?: boolean, deepLinkReturnRoute?: string): Promise<PublicKey>;
     signTransaction(transaction: Transaction, requireAllSignatures?: boolean, verifySignatures?: boolean, deepLinkReturnRoute?: string): Promise<Transaction>;

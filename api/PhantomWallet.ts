@@ -259,7 +259,9 @@ export class PhantomWallet implements WalletInterface {
     };
 
 
-
+    /** get wallet name */
+    getWalletName = (): string => "Phantom";
+    
     /** gets the last retrieved wallet public key*/
     getWalletPublicKey = (): PublicKey|null => this.phantomSession.wallet_pubkey;
 

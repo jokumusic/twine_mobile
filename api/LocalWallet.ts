@@ -26,6 +26,9 @@ export class LocalWallet implements WalletInterface {
     }
     
 
+    /** get wallet name */
+    getWalletName = (): string => "Local";
+
     /** gets the last retrieved wallet public key*/
     getWalletPublicKey = (): PublicKey|null => {console.log('getting key: ', this.keypair.publicKey); return this.keypair.publicKey;}
     getWalletKeyPair = () : Keypair|null => this.keypair;

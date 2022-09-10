@@ -9,6 +9,7 @@ import { PressableIcon, PressableImage } from '../components/Pressables';
 import { CheckBox, Dialog, Icon } from "@rneui/themed";
 import { TwineContext } from '../components/TwineProvider';
 import * as twine from '../api/Twine';
+import { web3 } from '../dist/browser';
 
 
 const SCREEN_DEEPLINK_ROUTE = "edit_product";
@@ -319,11 +320,12 @@ export default function EditProductScreen(props) {
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Price</Text>
           <TextInput
-            placeholder='price in USDC...'
+            placeholder='price (SOL)'
             style={styles.inputBox}
             value={product?.price?.toString()}
-            keyboardType='numeric'
-            onChangeText={(t)=>setProduct({...product,  price: parseInt(t)})}
+            keyboardType='decimal-pad'
+            autoCapitalize={'words'}
+            onChangeText={(t)=>setProduct({...product,  price: Number(t) * web3.LAMPORTS_PER_SOL})}
           />
         </View>
 

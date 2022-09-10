@@ -48,7 +48,7 @@ export default function ContactScreen(props) {
 
   useEffect(()=>{
     console.log('twineContext.walletPubkey change');
-    if(!walletIsConnected())
+    if(!walletIsConnected("You must be connected to a wallet to view its communities.\nConnect to a wallet?"))
       return;
   
       const fetchedContact = twineContext.solchat
@@ -170,14 +170,18 @@ export default function ContactScreen(props) {
     setMessages(previousMessages => GiftedChat.append(previousMessages, populatedMessage));
   }
 
-  function walletIsConnected(){
+  function walletIsConnected(msg){
     if(!twineContext.walletPubkey){
-        Alert.alert(
+      Alert.alert(
         "connect to wallet",
-        "You must be connected to a wallet to view its communities.\nConnect to a wallet?",
+        msg, //"wallet name: " + twineContext.getCurrentWalletName() + "\nAddress: " + twineContext.walletPubkey?.toBase58(),
         [
-            {text: 'Yes', onPress: () => navigation.navigate("ManageWallets")},
-            {text: 'No', onPress: () => {}},
+          {text: 'Yes', onPress: () =>
+                twineContext.getCurrentWalletName() == "Phantom"
+                ? twineContext.connectWallet(true, SCREEN_DEEPLINK_ROUTE).catch(err=>Alert.alert('error', err))                  
+                : navigation.navigate("ManageWallets")            
+          },
+          {text: 'No', onPress: () => {}},
         ]);
 
         return false;
@@ -185,6 +189,7 @@ export default function ContactScreen(props) {
 
     return true;
   }
+
 
 
  useEffect(()=>{
@@ -233,7 +238,7 @@ export default function ContactScreen(props) {
   }
 
   function allowContact() {
-    if(!walletIsConnected())
+    if(!walletIsConnected("You must be connected to wallet to add a contact.\nConnect to a wallet?"))
       return;
 
     if(!addContactKey)

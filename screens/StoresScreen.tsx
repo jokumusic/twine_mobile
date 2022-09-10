@@ -51,9 +51,13 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
     if(!twineContext.walletPubkey){
       Alert.alert(
         "connect to wallet",
-        msg,
+        msg, //"wallet name: " + twineContext.getCurrentWalletName() + "\nAddress: " + twineContext.walletPubkey?.toBase58(),
         [
-          {text: 'Yes', onPress: () => navigation.navigate("ManageWallets")},
+          {text: 'Yes', onPress: () =>
+                twineContext.getCurrentWalletName() == "Phantom"
+                ? twineContext.connectWallet(true, SCREEN_DEEPLINK_ROUTE).catch(err=>Alert.alert('error', err))                  
+                : navigation.navigate("ManageWallets")            
+          },
           {text: 'No', onPress: () => {}},
         ]);
 

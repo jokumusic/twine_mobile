@@ -40,17 +40,21 @@ export default function CartScreen(props) {
 
     function walletIsConnected(msg){
         if(!twineContext.walletPubkey){
-            Alert.alert(
+          Alert.alert(
             "connect to wallet",
-            msg,
+            msg, //"wallet name: " + twineContext.getCurrentWalletName() + "\nAddress: " + twineContext.walletPubkey?.toBase58(),
             [
-                {text: 'Yes', onPress: () => navigation.navigate("ManageWallets")},
-                {text: 'No', onPress: () => {}},
+              {text: 'Yes', onPress: () =>
+                    twineContext.getCurrentWalletName() == "Phantom"
+                    ? twineContext.connectWallet(true, SCREEN_DEEPLINK_ROUTE).catch(err=>Alert.alert('error', err))                  
+                    : navigation.navigate("ManageWallets")            
+              },
+              {text: 'No', onPress: () => {}},
             ]);
-
+    
             return false;
         }
-
+    
         return true;
     }
 

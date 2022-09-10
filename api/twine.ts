@@ -149,12 +149,12 @@ export class Twine {
     private wallet: WalletInterface;
     private connection: Connection;
 
-    constructor(wallet: WalletInterface, network: string) {
+    constructor(network: string, wallet?: WalletInterface, ) {
         this.wallet = wallet;
         this.connection = new Connection(clusterApiUrl(network));
     }
 
-    getCurrentWalletPublicKey = () => this.wallet.getWalletPublicKey();
+    getCurrentWalletPublicKey = () => this.wallet?.getWalletPublicKey();
 
     setWallet(wallet: WalletInterface) {
         this.wallet = wallet;

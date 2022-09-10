@@ -111,21 +111,15 @@ function BottomTabNavigator() {
   const colorScheme = useColorScheme();
   const twineContext = React.useContext(TwineContext);
 
-  async function connectWallet(deeplinkRoute) {
-    if(twineContext.walletPubkey) 
+  async function connectWallet(navigation, deeplinkRoute:string) {
+    navigation.navigate("ManageWallets");
+   /* if(twineContext.walletPubkey) 
     {
       Alert.alert("wallet connect",
         "You're already connected to a wallet. Do you want to connect to another wallet?",
         [{
             text:'Yes',
-            onPress: ()=>{ 
-              /*twineContext
-                .connectWallet(true, deeplinkRoute)
-                .catch(err=>Alert.alert("error", err)); 
-                */
-               Navigation.naviga
-            },
-            style: 'OK'
+            onPress: ()=> navigation.navigate("ManageWallets"),
         },
         {
           text: 'No',
@@ -135,10 +129,14 @@ function BottomTabNavigator() {
     }
     else 
     {
-      await twineContext
-        .connectWallet(false, deeplinkRoute)
-        .catch(err=> Alert.alert("wallet connect",err));        
-    }   
+      if(twineContext.getCurrentWalletName() == "Phantom")
+        twineContext
+          .connectWallet(true, deeplinkRoute)
+          .catch(err=>Alert.alert('error', err));
+      else
+        navigation.navigate("ManageWallets")    
+    } 
+    */ 
   }
 
   return (
@@ -159,7 +157,7 @@ function BottomTabNavigator() {
               <CartIcon navigation={navigation} />             
               <PressableIcon
                 name="wallet"
-                onPress={()=>navigation.navigate("ManageWallets")}            
+                onPress={()=>connectWallet(navigation, "ShopTab")}            
                 color={Colors[colorScheme].text}
                 style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
               />
@@ -186,7 +184,7 @@ function BottomTabNavigator() {
             <CartIcon navigation={navigation} />
             <PressableIcon
               name="wallet"
-              onPress={()=>navigation.navigate("ManageWallets")}
+              onPress={()=>connectWallet(navigation, "ContactTab")} 
               color={Colors[colorScheme].text}
               style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
             />
@@ -213,7 +211,7 @@ function BottomTabNavigator() {
             <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
               <PressableIcon
                 name="wallet"
-                onPress={()=>navigation.navigate("ManageWallets")}
+                onPress={()=>connectWallet(navigation, "CartTab")} 
                 color={Colors[colorScheme].text}
                 style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}              
               />
@@ -234,7 +232,7 @@ function BottomTabNavigator() {
             <CartIcon navigation={navigation} />
             <PressableIcon
               name="wallet"
-              onPress={()=>navigation.navigate("ManageWallets")}
+              onPress={()=>connectWallet(navigation, "StoresTab")} 
               color={Colors[colorScheme].text}
               style={{ marginRight: 8,  marginLeft: 8, alignSelf: 'flex-start',  }}
             />

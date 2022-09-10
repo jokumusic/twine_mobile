@@ -1,4 +1,4 @@
-import React, {createContext, useEffect, useRef, useState} from 'react';
+import React, {createContext, useCallback, useEffect, useRef, useState} from 'react';
 import {
     Twine,
     AssetType,
@@ -17,25 +17,66 @@ global.Buffer = global.Buffer || Buffer;
 
 //import { getProduct } from './services/ProductsService.js';
 const NETWORK = "devnet";
-
-
 export const TwineContext = createContext();
 
 const LOCAL_KEYPAIRS_LOOKUP_KEY = "@LocalKeyPairs";
-//const k = Keypair.generate();
-//AsyncStorage.clear();
+const LOCAL_KEYPAIR_DEFAULT_PUBKEY = "@LocalKeyPairDefaultPubkey";
+
+export interface StoredLocalWallet {
+    name: string,
+    maxSpend: number,
+    keypair: Keypair
+    isDefault: boolean,
+}
+
 
 export function TwineProvider(props) {
-    let wallet = useRef<WalletInterface>(new PhantomWallet(NETWORK)).current;
-    const twine = useRef<Twine>(new Twine(wallet, NETWORK)).current;
-    const solchat = useRef<SolChat>(new SolChat(wallet, NETWORK)).current;
+    let twine = useRef<Twine>(new Twine(NETWORK)).current;
+    let solchat = useRef<SolChat>(new SolChat(NETWORK)).current;
+    const [wallet, setWallet] = useState<WalletInterface>();
     const [itemCount, setItemCount] = useState(0);
-    const [walletPubkey, setWalletPubkey] = useState(wallet.getWalletPublicKey());
+    const [walletPubkey, setWalletPubkey] = useState<PublicKey>();
     const [lastCreatedStore, setLastCreatedStore] = useState<Store>();
     const [lastUpdatedStore, setLastUpdatedStore] = useState<Store>();
     const [lastCreatedProduct, setLastCreatedProduct] = useState<Product>();
     const [lastUpdatedProduct, setLastUpdatedProduct] = useState<Product>();
 
+    useEffect(()=>{
+
+        const f = async () => {
+            const defaultPubkey = await getDefaultWalletPubkey();
+            if(!defaultPubkey) {
+                console.log('no default pubkey');
+                return;
+            }
+            
+            console.log('got default pubkey:', defaultPubkey);
+            let walletToUse: WalletInterface = null;
+
+            if(defaultPubkey == "phantom") {
+                walletToUse = new PhantomWallet(NETWORK);
+            }
+            else {
+                const localWallets = await getLocalWallets();
+                if(localWallets){
+                    const defaultWallet = localWallets.find(w=>w.keypair.publicKey.toBase58() == defaultPubkey);
+                    if(defaultWallet)
+                        walletToUse = new LocalWallet(defaultWallet.keypair, NETWORK);
+                }
+            }            
+
+            if(walletToUse) {
+                    console.log('setting wallet');
+                    setWallet(walletToUse);
+                    twine.setWallet(walletToUse);
+                    solchat.setWallet(walletToUse);
+                    setWalletPubkey(walletToUse.getWalletPublicKey());
+            }
+        };
+              
+        f();
+
+    }, []);
 
     async function storeData(key:string, value) {
         try {
@@ -53,60 +94,90 @@ export function TwineProvider(props) {
         }
     }
 
-    async function createLocalWallet(name:string, maxSpend:number){
+    async function getDefaultWalletPubkey() {
+        return getData(LOCAL_KEYPAIR_DEFAULT_PUBKEY);
+    }
+
+    async function createLocalWallet(wallet: StoredLocalWallet){
         let existingWallets = await getLocalWallets();
         if(!existingWallets)
             existingWallets = [];
 
-        const keypair = Keypair.generate();
-        const newEntry = {
-            name,
-            maxSpend,
-            keypair,
-        };
+        const newWallet = {...wallet, keypair: Keypair.generate()};
         
-        existingWallets.push(newEntry);
+        existingWallets.push(newWallet);
         const stringyWallets = JSON.stringify(existingWallets);
         await storeData(LOCAL_KEYPAIRS_LOOKUP_KEY, stringyWallets);
-        return newEntry;
+        return wallet;
     }
 
-    async function getLocalWallets() {
+    async function updateLocalWallet(wallet: StoredLocalWallet) {
+        let existingWallets = await getLocalWallets();
+        if(!existingWallets)
+            return;
+
+        const updatedWallets = existingWallets.map(w=> w.keypair.publicKey.equals(wallet.keypair.publicKey) ? wallet : w);
+        const stringyWallets = JSON.stringify(updatedWallets);
+        await storeData(LOCAL_KEYPAIRS_LOOKUP_KEY, stringyWallets);
+        return wallet;
+    }
+
+    async function getLocalWallets(): Promise<StoredLocalWallet[]> {
         const kpData  = await getData(LOCAL_KEYPAIRS_LOOKUP_KEY);
+        const defaultPubkey = await getDefaultWalletPubkey();
+
         if(kpData) {
             const kpArray = JSON.parse(kpData);
+            const walletsToFix = [];
             //console.log('kpArray: ', kpArray);
             const kps = kpArray.map(item => {
-                //const parsedItem = JSON.parse(item);
-                //console.log('name: ', item.name);
-                //console.log('item: ', item);
-                const secretKeyValues = Object.values(item.keypair._keypair.secretKey);
-                const secretKey = new Uint8Array(secretKeyValues);
-                const kp = Keypair.fromSecretKey(secretKey);
-                return {
-                    name: item.name,
-                    maxSpend: item?.maxSpend ?? 0,
-                    keypair: kp,
-                };
+                try{                    
+  
+                    const secretKeyValues = Object.values(item.keypair._keypair.secretKey);
+                    const secretKey = new Uint8Array(secretKeyValues);
+                    const kp = Keypair.fromSecretKey(secretKey);
+                    return {
+                        name: item.name,
+                        maxSpend: item?.maxSpend ?? 0,
+                        keypair: kp,
+                        isDefault: kp.publicKey.toBase58() == defaultPubkey
+                    } as StoredLocalWallet;
+                }
+                catch(e) {
+                    console.error(e);
+                }
             });
+   
 
             return kps;
         }
+
+        return [] as StoredLocalWallet[];
     }
 
-    async function useLocalWallet(kp: Keypair) {
-        wallet = new LocalWallet(kp, NETWORK);
-        twine.setWallet(wallet);
-        solchat.setWallet(wallet);
-        setWalletPubkey(kp.publicKey);
-        console.log('using localwallet: ', wallet.getWalletPublicKey()?.toBase58());
+    function getCurrentWalletName() {
+        return wallet?.getWalletName();
+    }
+
+    async function useLocalWallet(localWallet: StoredLocalWallet) {
+        console.log('using localwallet: ', localWallet.keypair.publicKey.toBase58());
+        const walletToUse = new LocalWallet(localWallet.keypair, NETWORK);
+        setWallet(walletToUse);
+        twine.setWallet(walletToUse);
+        solchat.setWallet(walletToUse);
+        await storeData(LOCAL_KEYPAIR_DEFAULT_PUBKEY, localWallet.keypair.publicKey.toBase58());
+
+        setWalletPubkey(walletToUse.getWalletPublicKey());
     }
 
     async function usePhantomWallet(){
-        wallet = new PhantomWallet(NETWORK);
-        twine.setWallet(wallet);
-        solchat.setWallet(wallet);
+        console.log('using phantom wallet');
+        const walletToUse = new PhantomWallet(NETWORK);
+        setWallet(walletToUse);
+        twine.setWallet(walletToUse);
+        solchat.setWallet(walletToUse);
         setWalletPubkey(null);
+        await storeData(LOCAL_KEYPAIR_DEFAULT_PUBKEY, "phantom");
     }
       
 
@@ -236,6 +307,8 @@ export function TwineProvider(props) {
             getAccountLamports,
             useLocalWallet,
             usePhantomWallet,
+            getCurrentWalletName,
+            updateLocalWallet,
         }}
         >
             {props.children}
