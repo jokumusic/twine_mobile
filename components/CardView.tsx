@@ -1,24 +1,13 @@
 import React from "react";
 import { View, ScrollView, Pressable, Image, StyleSheet, Dimensions, Text, Linking } from "react-native";
 import {PressableImage} from './Pressables';
-import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
-import {clusterApiUrl, Connection, PublicKey} from "@solana/web3.js";
-import * as anchor from "../dist/browser/index";
-import * as idl from "../target/idl/twine.json";
-import type { Twine } from '../target/types/twine';
-import { compress, decompress, trimUndefined, trimUndefinedRecursively } from 'compress-json';
-import * as twine from '../api/twine';
+import { FontAwesome } from '@expo/vector-icons';
 
 
 export const WINDOW_WIDTH = Dimensions.get('window').width;
 export const ITEM_WIDTH = Math.round(WINDOW_WIDTH) * .30;
 export const ITEM_HEIGHT = ITEM_WIDTH + 35; //Math.round(ITEM_WIDTH/4);
 
-export let SearchString: string ="";
-
-export const setSearchString = (s:string) =>{
-  SearchString = s;
-}
 
 const colors = ['#a2b369']; //['#10898d','#2f416b','#895a88', '#a2b369','#dd93ab'];
 

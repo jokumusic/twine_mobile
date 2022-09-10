@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { View } from "react-native"
 import Carousel, { Pagination } from 'react-native-snap-carousel'
 
-import { SearchString } from './CardView';
-import { getTopStores } from '../api/twine';
 
 const CarouselCards = ({data, renderItem, sliderWidth, itemWidth }) => {
   //const navigation = useRef(props.navigation);

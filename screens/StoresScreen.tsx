@@ -2,8 +2,7 @@ import { StyleSheet, ImageBackground, Button, Alert, ScrollView } from 'react-na
 import { View } from '../components/Themed';
 import { RootTabScreenProps } from '../types';
 import { useContext, useEffect, useRef, useState } from 'react';
-import * as twine from '../api/twine';
-import Navigation from '../navigation';
+import * as twine from '../api/Twine';
 import { Tab, Text, TabView, ListItem, Avatar, Dialog  } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 

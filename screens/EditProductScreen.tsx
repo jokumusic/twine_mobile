@@ -27,6 +27,7 @@ export default function EditProductScreen(props) {
   const [product, setProduct] = useState<twine.Product>(props.route.params?.product ?? {store: store?.address});
   const [logText, setLogText] = useState<string[]>([]);
   const scrollViewRef = useRef<any>(null);
+  const [productPrice, setProductPrice] = useState((props.route.params?.product?.price ?? 0)/ web3.LAMPORTS_PER_SOL);
   const [productStatusChoices, setProductStatusChoices] = useState(
     Object
     .values(twine.ProductStatus)
@@ -89,9 +90,12 @@ export default function EditProductScreen(props) {
       validatedProduct = {...validatedProduct, status: selectedProductStatus.value};
     }
 
-    if(product?.price < 0){
+    console.log('productPrice: ',  productPrice);
+    if(productPrice < 0){
       Alert.alert("Error", 'Price must be greater than or equal to 0');
       return false;
+    } else{
+      validatedProduct = {...validatedProduct, price: productPrice * web3.LAMPORTS_PER_SOL};
     }
 
     if(product?.inventory < 1){
@@ -158,6 +162,7 @@ export default function EditProductScreen(props) {
 
     if(refreshedProduct) {
       setProduct(refreshedProduct);
+      setProductPrice(refreshedProduct.price / web3.LAMPORTS_PER_SOL);
       log(JSON.stringify(refreshedProduct));
     }
     else {
@@ -322,10 +327,10 @@ export default function EditProductScreen(props) {
           <TextInput
             placeholder='price (SOL)'
             style={styles.inputBox}
-            value={product?.price?.toString()}
+            value={productPrice.toString()}
             keyboardType='decimal-pad'
             autoCapitalize={'words'}
-            onChangeText={(t)=>setProduct({...product,  price: Number(t) * web3.LAMPORTS_PER_SOL})}
+            onChangeText={(t)=> setProductPrice(t)}
           />
         </View>
 
@@ -373,7 +378,7 @@ export default function EditProductScreen(props) {
           <Button title={product?.address ? 'Update' : 'Create'} onPress={product?.address ? updateProduct : createProduct} />        
           <Button title='Refresh' onPress={refreshProduct} />               
       </View>
-
+<Button title="validate" onPress={()=>validateInputs()}/>
       <View style={{width: '95%', height: '20%', margin:5}}>
         <ScrollView
             contentContainerStyle={{

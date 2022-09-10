@@ -2,17 +2,14 @@ import {
    Dimensions,
    StyleSheet,
    Image,
-   Pressable,
    ImageBackground,
-  FlatList,
   Alert,
-  ActivityIndicator,
   ScrollView
   } from 'react-native';
 import { View } from '../components/Themed';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { TwineContext } from '../components/TwineProvider';
-import * as twine from '../api/twine';
+import * as twine from '../api/Twine';
 import {PressableIcon, PressableImage} from '../components/Pressables';
 import { Text, ListItem, Avatar, Dialog  } from '@rneui/themed';
 
