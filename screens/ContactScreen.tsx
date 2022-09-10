@@ -77,7 +77,7 @@ export default function ContactScreen(props) {
   }, [contact]);
 
   async function refreshChatWithFocusedContact() {
-    setMessages([]);
+    
     if(!focusedContact?.address)
       return;
     
@@ -94,6 +94,7 @@ export default function ContactScreen(props) {
             .map(m=>{
               try {
                 const parsedMessage = JSON.parse(m);
+                //console.log("_id: ", parsedMessage._id);
                 return populateMessage(parsedMessage);
               } catch(err){
                 console.log(err);
@@ -102,7 +103,7 @@ export default function ContactScreen(props) {
             .filter(successfullyParsed=> successfullyParsed);
 
             parsedMessages.sort((a,b)=> new Date(b?.createdAt) - new Date(a?.createdAt));
-            setMessages(previousMessages => GiftedChat.append(previousMessages, parsedMessages));
+            setMessages(parsedMessages);
         })
         .catch(appendSystemErrorMessage);
   }
@@ -167,7 +168,7 @@ export default function ContactScreen(props) {
     
     const populatedMessage = populateMessage(message);
     
-    setMessages(previousMessages => GiftedChat.append(previousMessages, populatedMessage));
+    //setMessages(previousMessages => GiftedChat.append(previousMessages, populatedMessage));
   }
 
   function walletIsConnected(msg){
@@ -203,7 +204,6 @@ export default function ContactScreen(props) {
         .subscribeToConversationBetween(contact, c, 
           (conversation: DirectConversation)=> {
             console.log('got conversation subscription callback');
-            setMessages([]);
             
               if(focusedContactRef.current?.address 
                   && (conversation.contact1.equals(focusedContactRef.current.address) || conversation.contact2.equals(focusedContactRef.current.address)))
@@ -211,6 +211,7 @@ export default function ContactScreen(props) {
                 const parsedMessages = conversation.messages.map(m=>{
                   try {
                     const parsedMessage = JSON.parse(m);
+                    //console.log("call _id: ", parsedMessage._id);
                     const populatedMessage = populateMessage(parsedMessage);
                     return populatedMessage;
                   } catch(err){
@@ -220,7 +221,7 @@ export default function ContactScreen(props) {
                 .filter(successfullyParsed=> successfullyParsed);
 
                 parsedMessages.sort((a,b)=> new Date(b?.createdAt) - new Date(a?.createdAt));
-                setMessages(previousMessages => GiftedChat.append(previousMessages, parsedMessages));
+                setMessages(parsedMessages);
             }
           }
         )

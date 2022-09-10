@@ -207,7 +207,7 @@ export class SolChat {
       }
       else{
         contact.data.allows.push(contactPdaString);
-        const updatedContact = await updateContact(contact, deeplinkRoute).catch(reject);
+        const updatedContact = await this.updateContact(contact, deeplinkRoute).catch(reject);
         if(updatedContact)
           resolve(updatedContact);
         else
