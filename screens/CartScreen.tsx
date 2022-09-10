@@ -60,6 +60,8 @@ export default function CartScreen(props) {
 
     async function refreshCheckout() {
         console.log('refreshing checkout items...');
+        setShowLoadingDialog(true);
+        
         await getItemsResolved()
             .then(items=>{  
                 setCheckoutItems(items)
@@ -67,13 +69,17 @@ export default function CartScreen(props) {
             })
             .catch(err=>Alert.alert('error', err))
             .finally(()=>{});
+        
+        setShowLoadingDialog(false);
     }
 
     async function refreshPurchases() {
         if(!walletIsConnected("You must be connected to a wallet to view its purchases.\nConnect to a wallet?"))
             return;
 
+        setShowLoadingDialog(true);
         console.log('refreshing purchased...')
+
         const tickets = await twineContext
             .getPurchaseTicketsByAuthority(twineContext.walletPubkey)
             .catch(err=>Alert.alert('error', err))
@@ -94,6 +100,7 @@ export default function CartScreen(props) {
 
         refreshedPurchases.sort((a,b)=> b?.ticket?.timestamp - a?.ticket?.timestamp);
         setPurchases(refreshedPurchases);        
+        setShowLoadingDialog(false);
     }
 
     async function checkOut() {
@@ -107,15 +114,15 @@ export default function CartScreen(props) {
         for(const checkoutItem of checkoutItems) {
             const buyPromise = twineContext
                 .buyProduct(checkoutItem, checkoutItem.count, SCREEN_DEEPLINK_ROUTE)
-                .then(ticket=>{
-                    removeItemFromCart(checkoutItem.address, checkoutItem.count);
+                .then(async ticket=>{
+                    await removeItemFromCart(checkoutItem.address, checkoutItem.count);
                 })
                 .catch(err=>Alert.alert("error", err));
 
             promises.push(buyPromise);
         }
 
-        Promise
+        const purchasedItems = await Promise
             .all(promises)
             .catch(err=>Alert.alert('error', err))
             .finally(()=>{
