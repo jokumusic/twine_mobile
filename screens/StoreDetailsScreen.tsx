@@ -28,7 +28,7 @@ export default function StoreDetailsScreen(props) {
    useEffect(()=>{
     if(store.address) {
       console.log('refreshing store...');
-      setShowLoadingDialog(true);
+      setShowLoadingDialog(false);
       twineContext
         .getStoreByAddress(store.address)
         .then(s=>{setStore(s);})
@@ -40,7 +40,7 @@ export default function StoreDetailsScreen(props) {
    useEffect(()=>{
     if(store.address) {
       console.log('refreshing store products...');
-      setShowLoadingDialog(true);
+      setShowLoadingDialog(false);
 
       twineContext
         .getProductsByStore(store.address)

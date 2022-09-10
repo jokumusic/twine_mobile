@@ -74,7 +74,7 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
                     if(item.account_type == "product")
                       navigation.navigate('ProductDetails',{product: item});
                     else if (item.account_type == "store")
-                      navigation.navigate('StoreDetails', {store: item})
+                      navigation.navigate('StoreDetails', {store: item});
                   }}
                   {...item}
                 />

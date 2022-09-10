@@ -44,7 +44,7 @@ export default function ManageWalletsScreen(props) {
     },[showCreateWalletDialog])
     
     async function createLocalWallet(){
-        setShowLoadingDialog(true);
+        setShowLoadingDialog(false);
         const walletToCreate = {name: createWalletName, maxSpend: createWalletMaxSpend} as StoredLocalWallet;
         const createdWallet = await twineContext.createLocalWallet(walletToCreate);
         //console.log('createdWallet:', createdWallet);
@@ -54,7 +54,7 @@ export default function ManageWalletsScreen(props) {
     }
 
     async function loadLocalWallets() {
-        setShowLoadingDialog(true);
+        setShowLoadingDialog(false);
         console.log('loading local wallets...');
         const localWallets = await twineContext.getLocalWallets() as StoredLocalWallet[];
        
@@ -146,7 +146,7 @@ export default function ManageWalletsScreen(props) {
 
 
     async function updateSelectedWallet() {
-        setShowLoadingDialog(true);
+        setShowLoadingDialog(false);
         
         const walletChange = {...selectedWalletChoice.value, name: walletName, maxSpend: walletMaxSpend};
         const updatedWallet = await twineContext

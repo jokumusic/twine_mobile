@@ -1,10 +1,8 @@
-import { StatusBar } from 'expo-status-bar';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Button, Platform, Pressable, StyleSheet, TextInput} from 'react-native';
+import { StyleSheet, TextInput} from 'react-native';
 import { Text, View } from '../components/Themed';
-import { FontAwesome5 } from '@expo/vector-icons';
 import {Contact} from '../api/SolChat';
-import { Avatar, Dialog } from "@rneui/themed";
+import { Avatar, Button, Dialog } from "@rneui/themed";
 import { PressableIcon } from '../components/Pressables';
 import * as Clipboard from 'expo-clipboard';
 import { TwineContext } from '../components/TwineProvider';
@@ -31,7 +29,7 @@ export default function EditContactScreen(props) {
             return;
         }
 
-        setShowLoadingDialog(true);
+        setShowLoadingDialog(false);
         console.log('submitting contact data...');
         
         const updatedContact = await solchat
@@ -119,7 +117,13 @@ export default function EditContactScreen(props) {
         </View>
 
         <View>
-        <Button title='Submit' onPress={submit} />
+        <Button 
+          type="solid"         
+          buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, alignSelf:'center', marginVertical: 20 }}
+          onPress={submit}
+        >
+        Submit
+        </Button>
       </View>
 
     </View>

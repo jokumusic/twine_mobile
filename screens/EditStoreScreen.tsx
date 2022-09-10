@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, KeyboardAvoidingView, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, TextInput, Button } from '../components/Themed';
+import { Text, View, TextInput } from '../components/Themed';
 import * as twine from '../api/Twine';
 import { PublicKey } from '@solana/web3.js';
 import { RadioGroup } from 'react-native-radio-buttons-group';
 import { TwineContext } from '../components/TwineProvider';
-import { Dialog } from '@rneui/themed';
+import { Dialog, Button } from '@rneui/themed';
 
 
 const SCREEN_DEEPLINK_ROUTE = "edit_store";
@@ -212,8 +212,21 @@ const updateStore = async() =>{
       </View>
     
       <View style={{flexDirection: 'row', alignContent: 'space-between', justifyContent: 'space-between', padding: 5}}>
-        <Button title={store?.address ? 'Update' : 'Create'} onPress={store?.address ? updateStore : createStore} />
-        <Button title='Refresh' onPress={refreshStore} />   
+        <Button 
+          type="solid"         
+          buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, alignSelf:'center', marginVertical: 20 }}
+          onPress={store?.address ? updateStore : createStore}        
+        >
+          {store?.address ? 'Update' : 'Create'}
+        </Button>
+        
+        <Button 
+          onPress={refreshStore}
+          type="solid"         
+          buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, alignSelf:'center', marginVertical: 20 }}
+        >
+          Refresh
+        </Button>   
       </View>      
 
       <View style={{width: '95%', height: '20%', margin:5}}>

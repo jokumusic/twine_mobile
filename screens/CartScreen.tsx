@@ -24,7 +24,7 @@ export default function CartScreen(props) {
     );
 
     async function refreshTab() {
-        setShowLoadingDialog(true);
+        setShowLoadingDialog(false);
 
         switch(tabIndex) {
           case 0: 
@@ -60,7 +60,7 @@ export default function CartScreen(props) {
 
     async function refreshCheckout() {
         console.log('refreshing checkout items...');
-        setShowLoadingDialog(true);
+        setShowLoadingDialog(false);
         
         await getItemsResolved()
             .then(items=>{  
@@ -77,7 +77,7 @@ export default function CartScreen(props) {
         if(!walletIsConnected("You must be connected to a wallet to view its purchases.\nConnect to a wallet?"))
             return;
 
-        setShowLoadingDialog(true);
+        setShowLoadingDialog(false);
         console.log('refreshing purchased...')
 
         const tickets = await twineContext

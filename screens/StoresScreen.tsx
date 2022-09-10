@@ -29,7 +29,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
 
   async function refreshTab() {
     console.log('refreshtab');
-    setShowLoadingDialog(true);
+    setShowLoadingDialog(false);
     
     switch(tabIndex) {
       case 0:

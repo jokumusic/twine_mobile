@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Alert, Dimensions, Platform, ScrollView, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, TextInput, Button } from '../components/Themed';
+import { Text, View, TextInput } from '../components/Themed';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { PublicKey } from '@solana/web3.js';
 import CarouselCards from '../components/CarouselCards';
 import { PressableIcon, PressableImage } from '../components/Pressables';
-import { CheckBox, Dialog, Icon } from "@rneui/themed";
+import { CheckBox, Dialog, Icon, Button } from "@rneui/themed";
 import { TwineContext } from '../components/TwineProvider';
 import * as twine from '../api/Twine';
 import { web3 } from '../dist/browser';
@@ -376,10 +376,22 @@ export default function EditProductScreen(props) {
       </View>
 
       <View style={{flexDirection: 'row', alignContent: 'space-between', justifyContent: 'space-between', padding: 5}}>       
-          <Button title={product?.address ? 'Update' : 'Create'} onPress={product?.address ? updateProduct : createProduct} />        
-          <Button title='Refresh' onPress={refreshProduct} />               
+          <Button 
+          type="solid"         
+          buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, alignSelf:'center', marginVertical: 20 }}          
+          onPress={product?.address ? updateProduct : createProduct}
+          >
+            {product?.address ? 'Update' : 'Create'} 
+          </Button>        
+          <Button
+            onPress={refreshProduct}
+            type="solid"         
+            buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, alignSelf:'center', marginVertical: 20 }}
+          >
+            Refresh
+          </Button>               
       </View>
-<Button title="validate" onPress={()=>validateInputs()}/>
+
       <View style={{width: '95%', height: '20%', margin:5}}>
         <ScrollView
             contentContainerStyle={{

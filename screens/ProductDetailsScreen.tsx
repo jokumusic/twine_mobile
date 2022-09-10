@@ -14,13 +14,12 @@ import {
  import CarouselCards from '../components/CarouselCards';
 import { Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
- 
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
 
  const WINDOW_WIDTH = Dimensions.get('window').width;
  const SLIDER_WIDTH = WINDOW_WIDTH;
- const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .70);
+ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
 
 
  export default function ProductDetailsScreen(props) {
@@ -42,16 +41,17 @@ import { TwineContext } from '../components/TwineProvider';
         return;
       }
 
-      setShowLoadingDialog(true);
+      setShowLoadingDialog(false);
       console.log('refreshing product...');
       twineContext
         .getProductByAddress(product.address)
-        .then(p=>{setProduct(p);})
+        .then(p=>{setProduct(p);setShowLoadingDialog(false);})
         .catch(err=>Alert.alert("error", err))
-        .finally(()=>setShowLoadingDialog(false));
+        .finally(()=>{setShowLoadingDialog(false);});
    },[twineContext.lastUpdatedProduct]);
       
   async function addToCart() {
+    console.log('adding to cart');
       if(!product?.address){
         Alert.alert('Product is missing an address. Unable to add item to cart.')
       }
@@ -80,7 +80,7 @@ import { TwineContext } from '../components/TwineProvider';
         <PressableImage
           show={true}
           source={item && {uri: item}}
-          style={{height:'100%', resizeMode:'stretch', aspectRatio: 1.2}}
+          style={{height:'100%', resizeMode:'stretch', aspectRatio: 1}}
           onPress={()=>
             console.log('image pressed')
           }
@@ -205,7 +205,7 @@ import { TwineContext } from '../components/TwineProvider';
     productImage: {
       //width: WINDOW_WIDTH /2,
       //height: WINDOW_WIDTH /2
-      width: WINDOW_WIDTH/2,
+      width: '35%',//WINDOW_WIDTH/2,
       height: '100%',
     },
 

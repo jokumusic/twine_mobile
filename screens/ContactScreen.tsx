@@ -11,6 +11,7 @@ import { TwineContext } from '../components/TwineProvider';
 import { Contact, ContactProfile, DirectConversation} from '../api/SolChat';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
 import uuid from 'react-native-uuid';
+import QRCode from 'react-native-qrcode-svg';
 
 
 const SCREEN_DEEPLINK_ROUTE = "contact";
@@ -245,7 +246,7 @@ export default function ContactScreen(props) {
     if(!addContactKey)
       return;
 
-    setShowLoadingDialog(true);
+    setShowLoadingDialog(false);
     console.log('allowing contact...');
 
     twineContext.solchat
@@ -272,7 +273,7 @@ export default function ContactScreen(props) {
       return;
     }
 
-    setShowLoadingDialog(true);
+    setShowLoadingDialog(false);
 
     twineContext
       .sendAsset(sendAsset.type, focusedContact.receiver, sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
@@ -429,13 +430,16 @@ export default function ContactScreen(props) {
                 onPress={()=>Linking.openURL(focusedContact.data.wiki)}/>
           </View>
 
-
-            <PressableIcon
-              name="cash-outline"
-              color={'purple'}
-              style={{marginTop: 10}}
-              onPress={toggleSendAssetModalVisibility}
-            />
+            <View style={{flexDirection: 'row', alignContent: 'space-between', paddingTop: 10, backgroundColor: '#DDDDDD',}}>
+              <PressableIcon
+                name="cash-outline"
+                color={'purple'}                
+                onPress={toggleSendAssetModalVisibility}
+              />
+              {focusedContact.receiver &&
+                  <QRCode value={focusedContact.receiver?.toBase58()} size={40} style={{marginLeft: 10}} />
+              }  
+            </View>
           </View>
           </>
           }
