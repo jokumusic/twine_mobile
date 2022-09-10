@@ -6,9 +6,9 @@ import { useContext, useEffect, useState } from 'react';
 //import RadioGroup, {RadioButtonProps} from 'react-native-radio-buttons-group';
 import RadioButtonRN from 'radio-buttons-react-native';
 import { web3 } from '../dist/browser';
-import { Avatar } from 'react-native-gifted-chat';
 import { PressableIcon } from '../components/Pressables';
 import * as Clipboard from 'expo-clipboard';
+import QRCode from 'react-native-qrcode-svg';
 
 
 const phantomWalletChoice = {
@@ -164,6 +164,7 @@ export default function ManageWalletsScreen(props) {
         <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
             <Dialog.Loading />
         </Dialog>
+  
         <Button 
             type="solid"
             onPress={()=>setShowCreateWalletDialog(true)}            
@@ -213,7 +214,7 @@ export default function ManageWalletsScreen(props) {
                 <Text style={styles.textBox}>{(selectedWalletChoice?.value?.lamports ?? 0) / web3.LAMPORTS_PER_SOL}</Text>
             </View>
 
-            <View style={styles.inputRow}>
+            <View style={styles.inputRow}>                
                 <View style={{flexDirection: 'row'}}>
                     <Text style={styles.inputLabel}>Address:</Text>
                     <PressableIcon
@@ -222,9 +223,15 @@ export default function ManageWalletsScreen(props) {
                         onPress={() =>Clipboard.setString(selectedWalletChoice?.value?.keypair?.publicKey?.toBase58())}
                         style={{marginLeft: 5}}
                     />
-                </View>
-                <Text style={styles.textBox}>{selectedWalletChoice?.value?.keypair?.publicKey?.toBase58()}</Text>
+                    <Text style={{fontSize: 10}}>{selectedWalletChoice?.value?.keypair?.publicKey?.toBase58()}</Text>   
+                                 
+                </View>                   
+                
+                {selectedWalletChoice?.value?.keypair?.publicKey &&
+                    <QRCode value={selectedWalletChoice?.value?.keypair?.publicKey?.toBase58()} size={50} />
+                }                
             </View>
+
 
             <Button 
                 type="solid"

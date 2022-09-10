@@ -8,6 +8,7 @@ import { Avatar, Dialog } from "@rneui/themed";
 import { PressableIcon } from '../components/Pressables';
 import * as Clipboard from 'expo-clipboard';
 import { TwineContext } from '../components/TwineProvider';
+import QRCode from 'react-native-qrcode-svg';
 
 const SCREEN_DEEPLINK_ROUTE = "edit_contact";
 
@@ -57,16 +58,19 @@ export default function EditContactScreen(props) {
       </Dialog>
         <View style={styles.inputSection}>
             
-            <View style={{flexDirection: 'row'}}>
+            <View style={{flexDirection: 'row', marginBottom: 15}}>
               <View style={{width:'60%', flexDirection: 'column', marginRight: 4}}>
                 <Text style={styles.inputLabel}>Address</Text>
                 <PressableIcon
                   name="copy"
-                  size={20}
+                  size={12}
                   onPress={() =>Clipboard.setString(contact?.address?.toBase58())}
                   style={{marginLeft: 5}}
                 />
                 <Text style={{fontSize: 16, marginBottom:8}}>{contact?.address?.toBase58()}</Text>
+                {contact?.address &&
+                    <QRCode value={contact?.address?.toBase58()} size={50} />
+                }  
               </View>              
               <Avatar
                 size={105}
@@ -76,8 +80,6 @@ export default function EditContactScreen(props) {
               />
             </View>
             
-
-
             <Text style={styles.inputLabel}>Name</Text>
             <TextInput
             style={styles.inputBox}
