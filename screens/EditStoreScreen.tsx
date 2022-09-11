@@ -6,7 +6,8 @@ import * as twine from '../api/Twine';
 import { PublicKey } from '@solana/web3.js';
 import { RadioGroup } from 'react-native-radio-buttons-group';
 import { TwineContext } from '../components/TwineProvider';
-import { Dialog, Button } from '@rneui/themed';
+import { Dialog, Button, Image } from '@rneui/themed';
+//import * as ImagePicker from 'expo-image-picker';
 
 
 const SCREEN_DEEPLINK_ROUTE = "edit_store";
@@ -19,6 +20,7 @@ export default function EditStoreScreen(props) {
   const scrollViewRef = useRef<any>(null);
   const isProgramInitialized = useRef(true);
   const focusComponent = useRef();
+  const [pickedImage, setPickedImage] = useState(null);
   const [secondaryAuthority, setSecondaryAuthority] = useState(store?.secondaryAuthority?.toBase58() ?? "");
   const [storeStatusChoices, setStoreStatusChoices] = useState(
     Object
@@ -145,6 +147,23 @@ const updateStore = async() =>{
   log('done');
 }
 
+/*const pickImage = async () => {
+  // No permissions request is necessary for launching the image library
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.All,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+  });
+
+  console.log(result);
+
+  if (!result.cancelled) {
+    setPickedImage(result.uri);
+  }
+};
+*/
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -156,7 +175,6 @@ const updateStore = async() =>{
       
       <View style={styles.inputSection}>
       <ScrollView>
-
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Name</Text>
           <TextInput 
@@ -187,6 +205,10 @@ const updateStore = async() =>{
             value={store?.data?.img}
             onChangeText={(t)=>setStore({...store, data:{...store?.data, img: t}})}
           />
+{/*
+          <Button title="Pick an image" onPress={pickImage} />
+            {pickedImage && <Image source={{ uri: pickedImage }} style={{ width: 200, height: 200 }} />}
+  */}     
         </View>
 
         <View style={styles.inputRow}>
