@@ -2,7 +2,7 @@ import * as anchor from "../dist/browser/index";
 import * as idl from "../target/idl/twine.json";
 import type { Twine as TwineProgram } from '../target/types/twine';
 import * as web3 from "@solana/web3.js";
-import {generateRandomString, generateRandomU16, generateRandomU32, uIntToBytes} from '../utils/random';
+import { generateRandomU16, generateRandomU32, uIntToBytes} from '../utils/random';
 import { compress, decompress, trimUndefined, trimUndefinedRecursively } from 'compress-json'
 import {
   clusterApiUrl,
@@ -143,6 +143,11 @@ export enum AssetType{
     USDC,
 }
 
+const STORE_NAME_MAX_LEN = 100;
+const STORE_DESCRIPTION_MAX_LEN = 200;
+const PRODUCT_NAME_MAX_LEN = 100;
+const PRODUCT_DESCRIPTION_MAX_LEN = 200;
+
 const programId = new PublicKey(idl.metadata.address);
 
 export class Twine {
@@ -262,8 +267,8 @@ export class Twine {
                 .createStore(
                     newStoreId,
                     store.status,
-                    store.data.displayName.toLowerCase(),
-                    store.data.displayDescription.toLowerCase(),
+                    store.data.displayName.slice(0,STORE_NAME_MAX_LEN).toLowerCase(),
+                    store.data.displayDescription.slice(0,STORE_DESCRIPTION_MAX_LEN).toLowerCase(),
                     this.encodeData(store.data))
                 .accounts({
                     store: storePda,
@@ -359,8 +364,8 @@ export class Twine {
             const tx = await program.methods
                 .updateStore(
                     store.status,
-                    store.data.displayName.toLowerCase(),
-                    store.data.displayDescription.toLowerCase(),
+                    store.data.displayName.slice(0,STORE_NAME_MAX_LEN).toLowerCase(),
+                    store.data.displayDescription.slice(0,STORE_DESCRIPTION_MAX_LEN).toLowerCase(),
                     this.encodeData(store.data))
                 .accounts({
                     store: store.address,
@@ -432,156 +437,156 @@ export class Twine {
 
 
     async createProduct(product: WriteableProduct, deeplinkRoute: string) {
-    return new Promise<Product>(async (resolve,reject) => {
-        const currentWalletPubkey = this.getCurrentWalletPublicKey();
-        if(!currentWalletPubkey){
-            reject('not connected to a wallet.');
-            return;
-        }
+        return new Promise<Product>(async (resolve,reject) => {
+            const currentWalletPubkey = this.getCurrentWalletPublicKey();
+            if(!currentWalletPubkey){
+                reject('not connected to a wallet.');
+                return;
+            }
 
-        if(!product.data.displayName) {
-            reject('product must have a name');
-            return;
-        }
+            if(!product.data.displayName) {
+                reject('product must have a name');
+                return;
+            }
 
-        if(!product.data.displayDescription) {
-            reject('product must have a description');
-            return;
-        }
+            if(!product.data.displayDescription) {
+                reject('product must have a description');
+                return;
+            }
 
-        if(!product.data.img) {
-            reject('product must have an image');
-            return;
-        }
+            if(!product.data.img) {
+                reject('product must have an image');
+                return;
+            }
 
-        if(product.price < 0) {
-            reject('product price must be equal to or greater than 0');
-            return;
-        }
+            if(product.price < 0) {
+                reject('product price must be equal to or greater than 0');
+                return;
+            }
 
-        if(product.inventory < 0) {
-            reject('product inventory must be equal to or greater than 0');
-            return;
-        }
+            if(product.inventory < 0) {
+                reject('product inventory must be equal to or greater than 0');
+                return;
+            }
 
-        
-        const program = this.getProgram(deeplinkRoute);
-        const newProductId  = generateRandomU32();
-        const [productPda, productPdaBump] = this.getProductPda(currentWalletPubkey, newProductId);
-        const existingProduct = await program.account.product.fetchNullable(productPda);
-        if(existingProduct){
-            reject(`product already exists`);
-            return;
-        }       
+            
+            const program = this.getProgram(deeplinkRoute);
+            const newProductId  = generateRandomU32();
+            const [productPda, productPdaBump] = this.getProductPda(currentWalletPubkey, newProductId);
+            const existingProduct = await program.account.product.fetchNullable(productPda);
+            if(existingProduct){
+                reject(`product already exists`);
+                return;
+            }       
 
-        /*
-        const mintKeypair = Keypair.generate(); 
-        const [productMintPda, productMintPdaBump] = PublicKey.findProgramAddressSync([
-        anchor.utils.bytes.utf8.encode("product_mint"),
-        mintKeypair.publicKey.toBuffer()
-        ], program.programId);
+            /*
+            const mintKeypair = Keypair.generate(); 
+            const [productMintPda, productMintPdaBump] = PublicKey.findProgramAddressSync([
+            anchor.utils.bytes.utf8.encode("product_mint"),
+            mintKeypair.publicKey.toBuffer()
+            ], program.programId);
 
-        const [mintProductRefPda, mintProductRefPdaBump] = PublicKey.findProgramAddressSync([
-        anchor.utils.bytes.utf8.encode("mint_product_ref"),
-        mintKeypair.publicKey.toBuffer()
-        ], program.programId);
-        */
+            const [mintProductRefPda, mintProductRefPdaBump] = PublicKey.findProgramAddressSync([
+            anchor.utils.bytes.utf8.encode("mint_product_ref"),
+            mintKeypair.publicKey.toBuffer()
+            ], program.programId);
+            */
 
-        let tx;
+            let tx;
 
-        if(product.store) 
-        {
-            console.log('creating store product transaction...');
+            if(product.store) 
+            {
+                console.log('creating store product transaction...');
 
-            tx = await program.methods
-                .createStoreProduct(
-                    newProductId,
-                    product.status, //productMintDecimals, 
-                    new anchor.BN(product.price),
-                    new anchor.BN(product.inventory),
-                    product.redemptionType, 
-                    product.data.displayName.toLowerCase(),
-                    product.data.displayDescription.toLowerCase(),
-                    this.encodeData(product.data)
-                )
-                .accounts({
-                    //mint: storeProductMintPda,
-                    product: productPda,
-                    store: product.store,
-                    creator: currentWalletPubkey,
-                    authority: currentWalletPubkey,
-                    secondaryAuthority: product.secondaryAuthority ?? currentWalletPubkey,
-                    payTo: product.payTo ?? currentWalletPubkey,
-                    //tokenProgram: TOKEN_PROGRAM_ID,
-                })
-                .transaction()
+                tx = await program.methods
+                    .createStoreProduct(
+                        newProductId,
+                        product.status, //productMintDecimals, 
+                        new anchor.BN(product.price),
+                        new anchor.BN(product.inventory),
+                        product.redemptionType, 
+                        product.data.displayName.toLowerCase().slice(0,),
+                        product.data.displayDescription.toLowerCase(),
+                        this.encodeData(product.data)
+                    )
+                    .accounts({
+                        //mint: storeProductMintPda,
+                        product: productPda,
+                        store: product.store,
+                        creator: currentWalletPubkey,
+                        authority: currentWalletPubkey,
+                        secondaryAuthority: product.secondaryAuthority ?? currentWalletPubkey,
+                        payTo: product.payTo ?? currentWalletPubkey,
+                        //tokenProgram: TOKEN_PROGRAM_ID,
+                    })
+                    .transaction()
+                    .catch(reject);
+            } 
+            else {
+                console.log('creating lone product transaction...');
+                tx = await program.methods
+                    .createProduct(
+                        newProductId,
+                        product.status, //productMintDecimals, 
+                        new anchor.BN(product.price),
+                        new anchor.BN(product.inventory),
+                        product.redemptionType, 
+                        product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
+                        product.data.displayDescription.slice(0,PRODUCT_DESCRIPTION_MAX_LEN).toLowerCase(),
+                        this.encodeData(product.data)
+                    )
+                    .accounts({
+                        //mint: loneProductMintPda,
+                        product: productPda,
+                        creator: currentWalletPubkey,
+                        authority: currentWalletPubkey,
+                        secondaryAuthority: product.secondaryAuthority ?? currentWalletPubkey,
+                        payTo: product.payTo ?? currentWalletPubkey,
+                        //tokenProgram: TOKEN_PROGRAM_ID,
+                    })
+                    .transaction()
+                    .catch(reject);
+            }
+
+            if(!tx)
+                return;
+
+            tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+            tx.feePayer = currentWalletPubkey;
+
+            console.log('signing and sending transaction...');
+            const signature = await this.wallet
+                .signAndSendTransaction(tx, false, true, deeplinkRoute)
                 .catch(reject);
-        } 
-        else {
-            console.log('creating lone product transaction...');
-            tx = await program.methods
-                .createProduct(
-                    newProductId,
-                    product.status, //productMintDecimals, 
-                    new anchor.BN(product.price),
-                    new anchor.BN(product.inventory),
-                    product.redemptionType, 
-                    product.data.displayName.toLowerCase(),
-                    product.data.displayDescription.toLowerCase(),
-                    this.encodeData(product.data)
-                )
-                .accounts({
-                    //mint: loneProductMintPda,
-                    product: productPda,
-                    creator: currentWalletPubkey,
-                    authority: currentWalletPubkey,
-                    secondaryAuthority: product.secondaryAuthority ?? currentWalletPubkey,
-                    payTo: product.payTo ?? currentWalletPubkey,
-                    //tokenProgram: TOKEN_PROGRAM_ID,
-                })
-                .transaction()
+
+            if(!signature)
+                return;
+            
+            console.log(`waiting for finalization on tx: ${signature}`)
+            const confirmationResponse = await this.connection
+                .confirmTransaction(signature, 'finalized')
                 .catch(reject);
-        }
+            
+            if(!confirmationResponse)
+                return;
 
-        if(!tx)
-            return;
+            console.log('retrieving finalized account data...');
+            const createdProduct = await program.account
+                                    .product
+                                    .fetchNullable(productPda)              
+                                    .catch(reject);
 
-        tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-        tx.feePayer = currentWalletPubkey;
-
-        console.log('signing and sending transaction...');
-        const signature = await this.wallet
-            .signAndSendTransaction(tx, false, true, deeplinkRoute)
-            .catch(reject);
-
-        if(!signature)
-            return;
-        
-        console.log(`waiting for finalization on tx: ${signature}`)
-        const confirmationResponse = await this.connection
-            .confirmTransaction(signature, 'finalized')
-            .catch(reject);
-        
-        if(!confirmationResponse)
-            return;
-
-        console.log('retrieving finalized account data...');
-        const createdProduct = await program.account
-                                .product
-                                .fetchNullable(productPda)              
-                                .catch(reject);
-
-        if(!createdProduct)
-            return;
-   
-        try{
-            createdProduct.data = this.decodeData(createdProduct.data);
-            resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber(), inventory: createdProduct.inventory.toNumber()});
-        } catch(e) {
-            reject(e);
-        }    
-    });
-}
+            if(!createdProduct)
+                return;
+    
+            try{
+                createdProduct.data = this.decodeData(createdProduct.data);
+                resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber(), inventory: createdProduct.inventory.toNumber()});
+            } catch(e) {
+                reject(e);
+            }    
+        });
+    }
 
 
     async getBalanceByAddress(address: PublicKey) {
@@ -672,8 +677,8 @@ export class Twine {
                     new anchor.BN(product.price),
                     new anchor.BN(product.inventory),
                     product.redemptionType,
-                    product.data.displayName.toLowerCase(),
-                    product.data.displayDescription.toLowerCase(),
+                    product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
+                    product.data.displayDescription.slice(0,PRODUCT_DESCRIPTION_MAX_LEN).toLowerCase(),
                     this.encodeData(product.data),
                 )
                 .accounts({

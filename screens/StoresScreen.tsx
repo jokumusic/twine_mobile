@@ -153,7 +153,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
               { 
                 stores.map((store, i) => (
                   <ListItem key={"store" + store.address?.toBase58()} bottomDivider onPress={()=>navigation.navigate('StoreDetails',{store})}>
-                    <Avatar source={store?.data?.img && {uri: store.data.img}} size={70} />
+                    <Avatar source={store?.data?.img && {uri: store.data.img}} avatarStyle={{resizeMode: 'contain'}} size={70} />
                     <ListItem.Content >
                       <ListItem.Title>{store.data?.displayName}</ListItem.Title>
                       <ListItem.Subtitle>{store.data?.displayDescription}</ListItem.Subtitle>
@@ -169,7 +169,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
               {
                 products.map((product, i) => (
                   <ListItem key={"product" + product.address?.toBase58()} bottomDivider  onPress={()=>navigation.navigate('ProductDetails', {product})}>
-                    <Avatar source={product?.data?.img && {uri: product.data.img}} size={70} />
+                    <Avatar source={product?.data?.img && {uri: product.data.img}} avatarStyle={{resizeMode: 'contain'}} size={70} />
                     <ListItem.Content>
                       <ListItem.Title>{product.data?.displayName}</ListItem.Title>
                       <ListItem.Subtitle>{product.data?.displayDescription}</ListItem.Subtitle>
@@ -188,6 +188,7 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
                   <ListItem key={"sell" + sell.purchaseTicket?.address?.toBase58()} bottomDivider>
                     <Avatar 
                       source={sell.productSnapshot?.data?.img && {uri: sell.productSnapshot.data.img}}
+                      avatarStyle={{resizeMode: 'contain'}}
                       size={70}
                       onPress={()=>navigation.navigate('ProductDetails', {product:sell.productSnapshot})}
                     />
@@ -206,9 +207,6 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
               </ScrollView>
             </TabView.Item>
           </TabView>
-
-          
-
       </ImageBackground>      
     </View>
   );
