@@ -30,10 +30,6 @@ import { TwineContext } from '../components/TwineProvider';
    const [showLoadingDialog, setShowLoadingDialog] = useState(false);
    const twineContext = useContext(TwineContext);
 
-   useEffect(()=>{
-    console.log('twinepubkey: ');
-    console.log(twineContext.walletPubkey);
-   },[]);
 
    useEffect(()=>{
       if(!product?.address) {
@@ -45,7 +41,10 @@ import { TwineContext } from '../components/TwineProvider';
       console.log('refreshing product...');
       twineContext
         .getProductByAddress(product.address)
-        .then(p=>{setProduct(p);setShowLoadingDialog(false);})
+        .then(p=>{
+          setProduct(p);
+          setShowLoadingDialog(false);
+        })
         .catch(err=>Alert.alert("error", err))
         .finally(()=>{setShowLoadingDialog(false);});
    },[twineContext.lastUpdatedProduct]);
