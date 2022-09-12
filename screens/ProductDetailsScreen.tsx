@@ -14,6 +14,7 @@ import {
  import CarouselCards from '../components/CarouselCards';
 import { Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
+import {Mint} from '../constants/Addresses';
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
 
@@ -29,7 +30,16 @@ import { TwineContext } from '../components/TwineProvider';
    const { addItemToCart } = useContext(CartContext);
    const [showLoadingDialog, setShowLoadingDialog] = useState(false);
    const twineContext = useContext(TwineContext);
+   const [solPrice, setSolPrice] = useState(0);
 
+
+   useEffect(()=>{
+    (async ()=> {
+      const result = await twineContext.tokenSwapper.getInQuote(Mint.USDC, product.price, 1, Mint.SOL);
+      setSolPrice((Math.ceil(result.amount * 100) / 100).toFixed(2));
+    })();
+
+   },[product?.price]);
 
    useEffect(()=>{
       if(!product?.address) {
@@ -128,6 +138,7 @@ import { TwineContext } from '../components/TwineProvider';
           <Text style={styles.title}>{product?.data?.displayName}</Text>
           <Text>{product?.data?.displayDescription}</Text>
           <Text>Price: $ {product.price.toString()}</Text>
+          <Text>SOL: {solPrice}</Text>
           <Text>Available Quantity: {product.inventory.toString()}</Text> 
           {      
             product.data?.sku  &&

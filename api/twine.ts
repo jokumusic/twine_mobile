@@ -11,11 +11,12 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import WalletInterface from './WalletInterface';
-//import {TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token} from "@solana/spl-token";
+import * as splToken from "@solana/spl-token";
 //import { bs58 } from '../dist/browser/types/src/utils/bytes';
 
 if (typeof BigInt === 'undefined') global.BigInt = require('big-integer') //fixes an issue with react native not supporting bigint. added package big-integer to project and then added this
 
+const PAYMENT_MINT_ADDRESS = "";
 
 export enum RedemptionType {
     Immediate=1,

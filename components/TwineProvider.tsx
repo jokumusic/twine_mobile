@@ -12,6 +12,8 @@ import { SolChat } from '../api/SolChat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import WalletInterface from '../api/WalletInterface';
 import { Buffer } from "buffer";
+import TokenSwapInterface from '../api/TokenSwapInterface';
+import { JupiterSwap } from '../api/JupiterSwap';
 global.Buffer = global.Buffer || Buffer;
 
 
@@ -33,6 +35,7 @@ export interface StoredLocalWallet {
 export function TwineProvider(props) {
     let twine = useRef<Twine>(new Twine(NETWORK)).current;
     let solchat = useRef<SolChat>(new SolChat(NETWORK)).current;
+    let tokenSwapper = useRef<TokenSwapInterface>(new JupiterSwap(NETWORK)).current;
     const [wallet, setWallet] = useState<WalletInterface>();
     const [itemCount, setItemCount] = useState(0);
     const [walletPubkey, setWalletPubkey] = useState<PublicKey>();
@@ -70,6 +73,7 @@ export function TwineProvider(props) {
                     setWallet(walletToUse);
                     twine.setWallet(walletToUse);
                     solchat.setWallet(walletToUse);
+                    tokenSwapper.setWallet(walletToUse);
                     setWalletPubkey(walletToUse.getWalletPublicKey());
             }
         };
@@ -165,6 +169,7 @@ export function TwineProvider(props) {
         setWallet(walletToUse);
         twine.setWallet(walletToUse);
         solchat.setWallet(walletToUse);
+        tokenSwapper.setWallet(walletToUse);
         await storeData(LOCAL_KEYPAIR_DEFAULT_PUBKEY, localWallet.keypair.publicKey.toBase58());
 
         setWalletPubkey(walletToUse.getWalletPublicKey());
@@ -176,6 +181,7 @@ export function TwineProvider(props) {
         setWallet(walletToUse);
         twine.setWallet(walletToUse);
         solchat.setWallet(walletToUse);
+        tokenSwapper.setWallet(walletToUse);
         setWalletPubkey(null);
         await storeData(LOCAL_KEYPAIR_DEFAULT_PUBKEY, "phantom");
     }
@@ -309,6 +315,7 @@ export function TwineProvider(props) {
             usePhantomWallet,
             getCurrentWalletName,
             updateLocalWallet,
+            tokenSwapper,
         }}
         >
             {props.children}
