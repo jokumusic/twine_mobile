@@ -2,11 +2,12 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput} from 'react-native';
 import { Text, View } from '../components/Themed';
 import {Contact} from '../api/SolChat';
-import { Avatar, Button, Dialog } from "@rneui/themed";
+import { Avatar, Button, Dialog, Icon } from "@rneui/themed";
 import { PressableIcon } from '../components/Pressables';
 import * as Clipboard from 'expo-clipboard';
 import { TwineContext } from '../components/TwineProvider';
 import QRCode from 'react-native-qrcode-svg';
+//import * as ImagePicker from 'expo-image-picker';
 
 const SCREEN_DEEPLINK_ROUTE = "edit_contact";
 
@@ -15,6 +16,7 @@ export default function EditContactScreen(props) {
     const navigation = useRef(props.navigation).current;
     const [showLoadingDialog, setShowLoadingDialog] = useState(false);
     const {solchat} = useContext(TwineContext);
+    const [pickedImage, setPickedImage] = useState();
    
     useEffect(()=>{
         solchat
@@ -48,6 +50,23 @@ export default function EditContactScreen(props) {
         setShowLoadingDialog(false);
         console.log('done');
   }
+/*
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+  
+    console.log(result);
+  
+    if (!result.cancelled) {
+      setContact({...contact, data: {...contact.data, img: result.uri}});
+    }
+  };
+*/
 
    return (
     <View style={styles.container}>
@@ -94,12 +113,16 @@ export default function EditContactScreen(props) {
             onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, description: t}})}
             />
 
-            <Text style={styles.inputLabel}>Image URL</Text>
+            <Text style={styles.inputLabel}>Image</Text>
             <TextInput
             style={styles.inputBox}
             value={contact.data.img}
             onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, img: t}})} 
             />
+            {/*<Button onPress={()=>pickImage()}> <Icon type="ionicon" name="image-outline"/> </Button>*/}
+
+
+
 
             <Text style={styles.inputLabel}>twitter URL</Text>
             <TextInput
