@@ -16,7 +16,7 @@ export default function EditContactScreen(props) {
     const navigation = useRef(props.navigation).current;
     const [showLoadingDialog, setShowLoadingDialog] = useState(false);
     const {solchat} = useContext(TwineContext);
-    const [pickedImage, setPickedImage] = useState();
+    //const [pickedImage, setPickedImage] = useState();
    
     useEffect(()=>{
         solchat
@@ -55,6 +55,7 @@ export default function EditContactScreen(props) {
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      base64: true,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
@@ -63,7 +64,8 @@ export default function EditContactScreen(props) {
     console.log(result);
   
     if (!result.cancelled) {
-      setContact({...contact, data: {...contact.data, img: result.uri}});
+      let imageUri = result ? `data:image/jpg;base64,${result.base64}` : null;
+      setContact({...contact, data: {...contact.data, img: imageUri}});
     }
   };
 */
@@ -113,17 +115,24 @@ export default function EditContactScreen(props) {
             onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, description: t}})}
             />
 
-            <Text style={styles.inputLabel}>Image</Text>
+            <Text style={[styles.inputLabel,{alignSelf:'center'}]}>Image</Text>
             <TextInput
-            style={styles.inputBox}
-            value={contact.data.img}
-            onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, img: t}})} 
-            />
-            {/*<Button onPress={()=>pickImage()}> <Icon type="ionicon" name="image-outline"/> </Button>*/}
-
-
-
-
+              style={styles.inputBox}
+              value={contact.data.img}
+              onChangeText={(t)=>setContact({...contact,  data:{ ...contact.data, img: t}})} 
+                />
+          {/*
+          <View style={{flexDirection: 'row', marginBottom:10,}}>
+            <Text style={[styles.inputLabel,{alignSelf:'center'}]}>Image</Text>
+            <Button 
+              type="solid"         
+              buttonStyle={{ borderWidth: 0, borderRadius: 8, height: 40, width: 60, marginLeft: 10, alignSelf: 'center' }}
+              onPress={()=>pickImage()}
+            >
+              <Icon type="ionicon" name="image-outline" color="white"/>
+            </Button>
+           </View>
+              */}
             <Text style={styles.inputLabel}>twitter URL</Text>
             <TextInput
             style={styles.inputBox}
