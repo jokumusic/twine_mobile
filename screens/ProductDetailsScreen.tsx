@@ -14,7 +14,7 @@ import {
  import CarouselCards from '../components/CarouselCards';
 import { Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
-import {Mint} from '../constants/Addresses';
+import {Mint} from '../constants/Mints';
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
 

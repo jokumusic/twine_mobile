@@ -9,7 +9,10 @@ import { web3 } from '../dist/browser';
 import { PressableIcon } from '../components/Pressables';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
+import {Mint} from '../constants/Mints';
 
+
+const SCREEN_DEEPLINK_ROUTE = "manage_wallets";
 
 const phantomWalletChoice = {
     id:'Phantom',
@@ -35,6 +38,11 @@ export default function ManageWalletsScreen(props) {
     const [createWalletName, setCreateWalletName] = useState('');
     const [createWalletMaxSpend, setCreateWalletMaxSpend] = useState(1);
     const [showLoadingDialog, setShowLoadingDialog] = useState(false);
+    const [showSwapDialog, setShowSwapDialog] = useState(false);
+    const [swapFrom, setSwapFrom] = useState(Mint.SOL);
+    const [swapTo, setSwapTo] = useState(Mint.USDC);
+    const [swapAmount, setSwapAmount] = useState();
+    const [swapMessage, setSwapMessage] = useState('');
 
     
     useEffect(()=>{
@@ -62,8 +70,10 @@ export default function ManageWalletsScreen(props) {
         if(localWallets) {
             const populatedLocalWalletPromises = localWallets.map(async (w)=>{ 
                 //console.log('w: ', w.keypair.publicKey.toBase58());
-                const lamports = await twineContext.getAccountLamports(w.keypair.publicKey);
-                return {...w, lamports} as PopulatedStoredLocalWallet;
+                const solBalancePromise = twineContext.getAccountSol(w.keypair.publicKey);
+                const usdcBalancePromise = twineContext.getAccountUSDC(w.keypair.publicKey);
+                const [sol, usdc] = await Promise.all([solBalancePromise, usdcBalancePromise]);
+                return {...w, sol, usdc} as PopulatedStoredLocalWallet;
             });
             
             const populatedLocalWallets = await Promise.all(populatedLocalWalletPromises);
@@ -158,6 +168,49 @@ export default function ManageWalletsScreen(props) {
         setShowLoadingDialog(false);
     }
 
+    async function displaySwapDialog() {
+        setSwapAmount(null);
+        setSwapFrom(Mint.SOL);
+        setSwapTo(Mint.USDC);
+        setSwapMessage('');
+        setShowSwapDialog(true);
+    }
+
+    async function setSwapAmountChecked(n) {
+        setSwapMessage('');
+
+        switch(swapFrom?.name){            
+            case 'SOL':
+                if(n > selectedWalletChoice?.value?.sol)
+                    setSwapMessage("you don't have enough SOL");
+                else
+                    setSwapAmount(n);
+                break;
+            case 'USDC':
+                if(n > selectedWalletChoice?.value?.usdc)
+                    setSwapMessage("you don't have enough USDC");
+                else
+                    setSwapAmount(n);
+                break;
+            default:
+                setSwapMessage('unknown swap type');
+                break;
+        }
+    }
+
+    async function swap() {
+        if(swapAmount <= 0) {
+            setSwapMessage('amount must be greater than 0');
+        }
+
+        setShowSwapDialog(false);
+        setShowLoadingDialog(true);
+        const swapTransactionSignature = await twineContext.tokenSwapper.swap(swapFrom, swapAmount, 1, swapTo, SCREEN_DEEPLINK_ROUTE);
+        console.log('swapTransactionSignature: ', swapTransactionSignature);
+        loadLocalWallets();
+    }
+
+
 
    return (
     <ScrollView style={{alignContent: 'center',}}>
@@ -210,8 +263,11 @@ export default function ManageWalletsScreen(props) {
             </View>
 
             <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Balance: (SOL)</Text>
-                <Text style={styles.textBox}>{(selectedWalletChoice?.value?.lamports ?? 0) / web3.LAMPORTS_PER_SOL}</Text>
+                <Text style={styles.inputLabel}>Balance:</Text>
+                <View style={{flexDirection: 'column', marginBottom:5,}}>          
+                    <Text>USDC: {(selectedWalletChoice?.value?.usdc ?? 0)}</Text>
+                    <Text>SOL: {(selectedWalletChoice?.value?.sol ?? 0)}</Text>
+                </View>
             </View>
 
             <View style={styles.inputRow}>                
@@ -233,14 +289,26 @@ export default function ManageWalletsScreen(props) {
             </View>
 
 
-            <Button 
-                type="solid"
-                onPress={()=>updateSelectedWallet()}            
-                buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, alignSelf:'center', marginVertical: 20 }}
-                disabled={selectedWalletChoice?.label == "Phantom"}
-            >
-                Save
-            </Button>
+            <View style={{flexDirection: 'row', alignSelf:'center', backgroundColor: 'transparent', justifyContent: 'space-between'}}>
+                <Button 
+                    type="solid"
+                    onPress={()=>updateSelectedWallet()}            
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '85%', height: 50, alignSelf:'center', marginVertical: 20 }}
+                    disabled={selectedWalletChoice?.label == "Phantom"}
+                >
+                    Save
+                </Button>
+
+                <Button 
+                    type="solid"
+                    onPress={()=>displaySwapDialog()}            
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '85%', height: 50, alignSelf:'center', marginVertical: 20 }}
+                    disabled={selectedWalletChoice?.label == "Phantom"}
+                >
+                     <Icon type="ionicon" name="swap-horizontal-outline"/>
+                    Swap
+                </Button>
+            </View>
         </View>
 
  
@@ -248,7 +316,7 @@ export default function ManageWalletsScreen(props) {
         <Dialog isVisible={showCreateWalletDialog}>
             <Dialog.Title title="Dialog Title"/>
             <Text>
-                This will be a Twine wallet thats meant to hold small amounts to reduce the need for confirming every transaction.
+                This will be a local "burner" wallet thats meant to hold small amounts to reduce the need for confirming every transaction.
             </Text>
          
             <View style={styles.inputRow}>
@@ -277,6 +345,49 @@ export default function ManageWalletsScreen(props) {
                 <Dialog.Button title="Create" onPress={() => createLocalWallet()}/>
                 <Dialog.Button title="Cancel" onPress={() =>{setShowCreateWalletDialog(false); setCreateWalletName(''); setCreateWalletMaxSpend(0);}}/>
             </Dialog.Actions>
+        </Dialog>
+
+        <Dialog isVisible={showSwapDialog}>
+            <Text> {swapMessage}</Text>              
+            
+            <View style={{flexDirection: 'row', justifyContent: 'center', alignContent:'center', marginVertical: 20}}>
+                <Text style={{fontWeight: 'bold'}}>{swapFrom?.name}</Text>        
+                    <Icon 
+                        type="ionicon" 
+                        name="swap-horizontal-outline" 
+                        size={30}
+                        style={{marginHorizontal: 20}}
+                        onPress={()=>{const from=swapFrom; setSwapFrom(swapTo); setSwapTo(from);}}
+                    />                   
+                <Text style={{fontWeight: 'bold'}}>{swapTo?.name}</Text>                
+            </View>
+
+            <TextInput
+                placeholder='amount'
+                style={styles.inputBox}
+                value={swapAmount?.toString()}
+                keyboardType='decimal-pad'
+                autoCapitalize='words'
+                onChangeText={(t)=>setSwapAmountChecked(t)}
+            />
+
+            <View style={{flexDirection: 'row', alignSelf: 'center'}}>
+                <Dialog.Button 
+                    type="solid"
+                    onPress={()=>swap()}            
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, alignSelf:'center', marginTop: 10 }}
+                >
+                    Swap
+                </Dialog.Button>
+
+                <Dialog.Button 
+                    type="solid"
+                    onPress={()=>setShowSwapDialog(false)}            
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, alignSelf:'center', marginTop: 10 }}
+                >
+                    Cancel
+                </Dialog.Button>
+            </View>
         </Dialog>
     </ScrollView>
    );

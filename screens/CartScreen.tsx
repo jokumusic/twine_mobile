@@ -3,6 +3,7 @@ import { Alert, ImageBackground, ScrollView, StyleSheet, View } from "react-nati
 import { CartContext } from "../components/CartProvider";
 import { Tab, Text, TabView, ListItem, Avatar, Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
+import {Mint} from '../constants/Mints';
 
 const SCREEN_DEEPLINK_ROUTE = "cart";
 
@@ -109,6 +110,47 @@ export default function CartScreen(props) {
 
         setShowLoadingDialog(true);
         console.log('checking out');
+
+        if(twineContext.getCurrentWalletName() == "Local") {
+            const usdcBalance = await twineContext.getAccountUSDC(twineContext.walletPubkey);
+            console.log('usdc balance is ', usdcBalance);
+            if(usdcBalance < checkoutItemsTotal) {
+                const remainingUsdcRequired = (Math.ceil((checkoutItemsTotal - usdcBalance) * Mint.USDC.multiplier) / Mint.USDC.multiplier).toFixed(6);
+                console.log('remaining usdc required: ', remainingUsdcRequired);
+                const solBalancePromise = twineContext.getAccountSol(twineContext.walletPubkey);
+                const solNeededPromise = twineContext.tokenSwapper.getInQuote(Mint.USDC, remainingUsdcRequired, 1, Mint.SOL);
+                const [solBalance, solNeeded] = await Promise.all([solBalancePromise,solNeededPromise]);
+                const remainingSolNeeded = solNeeded.amount - solBalance;
+                const balanceMessage = `You need $${remainingUsdcRequired} more USDC to cover the payment.\n`;
+                if(remainingSolNeeded > 0) {
+                    Alert.alert('Insufficient Funds', `${balanceMessage}\nPlease transfer more funds into your wallet.`);
+                    setShowLoadingDialog(false);
+                    return;
+                }
+                else {
+                    Alert.alert(
+                        'Auto Swap?',
+                        `${balanceMessage}\nWould you like to convert ${solNeeded.amount} SOL to USDC to cover the payment?`,
+                        [
+                            {text: 'Yes', onPress: async () => {
+                                const swapTransactionSignature = await twineContext.tokenSwapper.swap(Mint.SOL, solNeeded.amount, 1, Mint.USDC, SCREEN_DEEPLINK_ROUTE);
+                                setShowLoadingDialog(false);
+                                console.log('swapTransactionSignature: ', swapTransactionSignature);
+                                return;
+                                           
+                            }},
+                            {text: 'No', onPress: () => {
+                                setShowLoadingDialog(false);
+                                return;
+                            }},
+                        ]
+                     );
+
+                    return;
+                }
+            }
+        }
+
         const promises = [];
 
         for(const checkoutItem of checkoutItems) {

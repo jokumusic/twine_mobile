@@ -13,7 +13,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import WalletInterface from '../api/WalletInterface';
 import { Buffer } from "buffer";
 import TokenSwapInterface from '../api/TokenSwapInterface';
-import { JupiterSwap } from '../api/JupiterSwap';
+//import { JupiterSwap } from '../api/JupiterSwap';
+import {MockSwap} from '../api/MockSwap';
+import Solana from '../api/Solana';
 global.Buffer = global.Buffer || Buffer;
 
 
@@ -33,9 +35,10 @@ export interface StoredLocalWallet {
 
 
 export function TwineProvider(props) {
+    let solana = useRef<Solana>(new Solana(NETWORK)).current;
     let twine = useRef<Twine>(new Twine(NETWORK)).current;
     let solchat = useRef<SolChat>(new SolChat(NETWORK)).current;
-    let tokenSwapper = useRef<TokenSwapInterface>(new JupiterSwap(NETWORK)).current;
+    let tokenSwapper = useRef<TokenSwapInterface>(new MockSwap(NETWORK)).current;
     const [wallet, setWallet] = useState<WalletInterface>();
     const [itemCount, setItemCount] = useState(0);
     const [walletPubkey, setWalletPubkey] = useState<PublicKey>();
@@ -281,7 +284,15 @@ export function TwineProvider(props) {
     }
 
     async function getAccountLamports(account: PublicKey){
-        return twine.getBalanceByAddress(account);
+        return solana.getAccountLamports(account);
+    }
+
+    async function getAccountSol(account: PublicKey){
+        return solana.getAccountSol(account);
+    }
+
+    async function getAccountUSDC(account: PublicKey) {
+        return solana.getUsdcBalanceBySystemAccount(account);
     }
 
     return (
@@ -311,6 +322,8 @@ export function TwineProvider(props) {
             createLocalWallet,
             getLocalWallets,
             getAccountLamports,
+            getAccountSol,
+            getAccountUSDC,
             useLocalWallet,
             usePhantomWallet,
             getCurrentWalletName,
