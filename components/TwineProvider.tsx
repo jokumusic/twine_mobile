@@ -16,6 +16,7 @@ import TokenSwapInterface from '../api/TokenSwapInterface';
 //import { JupiterSwap } from '../api/JupiterSwap';
 import {MockSwap} from '../api/MockSwap';
 import Solana from '../api/Solana';
+
 global.Buffer = global.Buffer || Buffer;
 
 
@@ -243,7 +244,7 @@ export function TwineProvider(props) {
     }
 
     async function createStore(store: WriteableStore, deeplinkRoute: string) {
-        console.log('context wallet: ', wallet.getWalletPublicKey());
+        console.log('context wallet: ', wallet?.getWalletPublicKey());
         return twine
             .createStore(store, deeplinkRoute)
             .then(createdStore=>{
@@ -264,8 +265,6 @@ export function TwineProvider(props) {
     async function getStoreByAddress(address: PublicKey) {
         return twine.getStoreByAddress(address);
     }
-
-
 
     async function getProductsByStore(storeAddress: PublicKey) {
         return twine.getProductsByStore(storeAddress);
@@ -292,7 +291,7 @@ export function TwineProvider(props) {
     }
 
     async function getAccountUSDC(account: PublicKey) {
-        return solana.getUsdcBalanceBySystemAccount(account);
+        return solana.getUsdcBalance(account);
     }
 
     return (

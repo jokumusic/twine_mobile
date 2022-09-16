@@ -99,6 +99,8 @@ export class LocalWallet implements WalletInterface {
                 .sendAndConfirmTransaction(this.connection, transaction, [kp])
                 .catch(reject);
 
+            console.log('wallet trans signature: ', signature);
+
             if(!signature)
                 return;
 

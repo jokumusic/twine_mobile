@@ -360,8 +360,23 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "payTo",
+          "name": "purchaseTicketPayment",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketPaymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payToTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -376,6 +391,16 @@ export type Twine = {
         },
         {
           "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -813,6 +838,16 @@ export type Twine = {
       "code": 6016,
       "name": "StoreIsNotActive",
       "msg": "store is not active"
+    },
+    {
+      "code": 6017,
+      "name": "UnableToModifySnapshot",
+      "msg": "modifying snapshots is not allowed"
+    },
+    {
+      "code": 6018,
+      "name": "UnableToPurchaseSnapshot",
+      "msg": "purchasing snapshots is not allowed"
     }
   ]
 };
@@ -1179,8 +1214,23 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "payTo",
+          "name": "purchaseTicketPayment",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketPaymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payToTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -1195,6 +1245,16 @@ export const IDL: Twine = {
         },
         {
           "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -1632,6 +1692,16 @@ export const IDL: Twine = {
       "code": 6016,
       "name": "StoreIsNotActive",
       "msg": "store is not active"
+    },
+    {
+      "code": 6017,
+      "name": "UnableToModifySnapshot",
+      "msg": "modifying snapshots is not allowed"
+    },
+    {
+      "code": 6018,
+      "name": "UnableToPurchaseSnapshot",
+      "msg": "purchasing snapshots is not allowed"
     }
   ]
 };

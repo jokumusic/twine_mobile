@@ -11,12 +11,16 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import WalletInterface from './WalletInterface';
-import * as splToken from "@solana/spl-token";
+import * as spl_token from "@solana/spl-token";
+import * as tokenFaucetIdl from "../target/idl/tokenfaucet.json";
+import type { Tokenfaucet }  from "../target/types/tokenfaucet";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import Solana from '../api/Solana';
 //import { bs58 } from '../dist/browser/types/src/utils/bytes';
+
 
 if (typeof BigInt === 'undefined') global.BigInt = require('big-integer') //fixes an issue with react native not supporting bigint. added package big-integer to project and then added this
 
-const PAYMENT_MINT_ADDRESS = "";
 
 export enum RedemptionType {
     Immediate=1,
@@ -150,14 +154,20 @@ const PRODUCT_NAME_MAX_LEN = 100;
 const PRODUCT_DESCRIPTION_MAX_LEN = 200;
 
 const programId = new PublicKey(idl.metadata.address);
+const tokenfauceProgramId = new PublicKey(tokenFaucetIdl.metadata.address);
 
 export class Twine {
     private wallet: WalletInterface;
     private connection: Connection;
+    private paymentTokenMintAddress: PublicKey;
+    private solana: Solana;
 
     constructor(network: string, wallet?: WalletInterface, ) {
         this.wallet = wallet;
         this.connection = new Connection(clusterApiUrl(network));
+
+        this.solana = new Solana(network);
+        [this.paymentTokenMintAddress] = PublicKey.findProgramAddressSync([anchor.utils.bytes.utf8.encode("mint")], tokenfauceProgramId);
     }
 
     getCurrentWalletPublicKey = () => this.wallet?.getWalletPublicKey();
@@ -1183,6 +1193,7 @@ export class Twine {
         
             const program = this.getProgram(deeplinkRoute);
             const nonce = generateRandomU16();
+            const transferAmount = product.price * quantity;
 
             const [productSnapshotMetadataPda, productSnapshotMetadataPdaBump] = PublicKey.findProgramAddressSync(
             [
@@ -1205,35 +1216,65 @@ export class Twine {
                 currentWalletPubkey.toBuffer(),
                 Buffer.from(uIntToBytes(nonce,2,"setUint"))
             ], programId);
+        
             
+            const payerAtaAddress = await this.solana.getUsdcTokenAddress(currentWalletPubkey);
+           
+            const purchaseTicketAtaAddress = await this.solana.getUsdcTokenAddress(purchaseTicketPda);
+            const createPurchaseTicketAtaIx = this.solana.createAssociatedTokenAccountInstruction(
+                currentWalletPubkey,
+                purchaseTicketAtaAddress,
+                purchaseTicketPda,
+            );
+            const transferToPurchaseTicketAtaIx = this.solana.createTransferInstruction(
+                payerAtaAddress,
+                purchaseTicketAtaAddress,
+                currentWalletPubkey,
+                transferAmount
+            );
 
-            let transferAmount = product.price * quantity + 100000000;
 
-            const transferToPurchaseTicketIx = anchor.web3.SystemProgram.transfer({
-                fromPubkey: currentWalletPubkey,
-                toPubkey: purchaseTicketPda,
-                lamports: transferAmount,
-            });
+            const payToAtaAddress = await this.solana.getUsdcTokenAddress(product.payTo);
+            const payToAta = await this.solana.getUsdcAccount(payToAtaAddress);
+        
 
+            const tx = new anchor.web3.Transaction()
+                .add(createPurchaseTicketAtaIx)
+                .add(transferToPurchaseTicketAtaIx);
 
+            if(!payToAta) {
+                console.log("payTo ATA doesn't exist. adding instruction to create it");
+                const createPayToAtaIx = this.solana.createAssociatedTokenAccountInstruction(
+                    currentWalletPubkey,
+                    payToAtaAddress,
+                    product.payTo,
+                );
+                
+                tx.add(createPayToAtaIx);
+            } 
+            else {
+                //console.log('payTo ATA: ', payToAta.address.toBase58());
+            }
+
+            console.log('tokenMintAddress: ', this.paymentTokenMintAddress.toBase58());
+            
             const buyProductIx = await program.methods
             .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(product.price))
             .accounts({
-                //mint: loneProduct.mint,
                 product: product.address,
                 productSnapshotMetadata: productSnapshotMetadataPda,
                 productSnapshot: productSnapshotPda,
                 buyer: currentWalletPubkey,
                 buyFor: currentWalletPubkey,
                 payTo: product.payTo,
+                payToTokenAccount: payToAtaAddress,
                 purchaseTicket: purchaseTicketPda,
+                purchaseTicketPayment: purchaseTicketAtaAddress,
+                purchaseTicketPaymentMint: this.paymentTokenMintAddress,
             })
             .instruction();
 
-            const tx = new anchor.web3.Transaction()
-            .add(transferToPurchaseTicketIx)
-            .add(buyProductIx);
-
+            tx.add(buyProductIx);
             tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
             tx.feePayer = currentWalletPubkey;
 
@@ -1242,6 +1283,7 @@ export class Twine {
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
                 .catch(reject);
 
+            console.log('purchase signature: ', signature);
             if(!signature)
                 return;
 

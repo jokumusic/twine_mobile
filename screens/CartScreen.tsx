@@ -16,16 +16,25 @@ export default function CartScreen(props) {
     const [purchases, setPurchases] = useState([]);
     const [tabIndex, setTabIndex] = useState(0);
     const [showLoadingDialog, setShowLoadingDialog] = useState(false);
+    const [initialized, setInitialized] = useState(false);
 
 
     useEffect(()=> {
-            refreshTab();
-        },
-        [tabIndex,twineContext.walletPubkey,itemCount]
-    );
+        if(!initialized)
+            setInitialized(true);
+
+        refreshTab();
+    }, [tabIndex,twineContext.walletPubkey]);
+
+    useEffect(()=>{
+        if(!initialized)
+            return;
+
+        refreshCheckout();
+    }, [itemCount])
 
     async function refreshTab() {
-        setShowLoadingDialog(false);
+        setShowLoadingDialog(true);
 
         switch(tabIndex) {
           case 0: 
@@ -78,7 +87,7 @@ export default function CartScreen(props) {
         if(!walletIsConnected("You must be connected to a wallet to view its purchases.\nConnect to a wallet?"))
             return;
 
-        setShowLoadingDialog(false);
+        setShowLoadingDialog(true);
         console.log('refreshing purchased...')
 
         const tickets = await twineContext

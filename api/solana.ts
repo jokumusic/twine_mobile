@@ -36,19 +36,49 @@ export default class Solana {
     return sol;
   }
 
-  async getUsdcTokenAddressBySystemAccount(account: PublicKey) {
-    return spl_token.getAssociatedTokenAddress(this.usdc_mint, account, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+  async getUsdcTokenAddress(account: PublicKey) {
+    return spl_token.getAssociatedTokenAddress(this.usdc_mint, account, true, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
   }
 
-  async getUsdcBalanceBySystemAccount(account: PublicKey){
-    const usdcAtaAddress = await this.getUsdcTokenAddressBySystemAccount(account);
+  async getUsdcAccount(account: PublicKey){
+    const usdcAtaAddress = await this.getUsdcTokenAddress(account);
     try{
       const ataData = await spl_token.getAccount(this.connection, usdcAtaAddress, 'confirmed', TOKEN_PROGRAM_ID);
-      console.log('usdc amount: ', ataData.amount);
-      return Number(ataData.amount / Mint.USDC.multiplier );
+      return ataData
     } catch(err) {
     }
 
-    return 0;
+    return null;
   }
+
+  async getUsdcBalance(account: PublicKey){
+    const usdcAtaAddress = await this.getUsdcTokenAddress(account);
+    const ataData = await this.getUsdcAccount(account);
+    const convertedAmount = Number(ataData?.amount || 0) / Mint.USDC.multiplier;  
+    return convertedAmount;
+  }
+
+
+  createAssociatedTokenAccountInstruction(payer: PublicKey, associatedTokenAccount: PublicKey, associatedTokenAccountOwner: PublicKey ) {
+    return spl_token.createAssociatedTokenAccountInstruction(
+      payer,
+      associatedTokenAccount,
+      associatedTokenAccountOwner,
+      this.usdc_mint,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+  }
+
+  createTransferInstruction(source: PublicKey, destination: PublicKey, owner: PublicKey, amount: number) {
+    return spl_token.createTransferInstruction(
+      source,
+      destination,
+      owner,
+      amount,
+      [],
+      TOKEN_PROGRAM_ID,
+    );
+  }
+   
 }
