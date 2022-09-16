@@ -168,7 +168,7 @@ export default function CartScreen(props) {
                 .then(async ticket=>{
                     await removeItemFromCart(checkoutItem.address, checkoutItem.count);
                 })
-                .catch(err=>Alert.alert("error", err));
+                .catch(err=>console.log(err));//Alert.alert("error", err));
 
             promises.push(buyPromise);
         }

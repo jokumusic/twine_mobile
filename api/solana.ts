@@ -36,12 +36,12 @@ export default class Solana {
     return sol;
   }
 
-  async getUsdcTokenAddress(account: PublicKey) {
-    return spl_token.getAssociatedTokenAddress(this.usdc_mint, account, true, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+  async getUsdcTokenAddress(account: PublicKey, allowOffCurve=false) {
+    return spl_token.getAssociatedTokenAddress(this.usdc_mint, account, allowOffCurve, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
   }
 
-  async getUsdcAccount(account: PublicKey){
-    const usdcAtaAddress = await this.getUsdcTokenAddress(account);
+  async getUsdcAccount(account: PublicKey, allowOffCurve=false){
+    const usdcAtaAddress = await this.getUsdcTokenAddress(account, allowOffCurve);
     try{
       const ataData = await spl_token.getAccount(this.connection, usdcAtaAddress, 'confirmed', TOKEN_PROGRAM_ID);
       return ataData

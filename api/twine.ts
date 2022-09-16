@@ -1218,9 +1218,9 @@ export class Twine {
             ], programId);
         
             
-            const payerAtaAddress = await this.solana.getUsdcTokenAddress(currentWalletPubkey);
+            const payerAtaAddress = await this.solana.getUsdcTokenAddress(currentWalletPubkey, false);
            
-            const purchaseTicketAtaAddress = await this.solana.getUsdcTokenAddress(purchaseTicketPda);
+            const purchaseTicketAtaAddress = await this.solana.getUsdcTokenAddress(purchaseTicketPda, true);
             const createPurchaseTicketAtaIx = this.solana.createAssociatedTokenAccountInstruction(
                 currentWalletPubkey,
                 purchaseTicketAtaAddress,
@@ -1234,9 +1234,8 @@ export class Twine {
             );
 
 
-            const payToAtaAddress = await this.solana.getUsdcTokenAddress(product.payTo);
-            const payToAta = await this.solana.getUsdcAccount(payToAtaAddress);
-        
+            const payToAtaAddress = await this.solana.getUsdcTokenAddress(product.payTo, false);
+            const payToAta = await this.solana.getUsdcAccount(product.payTo, false);        
 
             const tx = new anchor.web3.Transaction()
                 .add(createPurchaseTicketAtaIx)
@@ -1256,8 +1255,6 @@ export class Twine {
                 //console.log('payTo ATA: ', payToAta.address.toBase58());
             }
 
-            console.log('tokenMintAddress: ', this.paymentTokenMintAddress.toBase58());
-            
             const buyProductIx = await program.methods
             .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(product.price))
             .accounts({
@@ -1301,7 +1298,7 @@ export class Twine {
                 .catch(reject);
 
             if(!purchaseTicket)
-            return;
+                return;
     
             resolve({...purchaseTicket, address: purchaseTicketPda});
         });

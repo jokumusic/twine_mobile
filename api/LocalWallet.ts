@@ -16,16 +16,17 @@ global.Buffer = global.Buffer || Buffer;
 
 export class LocalWallet implements WalletInterface {
     private keypair: Keypair;
-    private connection = new Connection(clusterApiUrl("devnet"));
+    private connection: Connection;
 
     constructor(keypair: Keypair, network: string) {
         if(!network)
             throw new Error("network must be specified");
 
+        this.connection = new Connection(clusterApiUrl(network));
         this.keypair = keypair; 
+
     }
     
-
     /** get wallet name */
     getWalletName = (): string => "Local";
 
@@ -89,17 +90,11 @@ export class LocalWallet implements WalletInterface {
             if(!kp){
                 reject('not connected to a wallet');
                 return;
-            }
-
-            console.log('signing and sending with ', kp.publicKey.toBase58());
-
-            const serializedTransaction = transaction.serialize({requireAllSignatures, verifySignatures});
-
+            }            
+       
             const signature = await anchor.web3
                 .sendAndConfirmTransaction(this.connection, transaction, [kp])
                 .catch(reject);
-
-            console.log('wallet trans signature: ', signature);
 
             if(!signature)
                 return;
