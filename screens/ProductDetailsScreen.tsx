@@ -138,7 +138,6 @@ import {Mint} from '../constants/Mints';
           <Text style={styles.title}>{product?.data?.displayName}</Text>
           <Text>{product?.data?.displayDescription}</Text>
           <Text>Price: $ {product.price.toString()}</Text>
-          <Text>SOL: {solPrice}</Text>
           <Text>Available Quantity: {product.inventory.toString()}</Text> 
           {      
             product.data?.sku  &&

@@ -342,7 +342,7 @@ export default function EditProductScreen(props) {
             style={styles.inputBox}
             value={product?.inventory?.toString()}
             keyboardType='numeric'
-            onChangeText={(t)=>setProduct({...product,  inventory: parseInt(t)})}
+            onChangeText={(t)=>setProduct({...product,  inventory: Number(t)})}
           />
         </View>
         

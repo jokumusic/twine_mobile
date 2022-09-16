@@ -16,6 +16,7 @@ import * as tokenFaucetIdl from "../target/idl/tokenfaucet.json";
 import type { Tokenfaucet }  from "../target/types/tokenfaucet";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import Solana from '../api/Solana';
+import { Mint } from "../constants/Mints";
 //import { bs58 } from '../dist/browser/types/src/utils/bytes';
 
 
@@ -513,7 +514,7 @@ export class Twine {
                     .createStoreProduct(
                         newProductId,
                         product.status, //productMintDecimals, 
-                        new anchor.BN(product.price),
+                        new anchor.BN(product.price * Mint.USDC.multiplier),
                         new anchor.BN(product.inventory),
                         product.redemptionType, 
                         product.data.displayName.toLowerCase().slice(0,),
@@ -539,7 +540,7 @@ export class Twine {
                     .createProduct(
                         newProductId,
                         product.status, //productMintDecimals, 
-                        new anchor.BN(product.price),
+                        new anchor.BN(product.price * Mint.USDC.multiplier),
                         new anchor.BN(product.inventory),
                         product.redemptionType, 
                         product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
@@ -592,7 +593,7 @@ export class Twine {
     
             try{
                 createdProduct.data = this.decodeData(createdProduct.data);
-                resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber(), inventory: createdProduct.inventory.toNumber()});
+                resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber() / Mint.USDC.multiplier, inventory: createdProduct.inventory.toNumber()});
             } catch(e) {
                 reject(e);
             }    
@@ -622,7 +623,7 @@ export class Twine {
 
             try{
                 product.data = this.decodeData(product.data);       
-                resolve({...product, address: address, price: product.price.toNumber(), inventory: product.inventory.toNumber()});       
+                resolve({...product, address: address, price: product.price.toNumber() / Mint.USDC.multiplier, inventory: product.inventory.toNumber()});       
             }catch(err) {
                 reject(err);
             }        
@@ -685,7 +686,7 @@ export class Twine {
             const tx = await program.methods
                 .updateProduct(
                     product.status,
-                    new anchor.BN(product.price),
+                    new anchor.BN(product.price * Mint.USDC.multiplier),
                     new anchor.BN(product.inventory),
                     product.redemptionType,
                     product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
@@ -724,7 +725,7 @@ export class Twine {
                 return;
         
             updatedProduct.data = this.decodeData(updatedProduct.data);
-            resolve({...updatedProduct, address: product.address, price: updatedProduct.price.toNumber(), inventory: updatedProduct.inventory.toNumber()});
+            resolve({...updatedProduct, address: product.address, price: updatedProduct.price.toNumber() / Mint.USDC.multiplier, inventory: updatedProduct.inventory.toNumber()});
         });
     }
 
@@ -899,7 +900,7 @@ export class Twine {
                         items.push({
                             ...product.account,
                             address: product.publicKey,
-                            price: product.account.price.toNumber(),
+                            price: product.account.price.toNumber() / Mint.USDC.multiplier,
                             inventory: product.account.inventory.toNumber(),
                             account_type: "product"
                         });
@@ -939,7 +940,7 @@ export class Twine {
                         const p = {
                             ...product.account,
                             address: product.publicKey,
-                            price: product.account.price.toNumber(),
+                            price: product.account.price.toNumber() / Mint.USDC.multiplier,
                             inventory: product.account.inventory.toNumber(),
                             account_type: "product"
                         };
@@ -974,7 +975,7 @@ export class Twine {
 
             const items = tickets.map(ticket=>{  
                 try {
-                    return {...ticket.account, address: ticket.publicKey};                
+                    return {...ticket.account, price: (ticket.account?.price || 0) / Mint.USDC.multiplier,  address: ticket.publicKey};                
                 }
                 catch(e){
                     console.log('exception: ', e);
@@ -1193,7 +1194,7 @@ export class Twine {
         
             const program = this.getProgram(deeplinkRoute);
             const nonce = generateRandomU16();
-            const transferAmount = product.price * quantity;
+            const transferAmount = product.price * quantity * Mint.USDC.multiplier;
 
             const [productSnapshotMetadataPda, productSnapshotMetadataPdaBump] = PublicKey.findProgramAddressSync(
             [
@@ -1256,7 +1257,7 @@ export class Twine {
             }
 
             const buyProductIx = await program.methods
-            .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(product.price))
+            .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(product.price * Mint.USDC.multiplier))
             .accounts({
                 product: product.address,
                 productSnapshotMetadata: productSnapshotMetadataPda,
