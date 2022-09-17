@@ -10,6 +10,9 @@ import { PressableIcon } from '../components/Pressables';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import {Mint} from '../constants/Mints';
+import SelectDropdown from 'react-native-select-dropdown';
+import { AssetType } from '../api/Twine';
+import { PublicKey } from '@solana/web3.js';
 
 
 const SCREEN_DEEPLINK_ROUTE = "manage_wallets";
@@ -24,6 +27,11 @@ const phantomWalletChoice = {
 
 interface PopulatedStoredLocalWallet extends StoredLocalWallet {
     lamports: number
+}
+
+interface SendAsset {
+    type: AssetType;
+    amount: number;
 }
 
 export default function ManageWalletsScreen(props) {
@@ -43,7 +51,10 @@ export default function ManageWalletsScreen(props) {
     const [swapTo, setSwapTo] = useState(Mint.USDC);
     const [swapAmount, setSwapAmount] = useState();
     const [swapMessage, setSwapMessage] = useState('');
-
+    const [showSendDialog, setShowSendDialog] = useState(false);
+    const [sendDialogMessage, setSendDialogMessage] = useState('');
+    const [sendToAddress, setSendToAddress] = useState('');
+    const [sendAsset, setSendAsset] = useState<SendAsset>({type: AssetType.SOL, amount:0});
     
     useEffect(()=>{
         if(!showCreateWalletDialog) {
@@ -210,6 +221,43 @@ export default function ManageWalletsScreen(props) {
         loadLocalWallets();
     }
 
+    async function displaySendDialog() {
+        setSendToAddress('');
+        setSendAsset({type: AssetType.SOL, amount:0});
+        setSendDialogMessage('');
+        setShowSendDialog(true);
+    }
+
+    async function sendAssetToAddress(){
+        if(!sendToAddress)
+          return;
+    
+        console.log('sending= type: ', sendAsset.type, ', amount: ', sendAsset.amount);
+    
+        if(sendAsset.amount <= 0)
+        {
+          setSendDialogMessage('an amount must be specified');
+          return;
+        }
+    
+        setShowSendDialog(false);
+        setShowLoadingDialog(true);
+    
+        const signature = await twineContext
+          .sendAsset(sendAsset.type, new PublicKey(sendToAddress), sendAsset.amount, SCREEN_DEEPLINK_ROUTE)
+          .catch(err=>{
+            console.log(err);
+          });
+        
+        
+        setShowSendDialog(false);
+        loadLocalWallets();
+        setShowLoadingDialog(false);
+    }
+    
+    async function cancelSendAssetToAddress() {
+        setShowSendDialog(false);
+    }
 
 
    return (
@@ -289,11 +337,11 @@ export default function ManageWalletsScreen(props) {
             </View>
 
 
-            <View style={{flexDirection: 'row', alignSelf:'center', backgroundColor: 'transparent', justifyContent: 'space-between'}}>
+            <View style={{flexDirection: 'row', alignSelf:'center', backgroundColor: 'transparent', justifyContent: 'space-evenly', paddingHorizontal: 20,}}>
                 <Button 
                     type="solid"
                     onPress={()=>updateSelectedWallet()}            
-                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '85%', height: 50, alignSelf:'center', marginVertical: 20 }}
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '70%', height: 50, alignSelf:'center', marginVertical: 20 }}
                     disabled={selectedWalletChoice?.label == "Phantom"}
                 >
                     Save
@@ -302,11 +350,21 @@ export default function ManageWalletsScreen(props) {
                 <Button 
                     type="solid"
                     onPress={()=>displaySwapDialog()}            
-                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '85%', height: 50, alignSelf:'center', marginVertical: 20 }}
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '70%', height: 50, alignSelf:'center', marginVertical: 20 }}
                     disabled={selectedWalletChoice?.label == "Phantom"}
                 >
                      <Icon type="ionicon" name="swap-horizontal-outline"/>
                     Swap
+                </Button>
+
+                <Button 
+                    type="solid"
+                    onPress={()=>displaySendDialog()}            
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '70%', height: 50, alignSelf:'center', marginVertical: 20 }}
+                    disabled={selectedWalletChoice?.label == "Phantom"}
+                >
+                    <Icon type="ionicon" name="send-outline"/>
+                    Send
                 </Button>
             </View>
         </View>
@@ -387,6 +445,57 @@ export default function ManageWalletsScreen(props) {
                 >
                     Cancel
                 </Dialog.Button>
+            </View>
+        </Dialog>
+
+        <Dialog isVisible={showSendDialog}>
+            <Text style={{color: 'red', fontStyle: 'italic'}}>{sendDialogMessage}</Text>
+            <View style={styles.inputRow}>
+                <Text style={styles.inputLabel}>Send To Address:</Text>
+                <TextInput 
+                    style={styles.inputBox}
+                    value={sendToAddress}
+                    onChangeText={setSendToAddress}
+                />
+            </View>
+        
+            <SelectDropdown 
+                data={Object.keys(AssetType).filter(v=>isNaN(Number(v)))}
+                onSelect={(val,index)=>{ 
+                    setSendAsset({...sendAsset, type: AssetType[val]});
+                }}
+                buttonStyle={{margin: 5, alignSelf: 'center'}}
+                defaultValue={"SOL"}
+            />
+            <TextInput 
+                placeholder="amount to send" 
+                value={sendAsset.amount?.toString()}
+                style={styles.inputBox} 
+                keyboardType='decimal-pad'
+                autoCapitalize='words'
+                onChangeText={(value) => setSendAsset({
+                    ...sendAsset,
+                    amount: value
+                })
+                }
+            />
+
+            <View style={{flexDirection: 'row', width: '100%', alignContent: 'center', alignSelf: 'center', justifyContent: 'space-evenly'}}>
+                <Dialog.Button 
+                    type="solid"                                
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, marginTop: 10 }}
+                    onPress={sendAssetToAddress}
+                >
+                    Send
+                </Dialog.Button>
+                <Dialog.Button 
+                    type="solid"                                
+                    buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50, marginTop: 10 }}
+                    onPress={cancelSendAssetToAddress}
+                >
+                    Cancel
+                </Dialog.Button>
+               
             </View>
         </Dialog>
     </ScrollView>

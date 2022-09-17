@@ -531,7 +531,7 @@ export default function ContactScreen(props) {
                   value={sendAsset.amount?.toString()}
                   style={styles.textInput} 
                   keyboardType='decimal-pad'
-                  autoCapitalize={sendAsset?.type == AssetType.LAMPORT ? 'none' : 'words'}
+                  autoCapitalize={'words'}
                   onChangeText={(value) => setSendAsset({
                       ...sendAsset,
                       amount: value

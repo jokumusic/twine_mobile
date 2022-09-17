@@ -21,7 +21,7 @@ global.Buffer = global.Buffer || Buffer;
 
 
 //import { getProduct } from './services/ProductsService.js';
-const NETWORK = "devnet";
+const NETWORK = "testnet";
 export const TwineContext = createContext();
 
 const LOCAL_KEYPAIRS_LOOKUP_KEY = "@LocalKeyPairs";

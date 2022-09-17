@@ -145,7 +145,6 @@ export interface Purchase {
 
 export enum AssetType{
     SOL,
-    LAMPORT,
     USDC,
 }
 
@@ -1133,54 +1132,71 @@ export class Twine {
                 return;
             }
 
-            if(assetType == AssetType.LAMPORT || assetType == AssetType.SOL){
-                let lamports: number = 0;
-                if(assetType == AssetType.LAMPORT) {
-                    lamports = amount;
-                }
-                else if(assetType == AssetType.SOL){
-                    lamports = web3.LAMPORTS_PER_SOL * amount;
-                }
-                else {
-                    reject(`unknown assetType: ${assetType}`);
-                    return;
-                }
+            const tx = new web3.Transaction();
 
-                const tx = new web3.Transaction().add(
-                    web3.SystemProgram.transfer({
+            if(assetType == AssetType.SOL) {
+                let lamports: number = web3.LAMPORTS_PER_SOL * amount;
+                const ix = web3.SystemProgram.transfer({
                         fromPubkey: currentWalletPubkey,
                         toPubkey: to,
                         lamports: BigInt(lamports)
-                    }),
-                );
+                });
 
-                console.log('getting latest blockhash...');
-                tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-                tx.feePayer = currentWalletPubkey;            
-        
-                console.log('signing and sending transaction...');
-                const signature = await this.wallet
-                    .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                    .catch(reject);
-        
-                if(!signature)
-                    return;
-
-                console.log('waiting for finalization of transaction...');
-                const confirmationResponse = await this.connection
-                    .confirmTransaction(signature, 'finalized')
-                    .catch(reject);
-
-                if(!confirmationResponse)
-                    return;
-
-                resolve(signature);
-                return;
+                tx.add(ix);               
             }
+            else if(assetType == AssetType.USDC) {
+                const amountToSend = amount * Mint.USDC.multiplier;
+                const currentWalletUsdcAccount = await this.solana.getUsdcAccount(currentWalletPubkey);
+                if(!currentWalletUsdcAccount || currentWalletUsdcAccount.amount < amountToSend){
+                    reject("Insufficient USDC funds");
+                    return;
+                }
+
+                const sendToUsdcAddress = await this.solana.getUsdcTokenAddress(to, false);
+                const sendToUsdcAccount = await this.solana.getUsdcAccount(to, false);
+                if(!sendToUsdcAccount) {
+                    console.log("adding create USDC account instruction");
+                    const createSendToUsdcAccountIx = this.solana.createAssociatedTokenAccountInstruction(
+                        currentWalletPubkey,
+                        sendToUsdcAddress,
+                        to
+                    );
+
+                    tx.add(createSendToUsdcAccountIx);
+                }
+
+                console.log('amountToSend: ', amountToSend);
+                const sendTokenIx = this.solana.createTokenTransferInstruction(currentWalletUsdcAccount.address, sendToUsdcAddress, currentWalletPubkey, amountToSend);
+                tx.add(sendTokenIx);
+            } 
             else {
-                reject(`sending of assetType ${assetType} is not supported`);
+                reject(`unknown assetType: ${assetType}`);
                 return;
             }
+
+            console.log('getting latest blockhash...');
+            tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+            tx.feePayer = currentWalletPubkey;            
+    
+            console.log('signing and sending transaction...');
+            const signature = await this.wallet
+                .signAndSendTransaction(tx, false, true, deeplinkRoute)
+                .catch(reject);
+    
+            console.log('signature: ', signature);
+
+            if(!signature)
+                return;
+
+            console.log('waiting for finalization of transaction...');
+            const confirmationResponse = await this.connection
+                .confirmTransaction(signature, 'finalized')
+                .catch(reject);
+
+            if(!confirmationResponse)
+                return;
+
+            resolve(signature);     
         });
     }
 
@@ -1227,7 +1243,7 @@ export class Twine {
                 purchaseTicketAtaAddress,
                 purchaseTicketPda,
             );
-            const transferToPurchaseTicketAtaIx = this.solana.createTransferInstruction(
+            const transferToPurchaseTicketAtaIx = this.solana.createTokenTransferInstruction(
                 payerAtaAddress,
                 purchaseTicketAtaAddress,
                 currentWalletPubkey,

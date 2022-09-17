@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useRef } from "react";
+import { useState, useContext, useEffect, useRef, useCallback } from "react";
 import { Alert, ImageBackground, ScrollView, StyleSheet, View } from "react-native";
 import { CartContext } from "../components/CartProvider";
 import { Tab, Text, TabView, ListItem, Avatar, Button, Dialog } from '@rneui/themed';
@@ -17,6 +17,7 @@ export default function CartScreen(props) {
     const [tabIndex, setTabIndex] = useState(0);
     const [showLoadingDialog, setShowLoadingDialog] = useState(false);
     const [initialized, setInitialized] = useState(false);
+    const [swapFundingComplete, setSwapFundingComplete] = useState(false);
 
 
     useEffect(()=> {
@@ -113,6 +114,17 @@ export default function CartScreen(props) {
         setShowLoadingDialog(false);
     }
 
+
+    useEffect(()=>{
+        if(!swapFundingComplete)
+            return;
+        useCallback(()=>{
+            setSwapFundingComplete(false);
+            checkOut();
+        },[]);
+
+    },[swapFundingComplete])
+
     async function checkOut() {
         if(!walletIsConnected("You must be connected to a wallet to checkout.\nConnect to a wallet?"))
             return;
@@ -145,8 +157,7 @@ export default function CartScreen(props) {
                                 const swapTransactionSignature = await twineContext.tokenSwapper.swap(Mint.SOL, solNeeded.amount, 1, Mint.USDC, SCREEN_DEEPLINK_ROUTE);
                                 setShowLoadingDialog(false);
                                 console.log('swapTransactionSignature: ', swapTransactionSignature);
-                                return;
-                                           
+                                setSwapFundingComplete(true);                                           
                             }},
                             {text: 'No', onPress: () => {
                                 setShowLoadingDialog(false);

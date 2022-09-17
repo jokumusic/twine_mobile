@@ -46,6 +46,7 @@ export default class Solana {
       const ataData = await spl_token.getAccount(this.connection, usdcAtaAddress, 'confirmed', TOKEN_PROGRAM_ID);
       return ataData
     } catch(err) {
+      console.log('spl_token.getAccount: ', err);
     }
 
     return null;
@@ -70,7 +71,7 @@ export default class Solana {
     );
   }
 
-  createTransferInstruction(source: PublicKey, destination: PublicKey, owner: PublicKey, amount: number) {
+  createTokenTransferInstruction(source: PublicKey, destination: PublicKey, owner: PublicKey, amount: number) {
     return spl_token.createTransferInstruction(
       source,
       destination,
