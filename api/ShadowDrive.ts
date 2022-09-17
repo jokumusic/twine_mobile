@@ -1,34 +1,56 @@
 import {ShdwDrive} from "@shadow-drive/sdk";
-import { clusterApiUrl, Connection, Transaction } from "@solana/web3.js";
+import { clusterApiUrl, Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { Mint } from "../constants/Mints";
 import * as anchor from "../dist/browser/index";
 import * as idl from "../target/idl/twine.json";
+import Solana from "./Solana";
 import WalletInterface from "./WalletInterface";
 
 const SHADOW_DRIVE_VERSION = "v2";
 
 export class ShadowDrive {
     private wallet: WalletInterface;
-    //private connection: Connection;
+    private connection: Connection;
     private drive: ShdwDrive; 
+    private solana: Solana;
+    private mint = Mint.SHDW;
 
-    constructor(wallet: WalletInterface) { //(network:string, wallet: WalletInterface) {
-        this.wallet = wallet;
+    constructor(wallet?: WalletInterface) { //(network:string, wallet: WalletInterface) {
+        if(wallet)
+            this.wallet = wallet;
+
         //this.connection = new Connection(clusterApiUrl(network));
-        const connection = new Connection(
-            "https://ssc-dao.genesysgo.net/",
-            "max"
-        );
-        
-        new ShdwDrive(connection, {publicKey: this.wallet.getWalletPublicKey()})
-            .init()
-            .then(d=>this.drive = d)
-            .catch(e=>{
-                throw new Error(e);
-            });
+        this.connection = new Connection("https://ssc-dao.genesysgo.net/", "max");
+        this.solana = new Solana("mainnet-beta");
+        /*this.initDrive(this.connection, wallet)
+        .then(d=>{
+            this.drive = d;
+        });*/
     }
 
     setWallet(wallet:WalletInterface) {
         this.wallet = wallet;
+        /*this.initDrive(this.connection, wallet)
+            .then(d=>{
+                this.drive = d;
+            });*/
+    }
+
+    private async initDrive(connection: Connection, wallet: WalletInterface){
+        if(!this.wallet)
+            return;
+
+        const shdwDrive = new ShdwDrive(connection, {
+            signTransaction: (tx: Transaction) => this.wallet.signTransaction(tx,false,true, ""),
+            signAllTransactions: (txs: Transaction[]) => this.wallet.signAllTransactions(txs,false,true,""),
+            publicKey: this.wallet.getWalletPublicKey(),
+        });
+
+        return await shdwDrive  
+            .init()
+            .catch(e=>{
+                throw new Error(e);
+            });
     }
 
     async createAccount(name:string, size:string) {
@@ -47,6 +69,15 @@ export class ShadowDrive {
     async uploadFile(data: any) {
         const pubkey = this.wallet.getWalletPublicKey();
         return this.drive.uploadFile(pubkey, data, SHADOW_DRIVE_VERSION);        
+    }
+
+    async getTokenAccount(walletPubkey: PublicKey) {
+        return this.solana.getTokenAccount(new PublicKey(this.mint.address), walletPubkey);
+    }
+
+    async getTokenBalance(walletPubkey: PublicKey) {
+        console.log('shadow mint: ', this.mint.address);
+        return this.solana.getTokenBalance(new PublicKey(this.mint.address), walletPubkey);
     }
 
     private bytesToHuman(bytes: any, si = false, dp = 1) {

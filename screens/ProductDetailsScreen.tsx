@@ -30,16 +30,7 @@ import {Mint} from '../constants/Mints';
    const { addItemToCart } = useContext(CartContext);
    const [showLoadingDialog, setShowLoadingDialog] = useState(false);
    const twineContext = useContext(TwineContext);
-   const [solPrice, setSolPrice] = useState(0);
 
-
-   useEffect(()=>{
-    (async ()=> {
-      const result = await twineContext.tokenSwapper.getInQuote(Mint.USDC, product.price, 1, Mint.SOL);
-      setSolPrice((Math.ceil(result.amount * 100) / 100).toFixed(2));
-    })();
-
-   },[product?.price]);
 
    useEffect(()=>{
       if(!product?.address) {

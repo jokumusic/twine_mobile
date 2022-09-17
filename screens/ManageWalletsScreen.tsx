@@ -82,9 +82,10 @@ export default function ManageWalletsScreen(props) {
             const populatedLocalWalletPromises = localWallets.map(async (w)=>{ 
                 //console.log('w: ', w.keypair.publicKey.toBase58());
                 const solBalancePromise = twineContext.getAccountSol(w.keypair.publicKey);
-                const usdcBalancePromise = twineContext.getAccountUSDC(w.keypair.publicKey);
-                const [sol, usdc] = await Promise.all([solBalancePromise, usdcBalancePromise]);
-                return {...w, sol, usdc} as PopulatedStoredLocalWallet;
+                const usdcBalancePromise = twineContext.getTokenBalance(Mint.USDC, w.keypair.publicKey);
+                const shdwBalancePromise = twineContext.getTokenBalance(Mint.SHDW, w.keypair.publicKey);
+                const [sol, usdc, shdw] = await Promise.all([solBalancePromise, usdcBalancePromise, shdwBalancePromise]);
+                return {...w, sol, usdc, shdw} as PopulatedStoredLocalWallet;
             });
             
             const populatedLocalWallets = await Promise.all(populatedLocalWalletPromises);
@@ -203,6 +204,12 @@ export default function ManageWalletsScreen(props) {
                 else
                     setSwapAmount(n);
                 break;
+            case 'SHDW':
+                if(n > selectedWalletChoice?.value?.shdw)
+                    setSwapMessage("you don't have enough SHDW");
+                else
+                    setSwapAmount(n);
+                break;
             default:
                 setSwapMessage('unknown swap type');
                 break;
@@ -315,6 +322,7 @@ export default function ManageWalletsScreen(props) {
                 <View style={{flexDirection: 'column', marginBottom:5,}}>          
                     <Text>USDC: {(selectedWalletChoice?.value?.usdc ?? 0)}</Text>
                     <Text>SOL: {(selectedWalletChoice?.value?.sol ?? 0)}</Text>
+                    <Text>SHDW: {(selectedWalletChoice?.value?.shdw ?? 0)}</Text>
                 </View>
             </View>
 

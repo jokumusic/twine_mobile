@@ -2,6 +2,7 @@ import WalletInterface from './WalletInterface';
 
 
 export interface MintInfo {
+    readonly name: string;
     readonly address : string;
     readonly multiplier: number;
 }

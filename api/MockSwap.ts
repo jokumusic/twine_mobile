@@ -7,6 +7,7 @@ import type { Tokenfaucet }  from "../target/types/tokenfaucet";
 import { JupiterSwap } from "./JupiterSwap";
 import * as spl_token from "@solana/spl-token";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { Mint } from "../constants/Mints";
 
 const tokenfauceProgramId = new PublicKey(tokenFaucetIdl.metadata.address);
 
@@ -15,15 +16,13 @@ export class MockSwap implements TokenSwapInterface {
     private wallet: WalletInterface;  
     private jupiterSwap: JupiterSwap;
     private connection: Connection;
-    private paymentTokenMintAddress: PublicKey;
+    private paymentTokenMintAddress = new PublicKey(Mint.USDC.address);
 
     constructor(network: string, wallet?: WalletInterface) {
       this.network = network;
       this.wallet = wallet;
       this.connection = new Connection(clusterApiUrl(network))
       this.jupiterSwap = new JupiterSwap(network, wallet);
-
-      [this.paymentTokenMintAddress] = PublicKey.findProgramAddressSync([anchor.utils.bytes.utf8.encode("mint")], tokenfauceProgramId);
     }
 
     private getTokenfaucetProgram() {

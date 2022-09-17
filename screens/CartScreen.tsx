@@ -133,7 +133,7 @@ export default function CartScreen(props) {
         console.log('checking out');
 
         if(twineContext.getCurrentWalletName() == "Local") {
-            const usdcBalance = await twineContext.getAccountUSDC(twineContext.walletPubkey);
+            const usdcBalance = await twineContext.getTokenBalance(Mint.USDC, twineContext.walletPubkey);
             console.log('usdc balance is ', usdcBalance);
             if(usdcBalance < checkoutItemsTotal) {
                 const remainingUsdcRequired = (Math.ceil((checkoutItemsTotal - usdcBalance) * Mint.USDC.multiplier) / Mint.USDC.multiplier).toFixed(6);

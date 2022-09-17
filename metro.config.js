@@ -1,9 +1,11 @@
+const path = require('path');
 const {getDefaultConfig} = require('metro-config');
 
 module.exports = async () => {
   const {
     resolver: {sourceExts},
   } = await getDefaultConfig();
+
 
   return {
     transformer: {
@@ -16,6 +18,18 @@ module.exports = async () => {
     },
     resolver: {
       sourceExts: [...sourceExts, 'cjs', 'svg'],
+      extraNodeModules: {
+        crypto: path.resolve(__dirname, './node_modules/react-native-quick-crypto'),
+        stream: path.resolve(__dirname, './node_modules/stream-browserify'),
+        buffer: path.resolve(__dirname, './node_modules/@craftzdog/react-native-buffer'),
+        //net: path.resolve(__dirname, './node_modules/react-native-tcp'),
+        //os: path.resolve(__dirname, './node_modules/react-native-os'),
+        //querystring: path.resolve(__dirname, './node_modules/querystring-es3'),
+        //dgram: path.resolve(__dirname, './node_modules/react-native-udp'),
+        //stream: path.resolve(__dirname, './node_modules/readable-stream'),
+        //fs: path.resolve(__dirname, './node_modules/react-native-level-fs'),
+        //vm: path.resolve(__dirname, './node_modules/vm-browserify'),
+      }
     },
   };
 };

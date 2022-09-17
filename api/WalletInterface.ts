@@ -7,6 +7,6 @@ export default interface WalletInterface {
     signTransaction(transaction: Transaction, requireAllSignatures?: boolean, verifySignatures?: boolean, deepLinkReturnRoute?: string): Promise<Transaction>;
     //signMessage(message: string, deepLinkReturnRoute?: string): Promise<any>;
     signAndSendTransaction(transaction: Transaction, requireAllSignatures?: boolean, verifySignatures?: boolean, deepLinkReturnRoute?: string): Promise<string>;
-    //signAllTransactions(transactions: Transaction[], requireAllSignatures?: boolean, verifySignatures?: boolean, deepLinkReturnRoute?: string): Promise<Transaction[]>;
+    signAllTransactions(transactions: Transaction[], requireAllSignatures?: boolean, verifySignatures?: boolean, deepLinkReturnRoute?: string): Promise<Transaction[]>;
     //disconnect(deepLinkReturnRoute?: string): Promise<void>;
 }

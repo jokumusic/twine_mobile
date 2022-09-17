@@ -12,16 +12,18 @@ import { SolChat } from '../api/SolChat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import WalletInterface from '../api/WalletInterface';
 import { Buffer } from "buffer";
-import TokenSwapInterface from '../api/TokenSwapInterface';
+import TokenSwapInterface, { MintInfo } from '../api/TokenSwapInterface';
 //import { JupiterSwap } from '../api/JupiterSwap';
 import {MockSwap} from '../api/MockSwap';
 import Solana from '../api/Solana';
+import {ShadowDrive} from '../api/ShadowDrive';
+import { Mint } from '../constants/Mints';
 
 global.Buffer = global.Buffer || Buffer;
 
 
 //import { getProduct } from './services/ProductsService.js';
-const NETWORK = "testnet";
+const NETWORK = "devnet";
 export const TwineContext = createContext();
 
 const LOCAL_KEYPAIRS_LOOKUP_KEY = "@LocalKeyPairs";
@@ -40,6 +42,7 @@ export function TwineProvider(props) {
     let twine = useRef<Twine>(new Twine(NETWORK)).current;
     let solchat = useRef<SolChat>(new SolChat(NETWORK)).current;
     let tokenSwapper = useRef<TokenSwapInterface>(new MockSwap(NETWORK)).current;
+    let shadowDrive = useRef<ShadowDrive>(new ShadowDrive()).current;
     const [wallet, setWallet] = useState<WalletInterface>();
     const [itemCount, setItemCount] = useState(0);
     const [walletPubkey, setWalletPubkey] = useState<PublicKey>();
@@ -78,6 +81,7 @@ export function TwineProvider(props) {
                     twine.setWallet(walletToUse);
                     solchat.setWallet(walletToUse);
                     tokenSwapper.setWallet(walletToUse);
+                    shadowDrive.setWallet(walletToUse);
                     setWalletPubkey(walletToUse.getWalletPublicKey());
             }
         };
@@ -174,6 +178,7 @@ export function TwineProvider(props) {
         twine.setWallet(walletToUse);
         solchat.setWallet(walletToUse);
         tokenSwapper.setWallet(walletToUse);
+        shadowDrive.setWallet(walletToUse);
         await storeData(LOCAL_KEYPAIR_DEFAULT_PUBKEY, localWallet.keypair.publicKey.toBase58());
 
         setWalletPubkey(walletToUse.getWalletPublicKey());
@@ -186,6 +191,7 @@ export function TwineProvider(props) {
         twine.setWallet(walletToUse);
         solchat.setWallet(walletToUse);
         tokenSwapper.setWallet(walletToUse);
+        shadowDrive.setWallet(walletToUse);
         setWalletPubkey(null);
         await storeData(LOCAL_KEYPAIR_DEFAULT_PUBKEY, "phantom");
     }
@@ -290,8 +296,20 @@ export function TwineProvider(props) {
         return solana.getAccountSol(account);
     }
 
-    async function getAccountUSDC(account: PublicKey) {
-        return solana.getUsdcBalance(account);
+    async function getTokenBalance(mint: MintInfo, account: PublicKey) {
+        let balance = 0;
+        console.log('getting balance for: ', mint.name);
+        if(mint.name == Mint.SHDW.name){
+            console.log('get that shdw');
+            if(!shadowDrive)
+                console.log('no shadowdrive');
+            balance = await shadowDrive?.getTokenBalance(account) ?? 0;
+        }
+        else {
+            balance = await solana.getTokenBalance(new PublicKey(mint.address), account);
+        }
+        
+        return balance / mint.multiplier;
     }
 
     return (
@@ -322,7 +340,7 @@ export function TwineProvider(props) {
             getLocalWallets,
             getAccountLamports,
             getAccountSol,
-            getAccountUSDC,
+            getTokenBalance,
             useLocalWallet,
             usePhantomWallet,
             getCurrentWalletName,

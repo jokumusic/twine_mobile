@@ -17,6 +17,7 @@ import type { Tokenfaucet }  from "../target/types/tokenfaucet";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import Solana from '../api/Solana';
 import { Mint } from "../constants/Mints";
+import { MintInfo } from "./TokenSwapInterface";
 //import { bs58 } from '../dist/browser/types/src/utils/bytes';
 
 
@@ -48,9 +49,6 @@ export enum TicketExhaustionType {
     UsageCount=1,
     ExpirationDate=2,
 }
-
-
-
 
 export interface WriteableStoreData{
     displayName: string;
@@ -146,6 +144,7 @@ export interface Purchase {
 export enum AssetType{
     SOL,
     USDC,
+    SHDW,
 }
 
 const STORE_NAME_MAX_LEN = 100;
@@ -159,7 +158,7 @@ const tokenfauceProgramId = new PublicKey(tokenFaucetIdl.metadata.address);
 export class Twine {
     private wallet: WalletInterface;
     private connection: Connection;
-    private paymentTokenMintAddress: PublicKey;
+    private productPaymentTokenMint: MintInfo;
     private solana: Solana;
 
     constructor(network: string, wallet?: WalletInterface, ) {
@@ -167,7 +166,7 @@ export class Twine {
         this.connection = new Connection(clusterApiUrl(network));
 
         this.solana = new Solana(network);
-        [this.paymentTokenMintAddress] = PublicKey.findProgramAddressSync([anchor.utils.bytes.utf8.encode("mint")], tokenfauceProgramId);
+        this.productPaymentTokenMint = Mint.USDC;
     }
 
     getCurrentWalletPublicKey = () => this.wallet?.getWalletPublicKey();
@@ -513,7 +512,7 @@ export class Twine {
                     .createStoreProduct(
                         newProductId,
                         product.status, //productMintDecimals, 
-                        new anchor.BN(product.price * Mint.USDC.multiplier),
+                        new anchor.BN(product.price * this.productPaymentTokenMint.multiplier),
                         new anchor.BN(product.inventory),
                         product.redemptionType, 
                         product.data.displayName.toLowerCase().slice(0,),
@@ -539,7 +538,7 @@ export class Twine {
                     .createProduct(
                         newProductId,
                         product.status, //productMintDecimals, 
-                        new anchor.BN(product.price * Mint.USDC.multiplier),
+                        new anchor.BN(product.price * this.productPaymentTokenMint.multiplier),
                         new anchor.BN(product.inventory),
                         product.redemptionType, 
                         product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
@@ -592,7 +591,7 @@ export class Twine {
     
             try{
                 createdProduct.data = this.decodeData(createdProduct.data);
-                resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber() / Mint.USDC.multiplier, inventory: createdProduct.inventory.toNumber()});
+                resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber() / this.productPaymentTokenMint.multiplier, inventory: createdProduct.inventory.toNumber()});
             } catch(e) {
                 reject(e);
             }    
@@ -622,7 +621,7 @@ export class Twine {
 
             try{
                 product.data = this.decodeData(product.data);       
-                resolve({...product, address: address, price: product.price.toNumber() / Mint.USDC.multiplier, inventory: product.inventory.toNumber()});       
+                resolve({...product, address: address, price: product.price.toNumber() / this.productPaymentTokenMint.multiplier, inventory: product.inventory.toNumber()});       
             }catch(err) {
                 reject(err);
             }        
@@ -685,7 +684,7 @@ export class Twine {
             const tx = await program.methods
                 .updateProduct(
                     product.status,
-                    new anchor.BN(product.price * Mint.USDC.multiplier),
+                    new anchor.BN(product.price * this.productPaymentTokenMint.multiplier),
                     new anchor.BN(product.inventory),
                     product.redemptionType,
                     product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
@@ -724,7 +723,7 @@ export class Twine {
                 return;
         
             updatedProduct.data = this.decodeData(updatedProduct.data);
-            resolve({...updatedProduct, address: product.address, price: updatedProduct.price.toNumber() / Mint.USDC.multiplier, inventory: updatedProduct.inventory.toNumber()});
+            resolve({...updatedProduct, address: product.address, price: updatedProduct.price.toNumber() / this.productPaymentTokenMint.multiplier, inventory: updatedProduct.inventory.toNumber()});
         });
     }
 
@@ -899,7 +898,7 @@ export class Twine {
                         items.push({
                             ...product.account,
                             address: product.publicKey,
-                            price: product.account.price.toNumber() / Mint.USDC.multiplier,
+                            price: product.account.price.toNumber() / this.productPaymentTokenMint.multiplier,
                             inventory: product.account.inventory.toNumber(),
                             account_type: "product"
                         });
@@ -939,7 +938,7 @@ export class Twine {
                         const p = {
                             ...product.account,
                             address: product.publicKey,
-                            price: product.account.price.toNumber() / Mint.USDC.multiplier,
+                            price: product.account.price.toNumber() / this.productPaymentTokenMint.multiplier,
                             inventory: product.account.inventory.toNumber(),
                             account_type: "product"
                         };
@@ -974,7 +973,7 @@ export class Twine {
 
             const items = tickets.map(ticket=>{  
                 try {
-                    return {...ticket.account, price: (ticket.account?.price || 0) / Mint.USDC.multiplier,  address: ticket.publicKey};                
+                    return {...ticket.account, price: (ticket.account?.price || 0) / this.productPaymentTokenMint.multiplier,  address: ticket.publicKey};                
                 }
                 catch(e){
                     console.log('exception: ', e);
@@ -1142,23 +1141,34 @@ export class Twine {
                         lamports: BigInt(lamports)
                 });
 
-                tx.add(ix);               
+                tx.add(ix);
             }
-            else if(assetType == AssetType.USDC) {
-                const amountToSend = amount * Mint.USDC.multiplier;
-                const currentWalletUsdcAccount = await this.solana.getUsdcAccount(currentWalletPubkey);
-                if(!currentWalletUsdcAccount || currentWalletUsdcAccount.amount < amountToSend){
-                    reject("Insufficient USDC funds");
+            else {
+                const mintInfo = assetType == AssetType.USDC ? Mint.USDC
+                    : assetType == AssetType.SHDW ? Mint.SHDW
+                    : null;
+
+                if(!mintInfo){
+                    reject("Unrecognized asset type");
                     return;
                 }
 
-                const sendToUsdcAddress = await this.solana.getUsdcTokenAddress(to, false);
-                const sendToUsdcAccount = await this.solana.getUsdcAccount(to, false);
-                if(!sendToUsdcAccount) {
-                    console.log("adding create USDC account instruction");
+                const mintPubkey = new PublicKey(mintInfo.address);
+
+                const amountToSend = amount * mintInfo.multiplier;
+                const tokenAccount = await this.solana.getTokenAccount(mintPubkey, currentWalletPubkey);
+                if(!tokenAccount || tokenAccount.amount < amountToSend){
+                    reject("Insufficient funds");
+                    return;
+                }
+
+                const sendToAddress = await this.solana.getTokenAddress(mintPubkey, to, false);
+                const sendToAccount = await this.solana.getTokenAccount(mintPubkey, to, false);
+                if(!sendToAccount) {
                     const createSendToUsdcAccountIx = this.solana.createAssociatedTokenAccountInstruction(
+                        mintPubkey,
                         currentWalletPubkey,
-                        sendToUsdcAddress,
+                        sendToAddress,
                         to
                     );
 
@@ -1166,12 +1176,14 @@ export class Twine {
                 }
 
                 console.log('amountToSend: ', amountToSend);
-                const sendTokenIx = this.solana.createTokenTransferInstruction(currentWalletUsdcAccount.address, sendToUsdcAddress, currentWalletPubkey, amountToSend);
+                const sendTokenIx = this.solana.createTokenTransferInstruction(
+                    tokenAccount.address,
+                    sendToAddress,
+                    currentWalletPubkey,
+                    amountToSend
+                );
+                
                 tx.add(sendTokenIx);
-            } 
-            else {
-                reject(`unknown assetType: ${assetType}`);
-                return;
             }
 
             console.log('getting latest blockhash...');
@@ -1210,7 +1222,7 @@ export class Twine {
         
             const program = this.getProgram(deeplinkRoute);
             const nonce = generateRandomU16();
-            const transferAmount = product.price * quantity * Mint.USDC.multiplier;
+            const transferAmount = product.price * quantity * this.productPaymentTokenMint.multiplier;
 
             const [productSnapshotMetadataPda, productSnapshotMetadataPdaBump] = PublicKey.findProgramAddressSync(
             [
@@ -1234,11 +1246,12 @@ export class Twine {
                 Buffer.from(uIntToBytes(nonce,2,"setUint"))
             ], programId);
         
-            
-            const payerAtaAddress = await this.solana.getUsdcTokenAddress(currentWalletPubkey, false);
+            const paymentMintPubkey = new PublicKey(this.productPaymentTokenMint.address);
+            const payerAtaAddress = await this.solana.getTokenAddress(paymentMintPubkey, currentWalletPubkey, false);
            
-            const purchaseTicketAtaAddress = await this.solana.getUsdcTokenAddress(purchaseTicketPda, true);
+            const purchaseTicketAtaAddress = await this.solana.getTokenAddress(paymentMintPubkey, purchaseTicketPda, true);
             const createPurchaseTicketAtaIx = this.solana.createAssociatedTokenAccountInstruction(
+                paymentMintPubkey,
                 currentWalletPubkey,
                 purchaseTicketAtaAddress,
                 purchaseTicketPda,
@@ -1251,8 +1264,8 @@ export class Twine {
             );
 
 
-            const payToAtaAddress = await this.solana.getUsdcTokenAddress(product.payTo, false);
-            const payToAta = await this.solana.getUsdcAccount(product.payTo, false);        
+            const payToAtaAddress = await this.solana.getTokenAddress(paymentMintPubkey, product.payTo, false);
+            const payToAta = await this.solana.getTokenAccount(paymentMintPubkey, product.payTo, false);        
 
             const tx = new anchor.web3.Transaction()
                 .add(createPurchaseTicketAtaIx)
@@ -1261,6 +1274,7 @@ export class Twine {
             if(!payToAta) {
                 console.log("payTo ATA doesn't exist. adding instruction to create it");
                 const createPayToAtaIx = this.solana.createAssociatedTokenAccountInstruction(
+                    paymentMintPubkey,
                     currentWalletPubkey,
                     payToAtaAddress,
                     product.payTo,
@@ -1273,7 +1287,7 @@ export class Twine {
             }
 
             const buyProductIx = await program.methods
-            .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(product.price * Mint.USDC.multiplier))
+            .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(product.price * this.productPaymentTokenMint.multiplier))
             .accounts({
                 product: product.address,
                 productSnapshotMetadata: productSnapshotMetadataPda,
@@ -1284,7 +1298,7 @@ export class Twine {
                 payToTokenAccount: payToAtaAddress,
                 purchaseTicket: purchaseTicketPda,
                 purchaseTicketPayment: purchaseTicketAtaAddress,
-                purchaseTicketPaymentMint: this.paymentTokenMintAddress,
+                purchaseTicketPaymentMint: paymentMintPubkey,
             })
             .instruction();
 
