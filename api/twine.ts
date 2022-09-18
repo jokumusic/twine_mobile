@@ -15,7 +15,7 @@ import * as spl_token from "@solana/spl-token";
 import * as tokenFaucetIdl from "../target/idl/tokenfaucet.json";
 import type { Tokenfaucet }  from "../target/types/tokenfaucet";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import Solana from '../api/Solana';
+import Solana from './Solana';
 import { Mint } from "../constants/Mints";
 import { MintInfo } from "./TokenSwapInterface";
 //import { bs58 } from '../dist/browser/types/src/utils/bytes';

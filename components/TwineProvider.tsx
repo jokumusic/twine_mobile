@@ -4,7 +4,7 @@ import {
     AssetType,
     Store, WriteableStore, StoreData, WriteableStoreData,
     Product, WriteableProduct, ProductData, WriteableProductData 
-} from '../api/Twine';
+} from '../api/Twine'
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { PhantomWallet } from '../api/PhantomWallet';
 import {LocalWallet} from '../api/LocalWallet';
