@@ -35,7 +35,7 @@
     "@types/bs58": "^4.0.1",
     "@types/react-native-snap-carousel": "^3.8.5",
     "assert": "^2.0.0",
-    "big-integer": "^1.6.51",
+    "big-integer": "https://github.com/jokumusic/BigInteger.js#support-hex-in-parseStringValue()",
     "buffer": "^6.0.3",
     "compress-json": "^2.1.1",
     "expo": "^46.0.0",

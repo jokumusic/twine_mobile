@@ -40,12 +40,12 @@ export class ShadowDrive {
         if(!this.wallet)
             return;
 
-        /*
+        
         const shdwDrive = new ShdwDrive(connection, {
             signTransaction: (tx: Transaction) => this.wallet.signTransaction(tx,false,true, ""),
             signAllTransactions: (txs: Transaction[]) => this.wallet.signAllTransactions(txs,false,true,""),
             publicKey: this.wallet.getWalletPublicKey(),
-        });*/
+        });
 
         return null;/*
         return await shdwDrive  
