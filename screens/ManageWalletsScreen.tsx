@@ -74,7 +74,7 @@ export default function ManageWalletsScreen(props) {
 
     async function loadLocalWallets() {
         setShowLoadingDialog(false);
-        console.log('loading local wallets...');
+        //console.log('loading local wallets...');
         const localWallets = await twineContext.getLocalWallets() as StoredLocalWallet[];
        
         //console.log('localWallets: ', localWallets);
@@ -101,7 +101,7 @@ export default function ManageWalletsScreen(props) {
         if(!localWallets)
             return;
 
-        console.log('creating choices...');
+        //console.log('creating choices...');
         let selectedChoice = phantomWalletChoice;
         let selectedIndex = 1;
 
@@ -118,7 +118,7 @@ export default function ManageWalletsScreen(props) {
                 };
 
                 if(w.isDefault) {
-                    console.log('selected choice: ', choice.label);
+                    //console.log('selected choice: ', choice.label);
                     selectedChoice = choice;
                     selectedIndex = index;
                 }
@@ -128,7 +128,7 @@ export default function ManageWalletsScreen(props) {
                 
             const choices = [{...phantomWalletChoice, selected: selectedIndex == 1}, ...localWalletChoices];
             //console.log('choices: ', choices);
-            console.log('looks like its localwallet');
+            //console.log('looks like its localwallet');
             setWalletChoices(choices);
             setSelectedWalletChoice(selectedChoice);
             setSelectedWalletChoiceIndex(selectedIndex);
@@ -136,7 +136,7 @@ export default function ManageWalletsScreen(props) {
             setWalletMaxSpend(selectedChoice?.value?.maxSpend ?? 0);
         }
         else {
-            console.log("looks like it's phantom")
+            //console.log("looks like it's phantom")
             setWalletChoices([phantomWalletChoice]);
             setSelectedWalletChoice(phantomWalletChoice);
             setSelectedWalletChoiceIndex(selectedIndex);
@@ -151,7 +151,7 @@ export default function ManageWalletsScreen(props) {
         if(!selectedWalletChoice)
             return;
 
-        console.log('setting wallet choice: ', selectedWalletChoice.label);
+        //console.log('setting wallet choice: ', selectedWalletChoice.label);
         if(selectedWalletChoice) {
             if(selectedWalletChoice.label == "Phantom")
                 twineContext.usePhantomWallet();
