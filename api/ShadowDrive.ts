@@ -33,13 +33,17 @@ export class ShadowDrive {
         /*this.initDrive(this.connection, wallet)
             .then(d=>{
                 this.drive = d;
-            });*/
+            });
+        */
     }
 
     private async initDrive(connection: Connection, wallet: WalletInterface){
         if(!this.wallet)
             return;
 
+            return null;
+
+        /*
         const shdwDrive = new ShdwDrive(connection, {
             signTransaction: (tx: Transaction) => this.wallet.signTransaction(tx,false,true, ""),
             signAllTransactions: (txs: Transaction[]) => this.wallet.signAllTransactions(txs,false,true,""),
@@ -51,6 +55,7 @@ export class ShadowDrive {
             .catch(e=>{
                 throw new Error(e);
             });
+        */
     }
 
     async createAccount(name:string, size:string) {
@@ -76,7 +81,7 @@ export class ShadowDrive {
     }
 
     async getTokenBalance(walletPubkey: PublicKey) {
-        console.log('shadow mint: ', this.mint.address);
+        //console.log('shadow mint: ', this.mint.address);
         return this.solana.getTokenBalance(new PublicKey(this.mint.address), walletPubkey);
     }
 

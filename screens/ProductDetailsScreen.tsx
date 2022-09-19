@@ -9,7 +9,6 @@ import {
  import { Text, View, TextInput} from '../components/Themed';
  import React, { useEffect, useRef, useState, useContext } from 'react';
  import { CartContext } from '../components/CartProvider';
- //import * as twine from '../api/twine';
  import { PressableIcon, PressableImage } from '../components/Pressables';
  import CarouselCards from '../components/CarouselCards';
 import { Button, Dialog } from '@rneui/themed';

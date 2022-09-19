@@ -4,7 +4,7 @@ import {
     AssetType,
     Store, WriteableStore, StoreData, WriteableStoreData,
     Product, WriteableProduct, ProductData, WriteableProductData 
-} from '../api/Twine';
+} from '../api/Twine'
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { PhantomWallet } from '../api/PhantomWallet';
 import {LocalWallet} from '../api/LocalWallet';
@@ -76,7 +76,7 @@ export function TwineProvider(props) {
             }            
 
             if(walletToUse) {
-                    console.log('setting wallet');
+                    //console.log('setting wallet');
                     setWallet(walletToUse);
                     twine.setWallet(walletToUse);
                     solchat.setWallet(walletToUse);
@@ -298,11 +298,11 @@ export function TwineProvider(props) {
 
     async function getTokenBalance(mint: MintInfo, account: PublicKey) {
         let balance = 0;
-        console.log('getting balance for: ', mint.name);
+        //console.log('getting balance for: ', mint.name);
         if(mint.name == Mint.SHDW.name){
-            console.log('get that shdw');
             if(!shadowDrive)
-                console.log('no shadowdrive');
+                throw new Error("shadowDrive has not be instantiated.");
+            
             balance = await shadowDrive?.getTokenBalance(account) ?? 0;
         }
         else {

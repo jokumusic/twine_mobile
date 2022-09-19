@@ -35,7 +35,7 @@ export default class Solana {
       const tokenAccount = await spl_token.getAccount(this.connection, tokenAddress, 'confirmed', TOKEN_PROGRAM_ID);
       return tokenAccount;
     } catch(err) {
-      console.log('spl_token.getAccount: ', err);
+      //console.log('spl_token.getAccount: ', err);
     }
 
     return null;
