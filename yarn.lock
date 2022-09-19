@@ -55,11 +55,7 @@
     json5 "^2.2.1"
     semver "^6.3.0"
 
-<<<<<<< HEAD
-"@babel/core@^7.12.9":
-=======
 "@babel/core@^7.18.6":
->>>>>>> 60bed16ce8e12736cc9a1947cc9672db55bb786c
   version "7.19.1"
   resolved "https://registry.yarnpkg.com/@babel/core/-/core-7.19.1.tgz#c8fa615c5e88e272564ace3d42fbc8b17bfeb22b"
   integrity sha512-1H8VgqXme4UXCRv7/Wa1bq7RVymKOzC7znjyFM8KiEzwFqcKUKYNoQef4GhdklgNvoBXyW4gYhuBNCM5o1zImw==
@@ -2638,40 +2634,17 @@
   dependencies:
     "@types/react" "*"
 
-<<<<<<< HEAD
-"@types/react-native@~0.66.13":
-  version "0.66.22"
-  resolved "https://registry.yarnpkg.com/@types/react-native/-/react-native-0.66.22.tgz#7202b57ce270f657f7eb5022f31e97ee945034a3"
-  integrity sha512-AaHTLLxijfNctNyHw0mt7IOunXOnCC5pTwW0Sk63rh90I1wEhkVvQBkXfsHOaQEgql7DtN7rpNdAaUWnsbVunw==
-=======
 "@types/react-native@~0.69.1":
   version "0.69.10"
   resolved "https://registry.yarnpkg.com/@types/react-native/-/react-native-0.69.10.tgz#4334f98c50d6d9bd2a6f0ab20f7ee743fb17dbee"
   integrity sha512-EHjdhdyEgyfnv0zZwygXmhaElwt9xGsNvwoLROLYbmSI2hSYaH7om/7kG++Q7nbO6BxA8v97/9nGVowkDNdutQ==
->>>>>>> 60bed16ce8e12736cc9a1947cc9672db55bb786c
   dependencies:
     "@types/react" "*"
 
-<<<<<<< HEAD
-"@types/react@*":
-  version "18.0.20"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.0.20.tgz#e4c36be3a55eb5b456ecf501bd4a00fd4fd0c9ab"
-  integrity sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA==
-  dependencies:
-    "@types/prop-types" "*"
-    "@types/scheduler" "*"
-    csstype "^3.0.2"
-
-"@types/react@^17", "@types/react@~17.0.21":
-  version "17.0.50"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.50.tgz#39abb4f7098f546cfcd6b51207c90c4295ee81fc"
-  integrity sha512-ZCBHzpDb5skMnc1zFXAXnL3l1FAdi+xZvwxK+PkglMmBrwjpp9nKaWuEvrGnSifCJmBFGxZOOFuwC6KH/s0NuA==
-=======
 "@types/react@*", "@types/react@~18.0.0":
   version "18.0.20"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-18.0.20.tgz#e4c36be3a55eb5b456ecf501bd4a00fd4fd0c9ab"
   integrity sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA==
->>>>>>> 60bed16ce8e12736cc9a1947cc9672db55bb786c
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -3240,15 +3213,7 @@ better-opn@~3.0.2:
   dependencies:
     open "^8.0.4"
 
-<<<<<<< HEAD
-big-integer@1.6.x:
-=======
 big-integer@1.6.x, "big-integer@https://github.com/jokumusic/BigInteger.js#support-hex-in-parseStringValue()":
->>>>>>> 60bed16ce8e12736cc9a1947cc9672db55bb786c
-  version "1.6.51"
-  resolved "https://github.com/jokumusic/BigInteger.js#9b34154a3d4e0e4147465febdffd96b45964f930"
-
-"big-integer@https://github.com/jokumusic/BigInteger.js#support-hex-in-parseStringValue()":
   version "1.6.51"
   resolved "https://github.com/jokumusic/BigInteger.js#9b34154a3d4e0e4147465febdffd96b45964f930"
 
@@ -8548,18 +8513,6 @@ prompts@^2.0.1, prompts@^2.2.1, prompts@^2.3.2, prompts@^2.4.0:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-<<<<<<< HEAD
-prop-types@*, prop-types@^15.5.10, prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2, prop-types@^15.7.x:
-  version "15.8.1"
-  resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
-  integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
-  dependencies:
-    loose-envify "^1.4.0"
-    object-assign "^4.1.1"
-    react-is "^16.13.1"
-
-=======
->>>>>>> 60bed16ce8e12736cc9a1947cc9672db55bb786c
 prop-types@15.7.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
@@ -8724,17 +8677,10 @@ react-addons-shallow-compare@15.6.2:
     fbjs "^0.8.4"
     object-assign "^4.1.0"
 
-<<<<<<< HEAD
-react-devtools-core@^4.23.0:
-  version "4.26.0"
-  resolved "https://registry.yarnpkg.com/react-devtools-core/-/react-devtools-core-4.26.0.tgz#d3d0f59d62ccf1ac03017a7e92f0fe71455019cc"
-  integrity sha512-OO0Q+vXtHYCXvRQ6elLiOUph3MjsCpuYktGTLnBpizYm46f8tAPuJKihGkwsceitHSJNpzNIjJaYHgX96CyTUQ==
-=======
 react-devtools-core@4.24.0:
   version "4.24.0"
   resolved "https://registry.yarnpkg.com/react-devtools-core/-/react-devtools-core-4.24.0.tgz#7daa196bdc64f3626b3f54f2ff2b96f7c4fdf017"
   integrity sha512-Rw7FzYOOzcfyUPaAm9P3g0tFdGqGq2LLiAI+wjYcp6CsF3DeeMrRS3HZAho4s273C29G/DJhx0e8BpRE/QZNGg==
->>>>>>> 60bed16ce8e12736cc9a1947cc9672db55bb786c
   dependencies:
     shell-quote "^1.6.1"
     ws "^7"
