@@ -306,7 +306,7 @@ export default function ManageWalletsScreen(props) {
             </View>
 
             <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Max Spend: (SOL)</Text>
+                <Text style={styles.inputLabel}>Max Spend Without Prompt: (USDC)</Text>
                 <TextInput 
                     style={styles.inputBox}
                     value={walletMaxSpend?.toString()}
@@ -396,7 +396,7 @@ export default function ManageWalletsScreen(props) {
             </View>
             
             <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Max Spend: (SOL)</Text>
+                <Text style={styles.inputLabel}>Max Spend Without Prompt: (USDC)</Text>
                 <TextInput 
                     style={styles.inputBox}
                     value={walletMaxSpend?.toString()}

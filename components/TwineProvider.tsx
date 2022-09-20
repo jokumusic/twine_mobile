@@ -44,6 +44,7 @@ export function TwineProvider(props) {
     let tokenSwapper = useRef<TokenSwapInterface>(new MockSwap(NETWORK)).current;
     let shadowDrive = useRef<ShadowDrive>(new ShadowDrive()).current;
     const [wallet, setWallet] = useState<WalletInterface>();
+    const [currentLocalWallet, setCurrentLocalWallet] = useState<StoredLocalWallet>();
     const [itemCount, setItemCount] = useState(0);
     const [walletPubkey, setWalletPubkey] = useState<PublicKey>();
     const [lastCreatedStore, setLastCreatedStore] = useState<Store>();
@@ -70,8 +71,10 @@ export function TwineProvider(props) {
                 const localWallets = await getLocalWallets();
                 if(localWallets){
                     const defaultWallet = localWallets.find(w=>w.keypair.publicKey.toBase58() == defaultPubkey);
-                    if(defaultWallet)
+                    if(defaultWallet) {
+                        setCurrentLocalWallet(defaultWallet);
                         walletToUse = new LocalWallet(defaultWallet.keypair, NETWORK);
+                    }
                 }
             }            
 
@@ -171,8 +174,13 @@ export function TwineProvider(props) {
         return wallet?.getWalletName();
     }
 
+    function getCurrentWalletMaxSpend() {
+        return currentLocalWallet?.maxSpend || 0;
+    }
+
     async function useLocalWallet(localWallet: StoredLocalWallet) {
         console.log('using localwallet: ', localWallet.keypair.publicKey.toBase58());
+        setCurrentLocalWallet(localWallet);
         const walletToUse = new LocalWallet(localWallet.keypair, NETWORK);
         setWallet(walletToUse);
         twine.setWallet(walletToUse);
@@ -193,6 +201,7 @@ export function TwineProvider(props) {
         tokenSwapper.setWallet(walletToUse);
         shadowDrive.setWallet(walletToUse);
         setWalletPubkey(null);
+        setCurrentLocalWallet(null);
         await storeData(LOCAL_KEYPAIR_DEFAULT_PUBKEY, "phantom");
     }
       
@@ -346,6 +355,7 @@ export function TwineProvider(props) {
             getCurrentWalletName,
             updateLocalWallet,
             tokenSwapper,
+            getCurrentWalletMaxSpend,
         }}
         >
             {props.children}
