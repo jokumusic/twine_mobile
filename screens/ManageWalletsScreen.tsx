@@ -1,4 +1,4 @@
-import { Alert, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { View } from '../components/Themed';
 import { Button, Dialog, Icon, Text, Input} from "@rneui/themed";
 import { TwineContext, StoredLocalWallet } from '../components/TwineProvider';
@@ -13,9 +13,14 @@ import {Mint} from '../constants/Mints';
 import SelectDropdown from 'react-native-select-dropdown';
 import { AssetType } from '../api/Twine';
 import { PublicKey } from '@solana/web3.js';
+import { BarCodeScanner } from 'expo-barcode-scanner';
 
 
 const SCREEN_DEEPLINK_ROUTE = "manage_wallets";
+
+const {height, width} = Dimensions.get('window');
+const WINDOW_HEIGHT = height;
+const WINDOW_WIDTH = width;
 
 const phantomWalletChoice = {
     id:'Phantom',
@@ -55,6 +60,8 @@ export default function ManageWalletsScreen(props) {
     const [sendDialogMessage, setSendDialogMessage] = useState('');
     const [sendToAddress, setSendToAddress] = useState('');
     const [sendAsset, setSendAsset] = useState<SendAsset>({type: AssetType.SOL, amount:0});
+    const [showScannerDialog, setShowScannerDialog] = useState(false);
+    const [scanned, setScanned] = useState(false);
     
     useEffect(()=>{
         if(!showCreateWalletDialog) {
@@ -266,6 +273,13 @@ export default function ManageWalletsScreen(props) {
         setShowSendDialog(false);
     }
 
+    const handleBarCodeScanned = ({ type, data }) => {
+        setScanned(true);
+        setSendToAddress(data);
+        setShowScannerDialog(false);
+        setShowSendDialog(true);
+    };
+
 
    return (
     <ScrollView style={{alignContent: 'center',}}>
@@ -460,11 +474,20 @@ export default function ManageWalletsScreen(props) {
             <Text style={{color: 'red', fontStyle: 'italic'}}>{sendDialogMessage}</Text>
             <View style={styles.inputRow}>
                 <Text style={styles.inputLabel}>Send To Address:</Text>
-                <TextInput 
-                    style={styles.inputBox}
-                    value={sendToAddress}
-                    onChangeText={setSendToAddress}
-                />
+                
+                <View style={{flexDirection: 'row'}}>
+                    <TextInput 
+                        style={[styles.inputBox,{width: '90%'}]}
+                        value={sendToAddress}
+                        onChangeText={setSendToAddress}                        
+                    />
+                    <Button
+                        onPress={()=>{setShowSendDialog(false); setShowScannerDialog(true);}}
+                        style={{borderRadius: 6, margin: 5,}}
+                    >
+                        <Icon type="ionicon" name="scan-outline" color="blue" size={22}/>
+                    </Button>
+                </View>
             </View>
         
             <SelectDropdown 
@@ -506,6 +529,18 @@ export default function ManageWalletsScreen(props) {
                
             </View>
         </Dialog>
+
+        <Dialog
+            isVisible={showScannerDialog}
+            onBackdropPress={()=>setShowScannerDialog(false)}
+          >
+            <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>              
+              <BarCodeScanner
+                onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+                style={StyleSheet.absoluteFill}
+                />
+            </View>  
+          </Dialog>
     </ScrollView>
    );
 }
