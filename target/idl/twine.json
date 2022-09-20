@@ -39,6 +39,27 @@
       "args": []
     },
     {
+      "name": "changeFeeAccount",
+      "accounts": [
+        {
+          "name": "programMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "feeAccount",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "createStore",
       "accounts": [
         {
@@ -386,6 +407,21 @@
         },
         {
           "name": "buyFor",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "programMetadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "feeTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "feeAccount",
           "isMut": false,
           "isSigner": false
         },
@@ -848,6 +884,11 @@
       "code": 6018,
       "name": "UnableToPurchaseSnapshot",
       "msg": "purchasing snapshots is not allowed"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidTokenAccount",
+      "msg": "invalid token account"
     }
   ],
   "metadata": {

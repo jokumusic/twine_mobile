@@ -1222,7 +1222,12 @@ export class Twine {
         
             const program = this.getProgram(deeplinkRoute);
             const nonce = generateRandomU16();
-            const transferAmount = product.price * quantity * this.productPaymentTokenMint.multiplier;
+            const transferAmount = product.price * quantity * this.productPaymentTokenMint.multiplier + 10000; //+fee
+
+            const [programMetadataPda, programMetadataPdaBump] = PublicKey.findProgramAddressSync(
+            [
+                anchor.utils.bytes.utf8.encode("program_metadata"), 
+            ], program.programId);
 
             const [productSnapshotMetadataPda, productSnapshotMetadataPdaBump] = PublicKey.findProgramAddressSync(
             [
@@ -1286,6 +1291,12 @@ export class Twine {
                 //console.log('payTo ATA: ', payToAta.address.toBase58());
             }
 
+            const programMetadata = await program.account.programMetadata.fetch(programMetadataPda);
+            const feeAccountPubkey = programMetadata.feeAccount;
+            const feeTokenAccountPubkey = await spl_token.getAssociatedTokenAddress(
+                paymentMintPubkey, feeAccountPubkey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID)           
+      
+
             const buyProductIx = await program.methods
             .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(product.price * this.productPaymentTokenMint.multiplier))
             .accounts({
@@ -1299,6 +1310,9 @@ export class Twine {
                 purchaseTicket: purchaseTicketPda,
                 purchaseTicketPayment: purchaseTicketAtaAddress,
                 purchaseTicketPaymentMint: paymentMintPubkey,
+                programMetadata: programMetadataPda,
+                feeTokenAccount: feeTokenAccountPubkey,
+                feeAccount: feeAccountPubkey,                
             })
             .instruction();
 

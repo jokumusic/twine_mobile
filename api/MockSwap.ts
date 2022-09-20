@@ -10,6 +10,7 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token
 import { Mint } from "../constants/Mints";
 
 const tokenfauceProgramId = new PublicKey(tokenFaucetIdl.metadata.address);
+const USDC_MINTINFO = {name: 'USDC', address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", multiplier: 1000000} as MintInfo;
 
 export class MockSwap implements TokenSwapInterface {
     private network: string;
@@ -47,6 +48,13 @@ export class MockSwap implements TokenSwapInterface {
             if(inAmount <= 0) {
                 reject('inAmount must be greater than 0');
                 return;
+            }
+
+            if(inToken.name == Mint.USDC.name) {
+                inToken = USDC_MINTINFO;
+            }
+            if(outToken.name == Mint.USDC.name) {
+                outToken = USDC_MINTINFO;
             }
 
             const quote = await this.getOutQuote(inToken, inAmount, allowedSlippagePercent, outToken);
@@ -107,10 +115,22 @@ export class MockSwap implements TokenSwapInterface {
 
 
     async getOutQuote(inToken: MintInfo, inAmount: number, slippagePercent=1, outToken: MintInfo) {
+        if(inToken.name == Mint.USDC.name) {
+            inToken = USDC_MINTINFO;
+        }
+        if(outToken.name == Mint.USDC.name) {
+            outToken = USDC_MINTINFO;
+        }
         return this.jupiterSwap.getOutQuote(inToken, inAmount, slippagePercent, outToken);
     }
 
     async getInQuote(outToken: MintInfo, outAmount: number, slippagePercent:number = 1, inToken: MintInfo) {
+        if(inToken.name == Mint.USDC.name) {
+            inToken = USDC_MINTINFO;
+        }
+        if(outToken.name == Mint.USDC.name) {
+            outToken = USDC_MINTINFO;
+        }
         return this.jupiterSwap.getInQuote(outToken, outAmount, slippagePercent, inToken);
     }
 }
