@@ -14,6 +14,8 @@ import {
 import { Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 import {Mint} from '../constants/Mints';
+import QRCode from 'react-native-qrcode-svg';
+import { PurchaseTicket } from '../api/Twine';
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
 
@@ -25,6 +27,7 @@ import {Mint} from '../constants/Mints';
  export default function ProductDetailsScreen(props) {
    const [store, setStore] = useState<twine.Store>(props.route.params?.store ?? {})
    const [product, setProduct] = useState<twine.Product>(props.route.params.product);
+   const purchaseTicket = useRef<PurchaseTicket>(props.route.params?.purchaseTicket).current;
    const navigation = useRef(props.navigation).current;
    const { addItemToCart } = useContext(CartContext);
    const [showLoadingDialog, setShowLoadingDialog] = useState(false);
@@ -57,7 +60,7 @@ import {Mint} from '../constants/Mints';
       addItemToCart(product.address);
   }
 
-  function isAuthorizedToEditStore() {
+  function isAuthorizedToEditProduct() {
     if(!twineContext.walletPubkey)
       return false;
       
@@ -97,7 +100,7 @@ import {Mint} from '../constants/Mints';
          
       <ImageBackground style={{width: '100%', height: '100%'}} source={require('../assets/images/screen_background.jpg')}>
         <View style={{margin: 10, backgroundColor: 'rgba(52, 52, 52, .025)'}}>
-          { isAuthorizedToEditStore() &&    
+          { isAuthorizedToEditProduct() &&    
             <PressableIcon
               name="create"
               size={30}
@@ -105,7 +108,15 @@ import {Mint} from '../constants/Mints';
               onPress={() => navigation.navigate('EditProduct',{store, product})}
             />
           }
-        </View>  
+        </View>
+        {purchaseTicket?.address &&
+          <View style={{flexDirection: 'column', width: '100%', backgroundColor: 'transparent', justifyContent: 'space-around'}}>           
+              <Text style={{color:'white', fontSize: 20, alignSelf: 'center'}}>Purchase Proof</Text>
+              <View style={{alignSelf: 'center'}}>
+                <QRCode value={purchaseTicket?.address?.toBase58()}/>
+              </View>        
+          </View>
+        }
        
         <View style={styles.imagesContainer}>
           { product?.data?.images &&
