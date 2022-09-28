@@ -15,7 +15,7 @@ import { Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 import {Mint} from '../constants/Mints';
 import QRCode from 'react-native-qrcode-svg';
-import { PurchaseTicket } from '../api/Twine';
+import { PurchaseTicket, RedemptionType } from '../api/Twine';
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
 
@@ -144,12 +144,20 @@ import { PurchaseTicket } from '../api/Twine';
             product.data?.sku  &&
             <Text>Sku: {product.data?.sku}</Text>
           }
+          <Text>
+            Redemption Type: 
+            {
+              (product.redemptionType & RedemptionType.Immediate) == RedemptionType.Immediate ? "Immediate"
+              : (product.redemptionType & RedemptionType.Ticket) == RedemptionType.Ticket ? "Ticket"
+              : "Unknown"
+            }
+          </Text> 
 
           { product.isSnapshot ||
           <Button 
             title="Add To Cart"
             onPress={addToCart}
-            buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center' }}
+            buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center', marginVertical: 10 }}
             disabled={product.inventory < 1}
           />
           }

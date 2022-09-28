@@ -321,6 +321,10 @@ export function TwineProvider(props) {
         return balance / mint.multiplier;
     }
 
+    async function getPurchaseFee() {
+        return twine.getPurchaseFee();
+    }
+
     return (
         <TwineContext.Provider value={{
             connectWallet,
@@ -356,6 +360,7 @@ export function TwineProvider(props) {
             updateLocalWallet,
             tokenSwapper,
             getCurrentWalletMaxSpend,
+            getPurchaseFee
         }}
         >
             {props.children}

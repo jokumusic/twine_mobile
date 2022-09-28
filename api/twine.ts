@@ -131,7 +131,7 @@ export interface PurchaseTicket {
     readonly buyer: PublicKey;
     readonly payTo: PublicKey;
     readonly authority: PublicKey;
-    readonly quantity: number;
+    readonly remainingQuantity: number;
     readonly redeemed: number;
     readonly nonce: number;
 }
@@ -202,6 +202,18 @@ export class Twine {
             [
             anchor.utils.bytes.utf8.encode("program_metadata"), 
             ], programId);
+    }
+
+    private async getProgramMetadata() {
+        const [programMetadataPda, programMetadataPdaBump] = this.getProgramMetadataPda();
+        const program = this.getProgram("");
+        let programMetadata = await program.account.programMetadata.fetch(programMetadataPda);
+        return programMetadata;
+    }
+
+    async getPurchaseFee() : number {
+        const programMetadata = await this.getProgramMetadata();
+        return programMetadata.fee.toNumber() / Mint.USDC.multiplier;
     }
 
     private getStorePda = (creatorPubkey: PublicKey, storeId: number) => {
@@ -1221,15 +1233,11 @@ export class Twine {
             }
         
             const program = this.getProgram(deeplinkRoute);
-            const nonce = generateRandomU16();
-            const transferAmount = product.price * quantity * this.productPaymentTokenMint.multiplier + 10000; //+fee
+            const purchaseFee = (await this.getProgramMetadata()).fee.toNumber();
+            const nonce = generateRandomU16();            
+            const transferAmount = product.price * this.productPaymentTokenMint.multiplier * quantity + purchaseFee;
             console.log('transferAmount: ', transferAmount);
-
-            const [programMetadataPda, programMetadataPdaBump] = PublicKey.findProgramAddressSync(
-            [
-                anchor.utils.bytes.utf8.encode("program_metadata"), 
-            ], program.programId);
-
+            const [programMetadataPda, programMetadataPdaBump] = this.getProgramMetadataPda();
             const [productSnapshotMetadataPda, productSnapshotMetadataPdaBump] = PublicKey.findProgramAddressSync(
             [
                 anchor.utils.bytes.utf8.encode("product_snapshot_metadata"),

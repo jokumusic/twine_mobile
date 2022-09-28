@@ -36,7 +36,33 @@ export type Twine = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "fee",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "changeFee",
+      "accounts": [
+        {
+          "name": "programMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "fee",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "changeFeeAccount",
@@ -455,6 +481,149 @@ export type Twine = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "createStoreTicketTaker",
+      "accounts": [
+        {
+          "name": "ticketTaker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "taker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "store",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "storeAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createProductTicketTaker",
+      "accounts": [
+        {
+          "name": "ticketTaker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "taker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "product",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "productAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "redeemTicket",
+      "accounts": [
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketSigner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "purchaseTicketPayment",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketPaymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payToTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "programMetadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "feeTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "feeAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ticketTaker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ticketTakerSigner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -490,6 +659,10 @@ export type Twine = {
           {
             "name": "feeAccount",
             "type": "publicKey"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
           }
         ]
       }
@@ -712,7 +885,7 @@ export type Twine = {
             "type": "publicKey"
           },
           {
-            "name": "quantity",
+            "name": "remainingQuantity",
             "type": "u64"
           },
           {
@@ -722,6 +895,146 @@ export type Twine = {
           {
             "name": "nonce",
             "type": "u16"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "store",
+            "type": "publicKey"
+          },
+          {
+            "name": "payment",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ticketTaker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "taker",
+            "type": "publicKey"
+          },
+          {
+            "name": "entityType",
+            "type": "u8"
+          },
+          {
+            "name": "entity",
+            "type": "publicKey"
+          },
+          {
+            "name": "authorizedBy",
+            "type": "publicKey"
+          },
+          {
+            "name": "enabledSlot",
+            "type": "u64"
+          },
+          {
+            "name": "enabledTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "disabledSlot",
+            "type": "u64"
+          },
+          {
+            "name": "disabledTimestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "redemption",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "openSlot",
+            "type": "u64"
+          },
+          {
+            "name": "closeSlot",
+            "type": "u64"
+          },
+          {
+            "name": "openTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "closeTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "store",
+            "type": "publicKey"
+          },
+          {
+            "name": "product",
+            "type": "publicKey"
+          },
+          {
+            "name": "productSnapshotMetadata",
+            "type": "publicKey"
+          },
+          {
+            "name": "productSnapshot",
+            "type": "publicKey"
+          },
+          {
+            "name": "puchaseTicket",
+            "type": "publicKey"
+          },
+          {
+            "name": "purchaseTicketSigner",
+            "type": "publicKey"
+          },
+          {
+            "name": "buyer",
+            "type": "publicKey"
+          },
+          {
+            "name": "payTo",
+            "type": "publicKey"
+          },
+          {
+            "name": "redeemed",
+            "type": "u64"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "ticketTaker",
+            "type": "publicKey"
+          },
+          {
+            "name": "ticketTakerSigner",
+            "type": "publicKey"
           }
         ]
       }
@@ -889,6 +1202,31 @@ export type Twine = {
       "code": 6019,
       "name": "InvalidTokenAccount",
       "msg": "invalid token account"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidTicketTakerSigner",
+      "msg": "signer isn't the ticket taker"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidTicketTaker",
+      "msg": "ticket taker isn't authorized to take the ticket"
+    },
+    {
+      "code": 6022,
+      "name": "InsufficientRemainingRedemptions",
+      "msg": "not enough redemptions remain"
+    },
+    {
+      "code": 6023,
+      "name": "QuantityMustBeGreaterThanZero",
+      "msg": "quantity must be greater than zero"
+    },
+    {
+      "code": 6024,
+      "name": "IncorrectSeed",
+      "msg": "incorrect seed"
     }
   ]
 };
@@ -931,7 +1269,33 @@ export const IDL: Twine = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "fee",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "changeFee",
+      "accounts": [
+        {
+          "name": "programMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "fee",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "changeFeeAccount",
@@ -1350,6 +1714,149 @@ export const IDL: Twine = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "createStoreTicketTaker",
+      "accounts": [
+        {
+          "name": "ticketTaker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "taker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "store",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "storeAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createProductTicketTaker",
+      "accounts": [
+        {
+          "name": "ticketTaker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "taker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "product",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "productAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "redeemTicket",
+      "accounts": [
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketSigner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "purchaseTicketPayment",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketPaymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payToTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payTo",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "programMetadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "feeTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "feeAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ticketTaker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ticketTakerSigner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1385,6 +1892,10 @@ export const IDL: Twine = {
           {
             "name": "feeAccount",
             "type": "publicKey"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
           }
         ]
       }
@@ -1607,7 +2118,7 @@ export const IDL: Twine = {
             "type": "publicKey"
           },
           {
-            "name": "quantity",
+            "name": "remainingQuantity",
             "type": "u64"
           },
           {
@@ -1617,6 +2128,146 @@ export const IDL: Twine = {
           {
             "name": "nonce",
             "type": "u16"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "store",
+            "type": "publicKey"
+          },
+          {
+            "name": "payment",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ticketTaker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "taker",
+            "type": "publicKey"
+          },
+          {
+            "name": "entityType",
+            "type": "u8"
+          },
+          {
+            "name": "entity",
+            "type": "publicKey"
+          },
+          {
+            "name": "authorizedBy",
+            "type": "publicKey"
+          },
+          {
+            "name": "enabledSlot",
+            "type": "u64"
+          },
+          {
+            "name": "enabledTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "disabledSlot",
+            "type": "u64"
+          },
+          {
+            "name": "disabledTimestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "redemption",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "openSlot",
+            "type": "u64"
+          },
+          {
+            "name": "closeSlot",
+            "type": "u64"
+          },
+          {
+            "name": "openTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "closeTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "store",
+            "type": "publicKey"
+          },
+          {
+            "name": "product",
+            "type": "publicKey"
+          },
+          {
+            "name": "productSnapshotMetadata",
+            "type": "publicKey"
+          },
+          {
+            "name": "productSnapshot",
+            "type": "publicKey"
+          },
+          {
+            "name": "puchaseTicket",
+            "type": "publicKey"
+          },
+          {
+            "name": "purchaseTicketSigner",
+            "type": "publicKey"
+          },
+          {
+            "name": "buyer",
+            "type": "publicKey"
+          },
+          {
+            "name": "payTo",
+            "type": "publicKey"
+          },
+          {
+            "name": "redeemed",
+            "type": "u64"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "ticketTaker",
+            "type": "publicKey"
+          },
+          {
+            "name": "ticketTakerSigner",
+            "type": "publicKey"
           }
         ]
       }
@@ -1784,6 +2435,31 @@ export const IDL: Twine = {
       "code": 6019,
       "name": "InvalidTokenAccount",
       "msg": "invalid token account"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidTicketTakerSigner",
+      "msg": "signer isn't the ticket taker"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidTicketTaker",
+      "msg": "ticket taker isn't authorized to take the ticket"
+    },
+    {
+      "code": 6022,
+      "name": "InsufficientRemainingRedemptions",
+      "msg": "not enough redemptions remain"
+    },
+    {
+      "code": 6023,
+      "name": "QuantityMustBeGreaterThanZero",
+      "msg": "quantity must be greater than zero"
+    },
+    {
+      "code": 6024,
+      "name": "IncorrectSeed",
+      "msg": "incorrect seed"
     }
   ]
 };

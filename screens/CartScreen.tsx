@@ -122,7 +122,8 @@ export default function CartScreen(props) {
 
         if(twineContext.getCurrentWalletName() == "Local") 
         {
-            const totalNeededForCheckout = checkoutItemsTotal + (checkoutItems.length * .01); //add 1cent fee per transaction
+            const purchaseFee = await twineContext.getPurchaseFee();            
+            const totalNeededForCheckout = checkoutItemsTotal + (checkoutItems.length * purchaseFee);
             const currentMaxSpend = twineContext.getCurrentWalletMaxSpend();
             const checkoutApprovalPrompt = async () => new Promise((resolve,reject) => {
                 Alert.alert(
@@ -357,7 +358,7 @@ export default function CartScreen(props) {
                                 <ListItem.Subtitle>{purchase?.snapshot?.data?.displayDescription}</ListItem.Subtitle>
                                 <View>
                                     <Text style={{fontSize:15}}>price: ${purchase?.snapshot?.price}</Text>
-                                    <Text style={{fontSize:15}}>quantity: {purchase.ticket?.quantity?.toString()}</Text>
+                                    <Text style={{fontSize:15}}>remaining redemptions: {purchase.ticket?.remainingQuantity?.toString()}</Text>
                                     <Text style={{fontSize:15}}>redemptions: {purchase.ticket?.redeemed?.toString()}</Text>
                                     <Text style={{fontSize:15}}>slot: {purchase.ticket?.slot?.toNumber()}</Text>
                                     <Text style={{fontSize:15}}>date: {new Date(purchase.ticket?.timestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                    
