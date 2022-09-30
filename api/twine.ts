@@ -798,11 +798,11 @@ export class Twine {
                         offset: 43, //authority
                         bytes: authority.toBase58(),
                     }
-                    },
-                    {
-                        memcmp: { //not snapshot
-                            offset: 119,
-                            bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
+                },
+                {
+                    memcmp: { //not snapshot
+                        offset: 119,
+                        bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
                     }
                 },
             ]);
@@ -813,11 +813,11 @@ export class Twine {
                         offset: 75, //secondarAuthority
                         bytes: authority.toBase58(),
                     }
-                    },
-                    {
-                        memcmp: { //not snapshot
-                            offset: 119,
-                            bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
+                },
+                {
+                    memcmp: { //not snapshot
+                        offset: 119,
+                        bytes: anchor.utils.bytes.bs58.encode(Buffer.from([0])),
                     }
                 },
             ]);
@@ -1129,7 +1129,7 @@ export class Twine {
             }
             
             const program = this.getProgram();
-            const stores = await program.account.store
+            const storesByAuthorityPromise = program.account.store
                 .all([
                         {
                             memcmp: { offset: 43, bytes: authority.toBase58() }
@@ -1137,11 +1137,36 @@ export class Twine {
                 ])
                 .catch(reject);
 
+            const storesBySecondaryAuthorityPromise = program.account.store
+                .all([
+                        {
+                            memcmp: { offset: 75, bytes: authority.toBase58() }
+                        }
+                ])
+                .catch(reject);
+
+            const stores = await  Promise
+                .all([storesByAuthorityPromise,storesBySecondaryAuthorityPromise])
+                .catch(err=>reject(err));
+
             if(!stores)
                 return;
-        
-            stores.forEach((store,i)=>{  
-                try{   
+
+            const uniqueStoresMap = new Map<string,any>();
+
+            if(stores[0].length > 0)
+                stores[0].forEach(s=>uniqueStoresMap.set(s.publicKey.toBase58(), s));
+
+            if(stores[1].length > 0) {
+                stores[1].forEach(s=>{
+                    uniqueStoresMap.set(s.publicKey.toBase58(), s);
+                });
+            }
+
+            const uniqueStores = [...uniqueStoresMap.values()];
+
+            uniqueStores.forEach((store,i)=>{  
+                try{
                     if(store.account.data){
                         const parsedStoreData = JSON.parse(store.account.data);          
                         store.account.data = decompress(parsedStoreData);
