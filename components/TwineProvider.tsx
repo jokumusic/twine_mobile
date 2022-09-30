@@ -337,6 +337,14 @@ export function TwineProvider(props) {
         return twine.getRedemptionsByTicketAddress(ticketAddress);
     }
 
+    async function createProductRedemptionTaker(productAddress: PublicKey, takerAddress: PublicKey, deeplinkRoute: "") {
+        return twine.createProductRedemptionTaker(productAddress, takerAddress, deeplinkRoute);
+    }
+
+    async function getRedemptionTakersByProductAddress(productAddress: PublicKey) {
+        return twine.getRedemptionTakersByProductAddress(productAddress) ;
+    }
+
     return (
         <TwineContext.Provider value={{
             connectWallet,
@@ -376,6 +384,8 @@ export function TwineProvider(props) {
             initiateRedemption,
             takeRedemption,
             getRedemptionsByTicketAddress,
+            createProductRedemptionTaker,
+            getRedemptionTakersByProductAddress
         }}
         >
             {props.children}

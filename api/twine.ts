@@ -144,6 +144,7 @@ export interface Purchase {
 }
 
 export interface Redemption {
+    readonly address: PublicKey;
     readonly bump: number;
     readonly version: number;
     readonly initSlot: number;
@@ -162,6 +163,19 @@ export interface Redemption {
     readonly price: number;
     readonly ticketTaker: PublicKey;
     readonly ticketTakerSigner: PublicKey;
+}
+
+export interface TicketTaker {
+    readonly address: PublicKey;
+    readonly bump: number;
+    readonly version: number;
+    readonly entityType: number;
+    readonly entity: PublicKey;
+    readonly authorizedBy: PublicKey;
+    readonly enabledSlot: number;
+    readonly enabledTimestamp: number;
+    readonly disabledSlot: number;
+    readonly disabledTimestamp: number;
 }
 
 export enum AssetType{
@@ -1495,6 +1509,102 @@ export class Twine {
             resolve(redemptions);
         });        
     }
+
+    async createProductRedemptionTaker(productAddress: PublicKey, takerAddress: PublicKey, deeplinkRoute: "") {
+        return new Promise<TicketTaker>(async (resolve,reject) => {
+            const currentWalletPubkey = this.getCurrentWalletPublicKey();
+            if(!currentWalletPubkey){
+                reject('not connected to a wallet.');
+                return;
+            }
+
+            const program = this.getProgram(deeplinkRoute);
+            const [ticketTakerPda, ticketTakerPdaBump] = PublicKey.findProgramAddressSync(
+                [
+                  anchor.utils.bytes.utf8.encode("product_taker"),
+                  productAddress.toBuffer(),
+                  takerAddress.toBuffer(),        
+                ], program.programId);
+
+
+            const tx = await program.methods
+                .createProductTicketTaker()
+                .accounts({
+                    ticketTaker: ticketTakerPda,
+                    taker: takerAddress,
+                    product: productAddress,
+                    productAuthority: currentWalletPubkey,
+                })
+                .transaction();
+
+            tx.feePayer = currentWalletPubkey;          
+            tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+            const txSignature = await this.wallet
+                .signAndSendTransaction(tx, false, true, deeplinkRoute)
+                .catch(reject);
+    
+            console.log('created product redemption taker signature: ', txSignature);            
+            if(!txSignature)
+                return;
+    
+            console.log('waiting for finalization of transaction...');
+            const confirmationResponse = await this.connection
+                .confirmTransaction(txSignature, 'finalized')
+                .catch(reject);
+
+            if(!confirmationResponse)
+                return;
+    
+            const ticketTaker = await program.account.ticketTaker
+                .fetch(ticketTakerPda)
+                .catch(reject);
+
+            if(!ticketTaker)
+                return;
+        
+            resolve({...ticketTaker, address: ticketTakerPda});
+        });
+    }
+
+
+    private getRedemptionTakers(filters?: Buffer | web3.GetProgramAccountsFilter[], additionalFilterString?: string) {
+        return new Promise<TicketTaker[]>(async (resolve,reject) => {            
+            const program = this.getProgram();
+            const takers = await program.account.ticketTaker
+                .all(filters)
+                .catch(reject);
+
+            if(!takers)
+                return;
+
+            const items = takers.map(taker=>{  
+                try {
+                    return {...taker.account, address: taker.publicKey};                
+                }
+                catch(e){
+                    console.log('exception: ', e);
+                }
+            });
+
+            resolve(items);
+        });
+    }
+
+    async getRedemptionTakersByProductAddress(productAddress: PublicKey) {
+        return new Promise<TicketTaker[]>(async (resolve,reject) => {
+            if(!productAddress){
+                reject('productAddress not specified');
+                return;
+            }
+            
+            const takers = await this.getRedemptionTakers([{ memcmp: { offset: 43, bytes: productAddress.toBase58() }}])
+                .catch(reject);
+            
+            resolve(takers);
+        });        
+    }
+
+
 
     async takeRedemption(redemptionAddress: PublicKey, deeplinkRoute: "") {
         return new Promise<Redemption>(async (resolve,reject) => {

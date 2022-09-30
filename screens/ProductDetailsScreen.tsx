@@ -11,17 +11,21 @@ import {
  import { CartContext } from '../components/CartProvider';
  import { PressableIcon, PressableImage } from '../components/Pressables';
  import CarouselCards from '../components/CarouselCards';
-import { Button, Dialog, ListItem } from '@rneui/themed';
+import { Button, Dialog, Icon, ListItem } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 import {Mint} from '../constants/Mints';
 import QRCode from 'react-native-qrcode-svg';
-import { PurchaseTicket, RedemptionType, Store, Product, Redemption } from '../api/Twine';
+import { PurchaseTicket, RedemptionType, Store, Product, Redemption, TicketTaker } from '../api/Twine';
+import { BarCodeScanner } from 'expo-barcode-scanner';
+import { PublicKey } from '@solana/web3.js';
 
- const SCREEN_DEEPLINK_ROUTE = "stores";
+const SCREEN_DEEPLINK_ROUTE = "stores";
 
- const WINDOW_WIDTH = Dimensions.get('window').width;
- const SLIDER_WIDTH = WINDOW_WIDTH;
- const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
+const {height, width} = Dimensions.get('window');
+const WINDOW_HEIGHT = height;
+const WINDOW_WIDTH = width;
+const SLIDER_WIDTH = WINDOW_WIDTH;
+const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
 
 
  export default function ProductDetailsScreen(props) {
@@ -33,6 +37,11 @@ import { PurchaseTicket, RedemptionType, Store, Product, Redemption } from '../a
    const [showLoadingDialog, setShowLoadingDialog] = useState(false);
    const twineContext = useContext(TwineContext);
    const [redemptions, setRedemptions] = useState<Redemption[]>([]);
+   const [showTicketTakerDialog, setShowTicketTakerDialog] = useState(false);
+   const [showScannerDialog, setShowScannerDialog] = useState(false);
+   const [scanned, setScanned] = useState(false);
+   const [newTakerAddress, setNewTakerAddress] = useState("");
+   const [takers, setTakers] = useState<TicketTaker[]>([]);
 
 
    useEffect(()=>{
@@ -69,7 +78,7 @@ import { PurchaseTicket, RedemptionType, Store, Product, Redemption } from '../a
         setRedemptions(items);
         setShowLoadingDialog(false);
     })();    
-   }, [purchaseTicket])
+   }, [purchaseTicket]);
       
   async function addToCart() {
     console.log('adding to cart');
@@ -116,6 +125,38 @@ import { PurchaseTicket, RedemptionType, Store, Product, Redemption } from '../a
     );
   }
 
+  useEffect(()=>{
+    if(!showTicketTakerDialog)
+      return;
+
+    console.log('getting takers');
+    setShowLoadingDialog(true);
+    (async () => {
+      const items = await twineContext
+        .getRedemptionTakersByProductAddress(product.address)
+        .catch(console.log);
+      
+        setTakers(items);
+        setShowLoadingDialog(false);
+    })();    
+   }, [purchaseTicket]);
+
+  const handleBarCodeScanned = ({ type, data }) => {
+    setScanned(true);
+    setNewTakerAddress(data);
+    setShowScannerDialog(false);
+    setShowTicketTakerDialog(true);
+  };
+
+  async function addProductRedemptionTaker() {
+    const taker = await twineContext
+      .createProductRedemptionTaker(product.address, new PublicKey(newTakerAddress))
+      .catch(console.log);
+    
+    setTakers(takers.concat(taker));
+    console.log('taker: ', taker);
+  }
+
   return (         
     <View style={styles.container}>
       <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
@@ -123,16 +164,24 @@ import { PurchaseTicket, RedemptionType, Store, Product, Redemption } from '../a
       </Dialog>
          
       <ImageBackground style={{width: '100%', height: '100%'}} source={require('../assets/images/screen_background.jpg')}>
-        <View style={{margin: 10, backgroundColor: 'rgba(52, 52, 52, .025)'}}>
-          { isAuthorizedToEditProduct() &&    
-            <PressableIcon
-              name="create"
-              size={30}
-              style={{ marginRight: 15 }}
-              onPress={() => navigation.navigate('EditProduct',{store, product})}
-            />
+        
+          { isAuthorizedToEditProduct() && 
+            <View style={{margin: 10, backgroundColor: 'transparent', flexDirection: 'row'}}>
+              <PressableIcon
+                name="create-outline"
+                size={30}
+                style={{ marginRight: 15 }}
+                onPress={() => navigation.navigate('EditProduct',{store, product})}
+              />
+              <PressableIcon
+                name="shield-checkmark-outline"
+                size={30}
+                style={{ marginRight: 15 }}
+                onPress={() => setShowTicketTakerDialog(true)}
+              />
+            </View>
           }
-        </View>
+      
         {purchaseTicket && purchaseTicket.remainingQuantity > 0 &&
           <View style={{flexDirection: 'column', width: '100%', backgroundColor: 'transparent', justifyContent: 'space-around'}}>                   
               <Button 
@@ -212,6 +261,79 @@ import { PurchaseTicket, RedemptionType, Store, Product, Redemption } from '../a
           }  
         </ScrollView>
       </ImageBackground>
+
+      <Dialog 
+        isVisible={showTicketTakerDialog}
+        onBackdropPress={()=>{setShowTicketTakerDialog(false);}}
+      >
+            <Dialog.Title title="Ticket Takers"/>
+            <Text>
+                Manage who can process ticket redemptions
+            </Text>
+         
+            <View style={styles.inputRow}>
+                <Text style={styles.inputLabel}>New Taker:</Text>
+                <View style={{flexDirection: 'row'}}>
+                  <TextInput
+                      value={newTakerAddress}
+                      placeholder="taker's public key"  
+                      style={styles.inputBox}
+                      onChangeText={(t)=>setNewTakerAddress(t)}
+                  />
+                  <Button
+                    onPress={()=>{setShowTicketTakerDialog(false); setShowScannerDialog(true);}}
+                    style={{borderRadius: 6, margin: 5,}}
+                  >
+                    <Icon type="ionicon" name="scan-outline" color="blue" size={22}/>
+                  </Button>
+                
+                  <Button
+                    onPress={()=>addProductRedemptionTaker()}
+                    style={{borderRadius: 6, margin: 5,}}
+                  >
+                    <Icon type="ionicon" name="add" color="blue" size={22}/>
+                  </Button>
+                </View>
+            </View>
+
+            <ScrollView>
+            {
+              takers.map((taker, i) => (
+                <ListItem
+                    key={"productTaker" + taker.address?.toBase58()}
+                    bottomDivider
+                    containerStyle={{marginTop: 10, borderTopWidth: 1}}
+                >
+                    <ListItem.Content >
+                        <View style={{flexDirection: 'row'}}>              
+                            <QRCode value={taker.address?.toBase58()} size={40}/>
+                            <View style={{marginLeft: 10}}>
+                              <Text style={{fontSize:15}}>enabled: {new Date(taker.enabledTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                              { taker.disabledTimestamp > 0 &&
+                                <Text style={{fontSize:15}}>disabled : {new Date(taker.disabledTimestamp.toNumber() * 1000).toLocaleString("en-us")}</Text>                                        
+                              }
+                            </View>
+                        </View>
+                    </ListItem.Content>
+                </ListItem>
+              ))              
+          }
+          </ScrollView>
+
+           
+        </Dialog>
+
+        <Dialog
+            isVisible={showScannerDialog}
+            onBackdropPress={()=>{setShowScannerDialog(false); setShowTicketTakerDialog(true);}}
+        >
+          <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>              
+            <BarCodeScanner
+              onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+              style={StyleSheet.absoluteFill}
+              />
+          </View>  
+        </Dialog>
     </View>
     );
       
@@ -274,6 +396,37 @@ import { PurchaseTicket, RedemptionType, Store, Product, Redemption } from '../a
       //height: WINDOW_WIDTH /2
       width: '35%',//WINDOW_WIDTH/2,
       height: '100%',
+    },
+    inputSection: {
+      flex: 1,
+      alignContent: 'flex-start',
+      padding: 10,
+      marginTop: 10,
+      borderWidth: 2,
+      backgroundColor: '#DDDDDD',
+      width:'95%',
+      alignSelf: 'center',
+      borderRadius: 20,
+    },
+    inputLabel:{
+      fontWeight: 'bold',
+      fontSize: 12,
+      alignContent:'flex-start'
+    },
+    inputBox:{
+      borderWidth: 1,
+      alignContent: 'flex-start',
+      height: 40,
+      marginBottom: 10,
+    },
+    textBox: {
+      borderWidth: 0,
+      alignContent: 'flex-start',
+      height: 40,
+      marginBottom: 10,
+    },
+    inputRow:{
+      margin: 5,
     },
 
    });
