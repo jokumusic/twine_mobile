@@ -181,18 +181,20 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
   };
 
   const onRedemptionScanned = async ({ type, data }) => {
+    const redemptionAddress = data;
     let redemption = await twineContext
-      .getRedemptionByAddress(data)
+      .getRedemptionByAddress(redemptionAddress)
       .catch(console.log);
   
     if(redemption && redemption?.closeTimestamp == 0) {
       console.log('processing redemption');
       redemption = await twineContext
-        .takeRedemption(data, SCREEN_DEEPLINK_ROUTE)
+        .takeRedemption(redemptionAddress, SCREEN_DEEPLINK_ROUTE)
         .catch(console.log);
     }
 
-    if(redemption?.product && product.address.equals(redemption.product) && redemption.closeTimestamp > 0)
+    console.log('redemption: ', redemption);
+    if(redemption && redemption.address == redemptionAddress && product.address.equals(redemption.product) && redemption.closeTimestamp > 0)
     {
       setScannedRedemptionIsValid(true);
     }
