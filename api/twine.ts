@@ -133,12 +133,35 @@ export interface PurchaseTicket {
     readonly authority: PublicKey;
     readonly remainingQuantity: number;
     readonly redeemed: number;
+    readonly pendingRedemption: number;
     readonly nonce: number;
+    readonly payment: PublicKey;
 }
 
 export interface Purchase {
     readonly purchaseTicket: PurchaseTicket;
     readonly productSnapshot: Product;
+}
+
+export interface Redemption {
+    readonly bump: number;
+    readonly version: number;
+    readonly initSlot: number;
+    readonly closeSlot: number;
+    readonly initTimestamp: number;
+    readonly closeTimestamp: number;
+    readonly store: PublicKey;
+    readonly product: PublicKey;
+    readonly productSnapshotMetadata: PublicKey;
+    readonly productSnapshot: PublicKey;
+    readonly purchaseTicket: PublicKey;
+    readonly purchaseTicketSigner: PublicKey;
+    readonly buyer: PublicKey;
+    readonly payTo: PublicKey;
+    readonly redeemQuantity: PublicKey;
+    readonly price: number;
+    readonly ticketTaker: PublicKey;
+    readonly ticketTakerSigner: PublicKey;
 }
 
 export enum AssetType{
@@ -1359,5 +1382,203 @@ export class Twine {
             resolve({...purchaseTicket, address: purchaseTicketPda});
         });
     }
+
+ 
+
+    async initiateRedemption(ticket: PurchaseTicket, redeemQuantity: number, deeplinkRoute: "") {
+        return new Promise<Redemption>(async (resolve,reject) => {
+            if(redeemQuantity > ticket.remainingQuantity) {
+                reject(`Not enough redemptions remain(${ticket.remainingQuantity}) in PurchaseTicket for ${redeemQuantity} redemptions`);
+                return;
+            }
+
+            const currentWalletPubkey = this.getCurrentWalletPublicKey();
+            if(!currentWalletPubkey){
+                reject('not connected to a wallet.');
+                return;
+            }
+            
+            const program = this.getProgram("");
+            const paymentTokenMintAddress = new PublicKey(this.productPaymentTokenMint.address);
+            const [redemptionPda, redemptionPdaBump] = PublicKey.findProgramAddressSync(
+                [
+                  anchor.utils.bytes.utf8.encode("redemption"),
+                  ticket.address.toBuffer(),
+                  new anchor.BN(ticket.remainingQuantity).toArrayLike(Buffer, 'be', 8),
+                ], program.programId);
+
+                console.log('programId: ', program.programId.toBase58());
+                console.log('ticket addr: ', ticket.address.toBase58());
+                console.log('tick auth: ', ticket.authority.toBase58());
+                console.log('tick pay: ', ticket.payment.toBase58());
+                console.log('tick mint: ', paymentTokenMintAddress.toBase58());
+                console.log('tick snap meta: ', ticket.productSnapshotMetadata.toBase58());
+                console.log('tick buyer: ', ticket.buyer.toBase58());
+                console.log('tick nonce: ', ticket.nonce);
+                console.log('redemption addr: ', redemptionPda.toBase58());
+            
+
+            const tx = await program.methods
+                .initiateRedemption(new anchor.BN(redeemQuantity))
+                .accounts({
+                    redemption: redemptionPda,
+                    purchaseTicket: ticket.address,
+                    purchaseTicketAuthority: ticket.authority,
+                    purchaseTicketPayment: ticket.payment,
+                    purchaseTicketPaymentMint: paymentTokenMintAddress,
+                })
+                .transaction();
+            
+            tx.feePayer = currentWalletPubkey;          
+            tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+            const txSignature = await this.wallet
+                .signAndSendTransaction(tx, false, true, deeplinkRoute)
+                .catch(reject);
+
+            console.log('initiate redemption signature: ', txSignature);            
+            if(!txSignature)
+                return;
+
+            console.log('waiting for finalization of transaction...');
+            const confirmationResponse = await this.connection
+                .confirmTransaction(txSignature, 'finalized')
+                .catch(reject);
+
+            if(!confirmationResponse)
+                return;
+    
+            const redemption = await program.account
+                .redemption
+                .fetch(redemptionPda)
+                .catch(reject);
+
+            if(!redemption)
+                return;
+    
+            resolve({...redemption, address: redemptionPda});
+        });
+    }
+
+    private getRedemptions(filters?: Buffer | web3.GetProgramAccountsFilter[], additionalFilterString?: string) {
+        return new Promise<Redemption[]>(async (resolve,reject) => {            
+            const program = this.getProgram();
+            const redemptions = await program.account.redemption
+                .all(filters)
+                .catch(reject);
+
+            if(!redemptions)
+                return;
+
+            const items = redemptions.map(redemption=>{  
+                try {
+                    return {...redemption.account, address: redemption.publicKey};                
+                }
+                catch(e){
+                    console.log('exception: ', e);
+                }
+            });
+
+            resolve(items);
+        });
+    }
+
+    async getRedemptionsByTicketAddress(ticketAddress: PublicKey) {
+        return new Promise<Redemption[]>(async (resolve,reject) => {
+            if(!ticketAddress){
+                reject('ticketAddress not specified');
+                return;
+            }
+            
+            const redemptions = await this.getRedemptions([{ memcmp: { offset: 170, bytes: ticketAddress.toBase58() }}])
+                .catch(reject);
+            
+            resolve(redemptions);
+        });        
+    }
+
+    async takeRedemption(redemptionAddress: PublicKey, deeplinkRoute: "") {
+        return new Promise<Redemption>(async (resolve,reject) => {
+            const currentWalletPubkey = this.getCurrentWalletPublicKey();
+            if(!currentWalletPubkey){
+                reject('not connected to a wallet.');
+                return;
+            }
+
+            const program = this.getProgram("");
+            const redemption = await program.account.redemption.fetch(redemptionAddress);
+            const purchaseTicket = await program.account.purchaseTicket.fetch(redemption.purchaseTicket);
+            const paymentTokenMintAddress = new PublicKey(this.productPaymentTokenMint.address);
+            const payToTokenAccountAddress = await spl_token.getAssociatedTokenAddress(paymentTokenMintAddress, redemption.payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+            const [productTicketTakerPda, productTicketTakerPdaBump] = PublicKey.findProgramAddressSync(
+              [
+                anchor.utils.bytes.utf8.encode("product_taker"),
+                purchaseTicket.product.toBuffer(),
+                currentWalletPubkey.toBuffer(),        
+              ], program.programId);
+            const [storeTicketTakerPda, storeTicketTakerPdaBump] = PublicKey.findProgramAddressSync(
+              [
+                anchor.utils.bytes.utf8.encode("store_taker"),
+                purchaseTicket.store.toBuffer(),
+                currentWalletPubkey.toBuffer(),        
+              ], program.programId);
+  
+            let ticketTakerAddress = productTicketTakerPda;
+            let ticketTakerAccount = await program.account.ticketTaker.fetchNullable(productTicketTakerPda);
+            
+            if(!ticketTakerAccount) {
+              ticketTakerAddress = storeTicketTakerPda;
+              ticketTakerAccount = await program.account.ticketTaker.fetchNullable(storeTicketTakerPda);
+            }
+
+            if(!ticketTakerAccount){
+                reject('not authorized to take redemption');
+                return;
+            }
+    
+            const tx = await program.methods
+            .takeRedemption()
+            .accounts({
+              purchaseTicket: redemption.purchaseTicket,
+              redemption: redemptionAddress,
+              ticketTaker: ticketTakerAddress,
+              ticketTakerSigner: currentWalletPubkey,
+              purchaseTicketPayment: purchaseTicket.payment,
+              purchaseTicketPaymentMint: paymentTokenMintAddress,
+              payToTokenAccount: payToTokenAccountAddress,
+              payTo: redemption.payTo,
+            })
+            .transaction();
+        
+            tx.feePayer = currentWalletPubkey;          
+            tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+            const txSignature = await this.wallet
+                .signAndSendTransaction(tx, false, true, deeplinkRoute)
+                .catch(reject);
+
+            console.log('initiate redemption signature: ', txSignature);            
+            if(!txSignature)
+                return;
+
+            console.log('waiting for finalization of transaction...');
+            const confirmationResponse = await this.connection
+                .confirmTransaction(txSignature, 'finalized')
+                .catch(reject);
+
+            if(!confirmationResponse)
+                return;
+    
+            const updatedRedemption = await program.account
+                .redemption
+                .fetch(redemptionAddress)
+                .catch(reject);
+
+            if(!redemption)
+                return;
+    
+            resolve({...updatedRedemption, address: redemptionAddress});            
+        });
+    }
+
+
 }
 

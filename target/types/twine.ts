@@ -545,7 +545,48 @@ export type Twine = {
       "args": []
     },
     {
-      "name": "redeemTicket",
+      "name": "initiateRedemption",
+      "accounts": [
+        {
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "purchaseTicketPayment",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketPaymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "takeRedemption",
       "accounts": [
         {
           "name": "purchaseTicket",
@@ -553,8 +594,18 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "purchaseTicketSigner",
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ticketTaker",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ticketTakerSigner",
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -578,52 +629,12 @@ export type Twine = {
           "isSigner": false
         },
         {
-          "name": "programMetadata",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "feeTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "feeAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "ticketTaker",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "ticketTakerSigner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "redemption",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "quantity",
-          "type": "u64"
-        }
-      ]
+      "args": []
     }
   ],
   "accounts": [
@@ -893,6 +904,10 @@ export type Twine = {
             "type": "u64"
           },
           {
+            "name": "pendingRedemption",
+            "type": "u64"
+          },
+          {
             "name": "nonce",
             "type": "u16"
           },
@@ -973,7 +988,7 @@ export type Twine = {
             "type": "u8"
           },
           {
-            "name": "openSlot",
+            "name": "initSlot",
             "type": "u64"
           },
           {
@@ -981,7 +996,7 @@ export type Twine = {
             "type": "u64"
           },
           {
-            "name": "openTimestamp",
+            "name": "initTimestamp",
             "type": "i64"
           },
           {
@@ -1005,7 +1020,7 @@ export type Twine = {
             "type": "publicKey"
           },
           {
-            "name": "puchaseTicket",
+            "name": "purchaseTicket",
             "type": "publicKey"
           },
           {
@@ -1021,7 +1036,7 @@ export type Twine = {
             "type": "publicKey"
           },
           {
-            "name": "redeemed",
+            "name": "redeemQuantity",
             "type": "u64"
           },
           {
@@ -1227,6 +1242,16 @@ export type Twine = {
       "code": 6024,
       "name": "IncorrectSeed",
       "msg": "incorrect seed"
+    },
+    {
+      "code": 6025,
+      "name": "AlreadyProcessed",
+      "msg": "already processed"
+    },
+    {
+      "code": 6026,
+      "name": "AlreadyRedeemed",
+      "msg": "already redeemed"
     }
   ]
 };
@@ -1778,7 +1803,48 @@ export const IDL: Twine = {
       "args": []
     },
     {
-      "name": "redeemTicket",
+      "name": "initiateRedemption",
+      "accounts": [
+        {
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "purchaseTicketPayment",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketPaymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "takeRedemption",
       "accounts": [
         {
           "name": "purchaseTicket",
@@ -1786,8 +1852,18 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "purchaseTicketSigner",
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ticketTaker",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ticketTakerSigner",
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -1811,52 +1887,12 @@ export const IDL: Twine = {
           "isSigner": false
         },
         {
-          "name": "programMetadata",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "feeTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "feeAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "ticketTaker",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "ticketTakerSigner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "redemption",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "quantity",
-          "type": "u64"
-        }
-      ]
+      "args": []
     }
   ],
   "accounts": [
@@ -2126,6 +2162,10 @@ export const IDL: Twine = {
             "type": "u64"
           },
           {
+            "name": "pendingRedemption",
+            "type": "u64"
+          },
+          {
             "name": "nonce",
             "type": "u16"
           },
@@ -2206,7 +2246,7 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
-            "name": "openSlot",
+            "name": "initSlot",
             "type": "u64"
           },
           {
@@ -2214,7 +2254,7 @@ export const IDL: Twine = {
             "type": "u64"
           },
           {
-            "name": "openTimestamp",
+            "name": "initTimestamp",
             "type": "i64"
           },
           {
@@ -2238,7 +2278,7 @@ export const IDL: Twine = {
             "type": "publicKey"
           },
           {
-            "name": "puchaseTicket",
+            "name": "purchaseTicket",
             "type": "publicKey"
           },
           {
@@ -2254,7 +2294,7 @@ export const IDL: Twine = {
             "type": "publicKey"
           },
           {
-            "name": "redeemed",
+            "name": "redeemQuantity",
             "type": "u64"
           },
           {
@@ -2460,6 +2500,16 @@ export const IDL: Twine = {
       "code": 6024,
       "name": "IncorrectSeed",
       "msg": "incorrect seed"
+    },
+    {
+      "code": 6025,
+      "name": "AlreadyProcessed",
+      "msg": "already processed"
+    },
+    {
+      "code": 6026,
+      "name": "AlreadyRedeemed",
+      "msg": "already redeemed"
     }
   ]
 };

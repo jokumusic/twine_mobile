@@ -360,7 +360,7 @@ export default function CartScreen(props) {
                                     <Text style={{fontSize:15}}>price: ${purchase?.snapshot?.price}</Text>
                                     <Text style={{fontSize:15}}>remaining redemptions: {purchase.ticket?.remainingQuantity?.toString()}</Text>
                                     <Text style={{fontSize:15}}>redemptions: {purchase.ticket?.redeemed?.toString()}</Text>
-                                    <Text style={{fontSize:15}}>slot: {purchase.ticket?.slot?.toNumber()}</Text>
+                                    <Text style={{fontSize:15}}>pending redemptions: {purchase.ticket?.pendingRedemption?.toNumber()}</Text>
                                     <Text style={{fontSize:15}}>date: {new Date(purchase.ticket?.timestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                    
                                 </View>
                             </ListItem.Content>

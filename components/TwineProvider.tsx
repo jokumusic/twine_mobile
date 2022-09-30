@@ -3,7 +3,7 @@ import {
     Twine,
     AssetType,
     Store, WriteableStore, StoreData, WriteableStoreData,
-    Product, WriteableProduct, ProductData, WriteableProductData 
+    Product, WriteableProduct, ProductData, WriteableProductData, PurchaseTicket 
 } from '../api/Twine'
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { PhantomWallet } from '../api/PhantomWallet';
@@ -325,6 +325,18 @@ export function TwineProvider(props) {
         return twine.getPurchaseFee();
     }
 
+    async function initiateRedemption(purchaseTicket: PurchaseTicket, redeemQuantity: number, deeplinkRoute: "") {
+        return twine.initiateRedemption(purchaseTicket, redeemQuantity, deeplinkRoute);
+    }
+
+    async function takeRedemption(redemptionAddress: PublicKey, deeplinkRoute: "") {
+        return twine.takeRedemption(redemptionAddress, deeplinkRoute);
+    }
+
+    async function getRedemptionsByTicketAddress(ticketAddress: PublicKey) {
+        return twine.getRedemptionsByTicketAddress(ticketAddress);
+    }
+
     return (
         <TwineContext.Provider value={{
             connectWallet,
@@ -360,7 +372,10 @@ export function TwineProvider(props) {
             updateLocalWallet,
             tokenSwapper,
             getCurrentWalletMaxSpend,
-            getPurchaseFee
+            getPurchaseFee,
+            initiateRedemption,
+            takeRedemption,
+            getRedemptionsByTicketAddress,
         }}
         >
             {props.children}

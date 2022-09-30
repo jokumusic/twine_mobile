@@ -11,11 +11,11 @@ import {
  import { CartContext } from '../components/CartProvider';
  import { PressableIcon, PressableImage } from '../components/Pressables';
  import CarouselCards from '../components/CarouselCards';
-import { Button, Dialog } from '@rneui/themed';
+import { Button, Dialog, ListItem } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 import {Mint} from '../constants/Mints';
 import QRCode from 'react-native-qrcode-svg';
-import { PurchaseTicket, RedemptionType } from '../api/Twine';
+import { PurchaseTicket, RedemptionType, Store, Product, Redemption } from '../api/Twine';
 
  const SCREEN_DEEPLINK_ROUTE = "stores";
 
@@ -25,13 +25,14 @@ import { PurchaseTicket, RedemptionType } from '../api/Twine';
 
 
  export default function ProductDetailsScreen(props) {
-   const [store, setStore] = useState<twine.Store>(props.route.params?.store ?? {})
-   const [product, setProduct] = useState<twine.Product>(props.route.params.product);
-   const purchaseTicket = useRef<PurchaseTicket>(props.route.params?.purchaseTicket).current;
+   const [store, setStore] = useState<Store>(props.route.params?.store ?? {})
+   const [product, setProduct] = useState<Product>(props.route.params.product);
+   const [purchaseTicket, setPurchaseTicket] = useState<PurchaseTicket>(props.route.params?.purchaseTicket);
    const navigation = useRef(props.navigation).current;
    const { addItemToCart } = useContext(CartContext);
    const [showLoadingDialog, setShowLoadingDialog] = useState(false);
    const twineContext = useContext(TwineContext);
+   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
 
 
    useEffect(()=>{
@@ -50,7 +51,25 @@ import { PurchaseTicket, RedemptionType } from '../api/Twine';
         })
         .catch(err=>Alert.alert("error", err))
         .finally(()=>{setShowLoadingDialog(false);});
+
+
    },[twineContext.lastUpdatedProduct]);
+
+   useEffect(()=>{
+    if(!purchaseTicket)
+      return;
+
+    console.log('getting redemptions');
+    setShowLoadingDialog(true);
+    (async () => {
+      const items = await twineContext
+        .getRedemptionsByTicketAddress(purchaseTicket.address)
+        .catch(console.log);
+      
+        setRedemptions(items);
+        setShowLoadingDialog(false);
+    })();    
+   }, [purchaseTicket])
       
   async function addToCart() {
     console.log('adding to cart');
@@ -74,6 +93,11 @@ import { PurchaseTicket, RedemptionType } from '../api/Twine';
       return false;
     
     return twineContext.walletPubkey.equals(product.authority) || twineContext.walletPubkey.equals(product.secondaryAuthority);
+  }
+
+  async function redeem(){
+    const redemption = await twineContext.initiateRedemption(purchaseTicket, 1, SCREEN_DEEPLINK_ROUTE);
+    console.log('got redemption: ', redemption);
   }
 
   function carouselRenderImage({ item, index}) {
@@ -109,12 +133,14 @@ import { PurchaseTicket, RedemptionType } from '../api/Twine';
             />
           }
         </View>
-        {purchaseTicket?.address &&
-          <View style={{flexDirection: 'column', width: '100%', backgroundColor: 'transparent', justifyContent: 'space-around'}}>           
-              <Text style={{color:'white', fontSize: 20, alignSelf: 'center'}}>Purchase Proof</Text>
-              <View style={{alignSelf: 'center'}}>
-                <QRCode value={purchaseTicket?.address?.toBase58()}/>
-              </View>        
+        {purchaseTicket && purchaseTicket.remainingQuantity > 0 &&
+          <View style={{flexDirection: 'column', width: '100%', backgroundColor: 'transparent', justifyContent: 'space-around'}}>                   
+              <Button 
+                title="Reedeem"
+                onPress={()=>redeem()}
+                buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center', marginVertical: 10 }}
+                disabled={purchaseTicket.remainingQuantity <= 0}
+              />
           </View>
         }
        
@@ -161,6 +187,29 @@ import { PurchaseTicket, RedemptionType } from '../api/Twine';
             disabled={product.inventory < 1}
           />
           }
+
+          {
+            redemptions.map((redemption, i) => (
+            <ListItem
+                key={"redemption" + redemption.address?.toBase58()}
+                bottomDivider
+                containerStyle={{marginTop: 10, borderTopWidth: 1}}
+            >
+                <ListItem.Content >
+                    <View style={{flexDirection: 'row'}}>              
+                        <QRCode value={redemption.address?.toBase58()} size={60}/>
+                        <View style={{marginLeft: 10}}>
+                          <Text style={{fontSize:15}}>quantity: {redemption.redeemQuantity.toString()}</Text>
+                          <Text style={{fontSize:15}}>initiated : {new Date(redemption.initTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                          { redemption.closeTimestamp > 0 &&
+                            <Text style={{fontSize:15}}>closed : {new Date(redemption.closeTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                        
+                          }
+                        </View>
+                    </View>
+                </ListItem.Content>
+            </ListItem>
+            ))
+          }  
         </ScrollView>
       </ImageBackground>
     </View>
