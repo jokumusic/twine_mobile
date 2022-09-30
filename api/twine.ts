@@ -1629,6 +1629,27 @@ export class Twine {
         });        
     }
 
+    async getProductTicketTakerAccount(productAddress: PublicKey, takerAddress: PublicKey) {
+        return new Promise<TicketTaker>(async (resolve,reject) => {
+            const program = this.getProgram();
+            const [ticketTakerPda, ticketTakerPdaBump] = PublicKey.findProgramAddressSync(
+                [
+                    anchor.utils.bytes.utf8.encode("product_taker"),
+                    productAddress.toBuffer(),
+                    takerAddress.toBuffer(),        
+                ], program.programId);
+
+            const ticketTaker = await program.account.ticketTaker
+                .fetchNullable(ticketTakerPda)
+                .catch(reject);
+
+            if(!ticketTaker)
+                return null;
+        
+            resolve({...ticketTaker, address: ticketTakerPda});
+        });
+    }
+
 
 
     async takeRedemption(redemptionAddress: PublicKey, deeplinkRoute: "") {
@@ -1702,18 +1723,33 @@ export class Twine {
             if(!confirmationResponse)
                 return;
     
-            const updatedRedemption = await program.account
-                .redemption
-                .fetch(redemptionAddress)
+            const updatedRedemption = await this
+                .getRedemptionByAddress(redemptionAddress)
                 .catch(reject);
 
-            if(!redemption)
+            if(!updatedRedemption) {
+                reject(`unable to retrieve redemption ${redemptionAddress.toBase58()}`);
                 return;
+            }
     
             resolve({...updatedRedemption, address: redemptionAddress});            
         });
     }
 
+    async getRedemptionByAddress(redemptionAddress: PublicKey) {
+        return new Promise<Redemption|null>(async (resolve,reject) => {
+            const program = this.getProgram();
+            const redemption = await program.account.redemption
+                .fetchNullable(redemptionAddress)
+                .catch(reject);
 
+            if(!redemption){
+                resolve(null);
+                return;
+            }
+
+            resolve({...redemption, address: redemptionAddress});  
+        });
+    }
 }
 

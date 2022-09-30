@@ -42,6 +42,10 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [scanned, setScanned] = useState(false);
    const [newTakerAddress, setNewTakerAddress] = useState("");
    const [takers, setTakers] = useState<TicketTaker[]>([]);
+   const [currentTaker, setCurrentTaker] = useState<TicketTaker>();
+   const [showValidateRedemptionScannerDialog, setShowValidateRedemptionScannerDialog] = useState(false);
+   const [scannedRedemptionIsValid, setScannedRedemptionIsValid] = useState<boolean|null>(null);
+   const [showValidateRedemptionResult, setShowValidateRedemptionResult] = useState(false);
 
 
    useEffect(()=>{
@@ -79,6 +83,22 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         setShowLoadingDialog(false);
     })();    
    }, [purchaseTicket]);
+
+   useEffect(()=>{
+    if(!takers)
+      return;
+
+    console.log('checking if current viewer is a taker');
+    
+    (async () => {
+      const taker = await twineContext
+        .getProductTicketTakerAccount(product.address, twineContext.walletPubkey)
+        .catch(console.log);
+      if(taker) {
+        setCurrentTaker(taker);
+      }
+    })();    
+   }, [takers]);
       
   async function addToCart() {
     console.log('adding to cart');
@@ -104,10 +124,11 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
     return twineContext.walletPubkey.equals(product.authority) || twineContext.walletPubkey.equals(product.secondaryAuthority);
   }
 
-  async function redeem(){
+  async function initiateRedemption(){
     const redemption = await twineContext.initiateRedemption(purchaseTicket, 1, SCREEN_DEEPLINK_ROUTE);
     console.log('got redemption: ', redemption);
   }
+
 
   function carouselRenderImage({ item, index}) {
     return (
@@ -141,12 +162,6 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
     })();    
    }, [purchaseTicket]);
 
-  const handleBarCodeScanned = ({ type, data }) => {
-    setScanned(true);
-    setNewTakerAddress(data);
-    setShowScannerDialog(false);
-    setShowTicketTakerDialog(true);
-  };
 
   async function addProductRedemptionTaker() {
     const taker = await twineContext
@@ -157,6 +172,35 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
     console.log('taker: ', taker);
   }
 
+  const onAddTicketTakerAddressScanned = ({ type, data }) => {
+    setScannedRedemptionIsValid(false);
+    setScanned(true);
+    setNewTakerAddress(data);
+    setShowScannerDialog(false);
+    setShowTicketTakerDialog(true);
+  };
+
+  const onRedemptionScanned = async ({ type, data }) => {
+    let redemption = await twineContext
+      .getRedemptionByAddress(data)
+      .catch(console.log);
+  
+    if(redemption && redemption?.closeTimestamp == 0) {
+      console.log('processing redemption');
+      redemption = await twineContext
+        .takeRedemption(data, SCREEN_DEEPLINK_ROUTE)
+        .catch(console.log);
+    }
+
+    if(redemption?.product && product.address.equals(redemption.product) && redemption.closeTimestamp > 0)
+    {
+      setScannedRedemptionIsValid(true);
+    }
+    else{
+      setScannedRedemptionIsValid(false);
+    }
+  };
+
   return (         
     <View style={styles.container}>
       <Dialog isVisible={showLoadingDialog} overlayStyle={{backgroundColor:'transparent', shadowColor: 'transparent'}}>
@@ -164,9 +208,9 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       </Dialog>
          
       <ImageBackground style={{width: '100%', height: '100%'}} source={require('../assets/images/screen_background.jpg')}>
-        
-          { isAuthorizedToEditProduct() && 
-            <View style={{margin: 10, backgroundColor: 'transparent', flexDirection: 'row'}}>
+        <View style={{margin: 10, backgroundColor: 'transparent', flexDirection: 'row'}}>
+          { isAuthorizedToEditProduct() &&   
+            <>
               <PressableIcon
                 name="create-outline"
                 size={30}
@@ -178,15 +222,25 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                 size={30}
                 style={{ marginRight: 15 }}
                 onPress={() => setShowTicketTakerDialog(true)}
-              />
-            </View>
+              />            
+            </>
           }
+
+          { currentTaker &&
+            <PressableIcon
+              name="checkmark-done-outline"
+              size={30}
+              style={{ marginRight: 15 }}
+              onPress={() => setShowValidateRedemptionScannerDialog(true)}
+            />
+          }
+        </View>
       
         {purchaseTicket && purchaseTicket.remainingQuantity > 0 &&
           <View style={{flexDirection: 'column', width: '100%', backgroundColor: 'transparent', justifyContent: 'space-around'}}>                   
               <Button 
                 title="Reedeem"
-                onPress={()=>redeem()}
+                onPress={()=>initiateRedemption()}
                 buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center', marginVertical: 10 }}
                 disabled={purchaseTicket.remainingQuantity <= 0}
               />
@@ -329,11 +383,39 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         >
           <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>              
             <BarCodeScanner
-              onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+              onBarCodeScanned={scanned ? undefined : onAddTicketTakerAddressScanned}
               style={StyleSheet.absoluteFill}
               />
           </View>  
         </Dialog>
+
+        <Dialog
+            isVisible={showValidateRedemptionScannerDialog}
+            onBackdropPress={()=>{setShowValidateRedemptionScannerDialog(false);}}
+        >
+          <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>
+            <BarCodeScanner
+              onBarCodeScanned={(s)=>{
+                setScannedRedemptionIsValid(null);
+                setShowValidateRedemptionScannerDialog(false);
+                setShowValidateRedemptionResult(true);
+                onRedemptionScanned(s);
+              }}
+              style={StyleSheet.absoluteFill}
+              />
+          </View>          
+        </Dialog>
+
+        <Dialog
+            isVisible={showValidateRedemptionResult}
+            onBackdropPress={()=>{setShowValidateRedemptionResult(false); setShowValidateRedemptionScannerDialog(true);}}
+        >
+          {scannedRedemptionIsValid == null ? <Dialog.Loading />
+           : scannedRedemptionIsValid === true ? <Icon type="ionicon" name="checkmark-circle-outline" color="green" size={70}/>
+           : <Icon type="ionicon" name="remove-circle-outline" color="red" size={70}/>
+          }         
+        </Dialog>
+        
     </View>
     );
       
