@@ -7,7 +7,7 @@ import {
     Transaction,
   } from "@solana/web3.js";
 
-import WalletInterface from "./WalletInterface";
+import WalletInterface, { SignedMessageData } from "./WalletInterface";
 import { Buffer } from "buffer";
 global.Buffer = global.Buffer || Buffer;
 
@@ -320,7 +320,7 @@ export class PhantomWallet implements WalletInterface {
     * @param deepLinkReturnRoute deeplink route back to the screen you want to display
     */
     signMessage = async (message: string, deepLinkReturnRoute = "") => {
-        return new Promise<any>(async (resolve, reject) => {
+        return new Promise<SignedMessageData>(async (resolve, reject) => {
             if(!this.getWalletPublicKey()){
                 reject('not connected to a wallet');
                 return;

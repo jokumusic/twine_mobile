@@ -18,6 +18,8 @@ import {MockSwap} from '../api/MockSwap';
 import Solana from '../api/Solana';
 import {ShadowDrive} from '../api/ShadowDrive';
 import { Mint } from '../constants/Mints';
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
 
 global.Buffer = global.Buffer || Buffer;
 
@@ -357,6 +359,15 @@ export function TwineProvider(props) {
         return twine.getPurchaseTicketByAddress(ticketAddress);
     }
 
+    async function signMessage(message: string, deeplinkRoute: "") {
+        return wallet?.signMessage(message, deeplinkRoute);
+    }
+
+    function signatureIsValid(message: string, signature: string, publicKey: PublicKey){
+        
+        return nacl.sign.detached.verify(Buffer.from(message), bs58.decode(signature), publicKey.toBytes())
+    }
+
     return (
         <TwineContext.Provider value={{
             connectWallet,
@@ -401,6 +412,8 @@ export function TwineProvider(props) {
             getProductTicketTakerAccount,
             getRedemptionByAddress,
             getPurchaseTicketByAddress,
+            signMessage,
+            signatureIsValid,
         }}
         >
             {props.children}

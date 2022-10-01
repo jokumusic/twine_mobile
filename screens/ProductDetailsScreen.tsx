@@ -19,7 +19,7 @@ import { PurchaseTicket, RedemptionType, Store, Product, Redemption, TicketTaker
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import { PublicKey } from '@solana/web3.js';
 
-const SCREEN_DEEPLINK_ROUTE = "stores";
+const SCREEN_DEEPLINK_ROUTE = "product_details";
 
 const {height, width} = Dimensions.get('window');
 const WINDOW_HEIGHT = height;
@@ -50,6 +50,10 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [redemptionQuantity, setRedemptionQuantity] = useState();
    const [redemptionMessage, setRedemptionMessage] = useState("");
    const [addTakerMessage, setAddTakerMessage] = useState("");
+   const [showSignedRedemptionDialog, setShowSignedRedemptionDialog] = useState(false);
+   const [signedRedemption, setSignedRedemption] = useState("");
+   const [redemptionResultMessage, setRedemptionResultMessage] = useState("");
+   const [redemptionValidationAllowedMinutes, setRedemptionValidationAllowedMinutes] = useState(1);
 
 
    useEffect(()=>{
@@ -218,27 +222,82 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
   };
 
   const onRedemptionScanned = async ({ type, data }) => {
-    const redemptionAddress = data;
-    let redemption = await twineContext
-      .getRedemptionByAddress(redemptionAddress)
-      .catch(console.log);
-  
-    if(redemption && redemption?.closeTimestamp == 0) {
-      console.log('processing redemption');
-      redemption = await twineContext
-        .takeRedemption(redemptionAddress, SCREEN_DEEPLINK_ROUTE)
-        .catch(console.log);
-    }
+    setRedemptionResultMessage("");
+    let resultMessage = "";
+    let message;
 
-    console.log('redemption: ', redemption);
-    if(redemption && redemption.address == redemptionAddress && product.address.equals(redemption.product) && redemption.closeTimestamp > 0)
-    {
-      setScannedRedemptionIsValid(true);
+    try {
+      //console.log('data: ', data);
+      const verificationData = JSON.parse(data);
+      //console.log('verificationData: ', verificationData);
+      message = JSON.parse(verificationData.message);
+      //console.log('message: ', message);
+      const messageDate = new Date(message.time);
+      const currentDate = new Date();
+      resultMessage += `signature time: ${messageDate.toLocaleString()}\n\n`;
+
+      var diffMinutes = (messageDate.getTime() - currentDate.getTime()) / 1000 / 60;
+      if(Math.abs(diffMinutes) > redemptionValidationAllowedMinutes)
+        throw Error(`signed redemption is older than ${redemptionValidationAllowedMinutes} minutes`);
+      
+      const redemptionAddress = new PublicKey(message.redemptionAddress);
+      //console.log('redemptionAddr: ', redemptionAddress.toBase58());
+
+      let redemption = await twineContext
+        .getRedemptionByAddress(redemptionAddress)
+        .catch(err=>{throw Error(err)});
+
+      if(!redemption)
+        throw Error("Unable to retrieve redemption");      
+      
+      if(!product.address.equals(redemption.product))
+        throw Error("The redemption is not for this product");
+
+      if(!twineContext.signatureIsValid(verificationData.message, verificationData.signature, redemption.purchaseTicketSigner))
+        throw Error("Signature is invalid");
+      
+      if(redemption?.closeTimestamp == 0) {
+        console.log('taking redemption');
+        redemption = await twineContext
+          .takeRedemption(redemptionAddress, SCREEN_DEEPLINK_ROUTE)
+          .catch(err=>{throw Error(err);});
+      }
+
+      if(redemption.closeTimestamp <= 0)
+        throw Error("The redemption wasn't properly processed.");
+      
+      setScannedRedemptionIsValid(true);      
     }
-    else{
+    catch(err){
+      resultMessage += err;
       setScannedRedemptionIsValid(false);
     }
+    finally{
+      setRedemptionResultMessage(resultMessage);
+    }
   };
+
+  async function showSignedRedemption(redemption) {
+    setSignedRedemption("");
+    setShowSignedRedemptionDialog(true);
+
+    const jsonMessage = JSON.stringify({
+      time: new Date(),
+      redemptionAddress: redemption.address.toBase58()
+    });
+
+    const signatureData = await twineContext
+      .signMessage(jsonMessage, SCREEN_DEEPLINK_ROUTE)
+      .catch(console.log);
+
+    console.log('signature data: ', signatureData);
+    const sr = JSON.stringify({
+      message: jsonMessage,
+      signature: signatureData.signature
+    });
+
+    setSignedRedemption(sr);
+  }
 
   return (         
     <View style={styles.container}>
@@ -333,22 +392,22 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
           {
             redemptions.map((redemption, i) => (
             <ListItem
-                key={"redemption" + redemption.address?.toBase58()}
-                bottomDivider
-                containerStyle={{marginTop: 10, borderTopWidth: 1}}
+              key={"redemption" + redemption.address?.toBase58()}
+              bottomDivider
+              containerStyle={{marginTop: 10, borderTopWidth: 1}}
+              onPress={()=>showSignedRedemption(redemption)}
             >
-                <ListItem.Content >
-                    <View style={{flexDirection: 'row'}}>              
-                        <QRCode value={redemption.address?.toBase58()} size={60}/>
-                        <View style={{marginLeft: 10}}>
-                          <Text style={{fontSize:15}}>quantity: {redemption.redeemQuantity.toString()}</Text>
-                          <Text style={{fontSize:15}}>initiated : {new Date(redemption.initTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>
-                          { redemption.closeTimestamp > 0 &&
-                            <Text style={{fontSize:15}}>closed : {new Date(redemption.closeTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                        
-                          }
-                        </View>
-                    </View>
-                </ListItem.Content>
+              <ListItem.Content >
+                  <View style={{flexDirection: 'row'}}>
+                      <View style={{marginLeft: 10}}>
+                        <Text style={{fontSize:15}}>quantity: {redemption.redeemQuantity.toString()}</Text>
+                        <Text style={{fontSize:15}}>initiated : {new Date(redemption.initTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                        { redemption.closeTimestamp > 0 &&
+                          <Text style={{fontSize:15}}>closed : {new Date(redemption.closeTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                        
+                        }
+                      </View>
+                  </View>
+              </ListItem.Content>
             </ListItem>
             ))
           }  
@@ -486,10 +545,23 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
             isVisible={showValidateRedemptionResult}
             onBackdropPress={()=>{setShowValidateRedemptionResult(false); setShowValidateRedemptionScannerDialog(true);}}
         >
+          <Text style={{marginVertical: 10}}>{redemptionResultMessage}</Text>
           {scannedRedemptionIsValid == null ? <Dialog.Loading />
            : scannedRedemptionIsValid === true ? <Icon type="ionicon" name="checkmark-circle-outline" color="green" size={70}/>
            : <Icon type="ionicon" name="remove-circle-outline" color="red" size={70}/>
           }         
+        </Dialog>
+
+        <Dialog
+          isVisible={showSignedRedemptionDialog}
+          onBackdropPress={()=>{setShowSignedRedemptionDialog(false);}}>
+          <View style={{alignSelf: 'center'}}>
+            <Text style={{fontSize: 20, fontWeight: 'bold'}}>Signed Redemption</Text>
+            {signedRedemption
+              ? <QRCode value={signedRedemption} size={200}/>
+              : <Dialog.Loading/>
+            }
+          </View>
         </Dialog>
         
     </View>
