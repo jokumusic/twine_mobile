@@ -7,7 +7,7 @@ import {
    ActivityIndicator
    } from 'react-native';
  import { Text, View, TextInput} from '../components/Themed';
- import React, { useEffect, useRef, useState, useContext } from 'react';
+ import React, { useEffect, useRef, useState, useContext, useCallback } from 'react';
  import { CartContext } from '../components/CartProvider';
  import { PressableIcon, PressableImage } from '../components/Pressables';
  import CarouselCards from '../components/CarouselCards';
@@ -46,6 +46,10 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [showValidateRedemptionScannerDialog, setShowValidateRedemptionScannerDialog] = useState(false);
    const [scannedRedemptionIsValid, setScannedRedemptionIsValid] = useState<boolean|null>(null);
    const [showValidateRedemptionResult, setShowValidateRedemptionResult] = useState(false);
+   const [showRedemptionDialog, setShowRedemptionDialog] = useState(false);
+   const [redemptionQuantity, setRedemptionQuantity] = useState();
+   const [redemptionMessage, setRedemptionMessage] = useState("");
+   const [addTakerMessage, setAddTakerMessage] = useState("");
 
 
    useEffect(()=>{
@@ -125,10 +129,31 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
   }
 
   async function initiateRedemption(){
-    const redemption = await twineContext.initiateRedemption(purchaseTicket, 1, SCREEN_DEEPLINK_ROUTE);
-    console.log('got redemption: ', redemption);
-  }
+    if(redemptionQuantity <= 0) {
+      setRedemptionMessage("quantity must be greater than 0");
+      return;
+    }
 
+    setShowRedemptionDialog(false);
+    setShowLoadingDialog(true);
+    const redemption = await twineContext
+      .initiateRedemption(purchaseTicket, redemptionQuantity, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>{
+        setShowLoadingDialog(false);
+        setRedemptionMessage(err);
+        setShowRedemptionDialog(true);
+      });
+    
+    if(redemption){
+      setRedemptions([...redemptions, redemption]);
+      const ticket = await twineContext.getPurchaseTicketByAddress(purchaseTicket.address);
+      if(ticket){
+        setPurchaseTicket(ticket);
+      }
+    }
+
+    setShowLoadingDialog(false);
+  }
 
   function carouselRenderImage({ item, index}) {
     return (
@@ -156,20 +181,32 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       const items = await twineContext
         .getRedemptionTakersByProductAddress(product.address)
         .catch(console.log);
-      
-        setTakers(items);
-        setShowLoadingDialog(false);
+
+      setTakers(items);
+      setShowLoadingDialog(false);
     })();    
-   }, [purchaseTicket]);
+   }, [showTicketTakerDialog]);
 
 
   async function addProductRedemptionTaker() {
+
+    if(takers.findIndex(t=>t.address.toBase58() == newTakerAddress)) {
+      setAddTakerMessage("Specified address is already a taker.")
+      return;
+    }
+    setShowTicketTakerDialog(false);
+    setShowLoadingDialog(true);
     const taker = await twineContext
       .createProductRedemptionTaker(product.address, new PublicKey(newTakerAddress))
-      .catch(console.log);
+      .catch(err=>setAddTakerMessage(err));
     
-    setTakers(takers.concat(taker));
-    console.log('taker: ', taker);
+    if(taker) {
+      setTakers(takers.concat(taker));
+      setAddTakerMessage("");
+    }
+
+    setShowLoadingDialog(false);
+    setShowTicketTakerDialog(true);
   }
 
   const onAddTicketTakerAddressScanned = ({ type, data }) => {
@@ -223,7 +260,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                 name="shield-checkmark-outline"
                 size={30}
                 style={{ marginRight: 15 }}
-                onPress={() => setShowTicketTakerDialog(true)}
+                onPress={() =>{setNewTakerAddress(""); setShowTicketTakerDialog(true);}}
               />            
             </>
           }
@@ -242,7 +279,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
           <View style={{flexDirection: 'column', width: '100%', backgroundColor: 'transparent', justifyContent: 'space-around'}}>                   
               <Button 
                 title="Reedeem"
-                onPress={()=>initiateRedemption()}
+                onPress={()=>setShowRedemptionDialog(true)}
                 buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center', marginVertical: 10 }}
                 disabled={purchaseTicket.remainingQuantity <= 0}
               />
@@ -322,34 +359,36 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         isVisible={showTicketTakerDialog}
         onBackdropPress={()=>{setShowTicketTakerDialog(false);}}
       >
-            <Dialog.Title title="Ticket Takers"/>
-            <Text>
-                Manage who can process ticket redemptions
-            </Text>
-         
-            <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>New Taker:</Text>
-                <View style={{flexDirection: 'row'}}>
-                  <TextInput
-                      value={newTakerAddress}
-                      placeholder="taker's public key"  
-                      style={styles.inputBox}
-                      onChangeText={(t)=>setNewTakerAddress(t)}
-                  />
-                  <Button
-                    onPress={()=>{setShowTicketTakerDialog(false); setShowScannerDialog(true);}}
-                    style={{borderRadius: 6, margin: 5,}}
-                  >
-                    <Icon type="ionicon" name="scan-outline" color="blue" size={22}/>
-                  </Button>
-                
-                  <Button
-                    onPress={()=>addProductRedemptionTaker()}
-                    style={{borderRadius: 6, margin: 5,}}
-                  >
-                    <Icon type="ionicon" name="add" color="blue" size={22}/>
-                  </Button>
-                </View>
+          <Dialog.Title title="Ticket Takers"/>
+          <Text>
+              Manage who can process ticket redemptions
+          </Text>
+
+          <Text style={{color: 'red', marginVertical: 5}}>{addTakerMessage}</Text>
+        
+          <View style={styles.inputRow}>
+              <Text style={styles.inputLabel}>New Taker:</Text>
+              <View style={{flexDirection: 'row'}}>
+                <TextInput
+                    value={newTakerAddress}
+                    placeholder="taker's public key"  
+                    style={[styles.inputBox,{width:'75%'}]}                      
+                    onChangeText={(t)=>setNewTakerAddress(t)}
+                />
+                <Button
+                  onPress={()=>{setShowTicketTakerDialog(false); setShowScannerDialog(true);}}
+                  style={{borderRadius: 6, margin: 5,}}
+                >
+                  <Icon type="ionicon" name="scan-outline" color="blue" size={22}/>
+                </Button>
+              
+                <Button
+                  onPress={()=>addProductRedemptionTaker()}
+                  style={{borderRadius: 6, margin: 5,}}
+                >
+                  <Icon type="ionicon" name="add" color="blue" size={22}/>
+                </Button>
+              </View>
             </View>
 
             <ScrollView>
@@ -374,9 +413,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                 </ListItem>
               ))              
           }
-          </ScrollView>
-
-           
+          </ScrollView>           
         </Dialog>
 
         <Dialog
@@ -389,6 +426,43 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
               style={StyleSheet.absoluteFill}
               />
           </View>  
+        </Dialog>
+
+        <Dialog isVisible={showRedemptionDialog}>
+          <Text style={{color:'red'}}>{redemptionMessage}</Text>
+
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Quantity To Redeem</Text>
+            <TextInput
+                placeholder='quantity'
+                style={styles.inputBox}
+                value={redemptionQuantity}
+                keyboardType='decimal-pad'
+                autoCapitalize='words'
+                onChangeText={(n)=>{
+                  if(!isNaN(n))
+                    setRedemptionQuantity(n)
+                }}
+            />
+          </View>
+
+          <View style={{flexDirection: 'row', alignSelf: 'center'}}>
+              <Dialog.Button 
+                  type="solid"
+                  onPress={()=>initiateRedemption()}            
+                  buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
+              >
+                  Redeem
+              </Dialog.Button>
+
+              <Dialog.Button 
+                  type="solid"
+                  onPress={()=>{setShowRedemptionDialog(false); setRedemptionQuantity(0);}}            
+                  buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
+              >
+                  Cancel
+              </Dialog.Button>
+          </View>
         </Dialog>
 
         <Dialog

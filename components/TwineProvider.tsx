@@ -353,6 +353,10 @@ export function TwineProvider(props) {
         return twine.getRedemptionByAddress(redemptionAddress);
     }
 
+    async function getPurchaseTicketByAddress(ticketAddress: PublicKey) {
+        return twine.getPurchaseTicketByAddress(ticketAddress);
+    }
+
     return (
         <TwineContext.Provider value={{
             connectWallet,
@@ -396,6 +400,7 @@ export function TwineProvider(props) {
             getRedemptionTakersByProductAddress,
             getProductTicketTakerAccount,
             getRedemptionByAddress,
+            getPurchaseTicketByAddress,
         }}
         >
             {props.children}

@@ -1101,7 +1101,11 @@ export class Twine {
         });
     }
 
-
+    async getPurchaseTicketByAddress(ticketAddress: PublicKey) {
+        const program = this.getProgram();
+        const ticket = await program.account.purchaseTicket.fetch(ticketAddress);
+        return {...ticket, address: ticketAddress};
+    }
 
     async getMixedItems(searchString: string) {
         return new Promise<Store[]|Product[]>(async (resolve, reject) => {
