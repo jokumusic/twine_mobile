@@ -1635,6 +1635,16 @@ export class Twine {
 
     async getProductTicketTakerAccount(productAddress: PublicKey, takerAddress: PublicKey) {
         return new Promise<TicketTaker>(async (resolve,reject) => {
+            if(!productAddress) {
+                reject('productAddress is required');
+                return;
+            }
+
+            if(!takerAddress) {
+                reject('takerAddress is required');
+                return;
+            }
+
             const program = this.getProgram();
             const [ticketTakerPda, ticketTakerPdaBump] = PublicKey.findProgramAddressSync(
                 [

@@ -53,7 +53,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [showSignedRedemptionDialog, setShowSignedRedemptionDialog] = useState(false);
    const [signedRedemption, setSignedRedemption] = useState("");
    const [redemptionResultMessage, setRedemptionResultMessage] = useState("");
-   const [redemptionValidationAllowedMinutes, setRedemptionValidationAllowedMinutes] = useState(1);
+   const [redemptionValidationAllowedSeconds, setRedemptionValidationAllowedSeconds] = useState(30);
 
 
    useEffect(()=>{
@@ -95,6 +95,11 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    useEffect(()=>{
     if(!takers)
       return;
+
+    if(!twineContext.walletPubkey){
+      console.log('not connected to a wallet');
+      return;
+    }
 
     console.log('checking if current viewer is a taker');
     
@@ -228,17 +233,28 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
 
     try {
       //console.log('data: ', data);
-      const verificationData = JSON.parse(data);
+      let verificationData;
+      try{
+        verificationData = JSON.parse(data);
+      } catch(err) {
+        throw Error("QR redemption code format is invalid");
+      };
+
       //console.log('verificationData: ', verificationData);
-      message = JSON.parse(verificationData.message);
+      try {
+        message = JSON.parse(verificationData.message);
+      } catch(err) {
+        throw Error("QR redemption code format is invalid");
+      }
+
       //console.log('message: ', message);
       const messageDate = new Date(message.time);
       const currentDate = new Date();
       resultMessage += `signature time: ${messageDate.toLocaleString()}\n\n`;
 
-      var diffMinutes = (messageDate.getTime() - currentDate.getTime()) / 1000 / 60;
-      if(Math.abs(diffMinutes) > redemptionValidationAllowedMinutes)
-        throw Error(`signed redemption is older than ${redemptionValidationAllowedMinutes} minutes`);
+      var diffSeconds = (messageDate.getTime() - currentDate.getTime()) / 1000;
+      if(Math.abs(diffSeconds) > redemptionValidationAllowedSeconds)
+        throw Error(`signature is older than ${redemptionValidationAllowedSeconds} seconds`);
       
       const redemptionAddress = new PublicKey(message.redemptionAddress);
       //console.log('redemptionAddr: ', redemptionAddress.toBase58());
@@ -269,7 +285,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       setScannedRedemptionIsValid(true);      
     }
     catch(err){
-      resultMessage += err;
+      resultMessage += err;      
       setScannedRedemptionIsValid(false);
     }
     finally{
@@ -546,6 +562,19 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
             onBackdropPress={()=>{setShowValidateRedemptionResult(false); setShowValidateRedemptionScannerDialog(true);}}
         >
           <Text style={{marginVertical: 10}}>{redemptionResultMessage}</Text>
+          <View style={[styles.inputRow,{marginVertical: 10}]}>
+            <Text style={styles.inputLabel}>seconds signature is valid for</Text>
+            <TextInput
+                placeholder='seconds'
+                style={styles.inputBox}
+                value={redemptionValidationAllowedSeconds.toString()}
+                keyboardType='numeric'                
+                onChangeText={(n)=>{
+                  if(!isNaN(n))
+                    setRedemptionValidationAllowedSeconds(Number(n));
+                }}
+            />
+          </View>
           {scannedRedemptionIsValid == null ? <Dialog.Loading />
            : scannedRedemptionIsValid === true ? <Icon type="ionicon" name="checkmark-circle-outline" color="green" size={70}/>
            : <Icon type="ionicon" name="remove-circle-outline" color="red" size={70}/>
