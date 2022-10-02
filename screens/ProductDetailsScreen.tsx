@@ -54,6 +54,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [signedRedemption, setSignedRedemption] = useState("");
    const [redemptionResultMessage, setRedemptionResultMessage] = useState("");
    const [redemptionValidationAllowedSeconds, setRedemptionValidationAllowedSeconds] = useState(30);
+   const [quantityToAddToCart, setQuantityToAddToCart] = useState(product.inventory > 0 ? 1 : 0);
 
 
    useEffect(()=>{
@@ -114,11 +115,16 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    }, [takers]);
       
   async function addToCart() {
-    console.log('adding to cart');
-      if(!product?.address){
-        Alert.alert('Product is missing an address. Unable to add item to cart.')
-      }
-      addItemToCart(product.address);
+    if(quantityToAddToCart < 1) {
+      Alert.alert('Quantity must be greater than 0');
+      return;
+    }
+
+    if(!product?.address){
+      Alert.alert('Product is missing an address. Unable to add item to cart.')
+      return;
+    }
+    addItemToCart(product.address, quantityToAddToCart);
   }
 
   function isAuthorizedToEditProduct() {
@@ -397,12 +403,29 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
           </Text> 
 
           { product.isSnapshot ||
-          <Button 
-            title="Add To Cart"
-            onPress={addToCart}
-            buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center', marginVertical: 10 }}
-            disabled={product.inventory < 1}
-          />
+          <>
+            <View style={[styles.inputRow,{marginTop: 10, backgroundColor:'transparent', width: 140}]}>
+              <Text style={styles.inputLabel}>Quantity to Add</Text>
+              <TextInput
+                  placeholder='quantity'
+                  style={[styles.inputBox,{backgroundColor:'white'}]}
+                  value={quantityToAddToCart.toString()}
+                  keyboardType='numeric'
+                  editable={product.inventory > 0}
+                  onChangeText={(t)=>{
+                    const n = Number(t);
+                    if(!isNaN(n) && n <= product.inventory)
+                      setQuantityToAddToCart(n);
+                  }}
+              />
+            </View>
+            <Button 
+              title="Add To Cart"
+              onPress={addToCart}
+              buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center', marginVertical: 10 }}
+              disabled={product.inventory < 1 || quantityToAddToCart < 1}
+            />
+          </>
           }
 
           {
@@ -677,6 +700,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       alignContent: 'flex-start',
       height: 40,
       marginBottom: 10,
+      paddingHorizontal:2,
     },
     textBox: {
       borderWidth: 0,
