@@ -1050,6 +1050,10 @@
           {
             "name": "ticketTakerSigner",
             "type": "publicKey"
+          },
+          {
+            "name": "status",
+            "type": "u8"
           }
         ]
       }

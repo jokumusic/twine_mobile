@@ -4,7 +4,8 @@ import {
     ImageBackground,
    ScrollView,
    Alert,
-   ActivityIndicator
+   ActivityIndicator,
+   TouchableOpacity
    } from 'react-native';
  import { Text, View, TextInput} from '../components/Themed';
  import React, { useEffect, useRef, useState, useContext, useCallback } from 'react';
@@ -15,7 +16,7 @@ import { Button, Dialog, Icon, ListItem } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 import {Mint} from '../constants/Mints';
 import QRCode from 'react-native-qrcode-svg';
-import { PurchaseTicket, RedemptionType, Store, Product, Redemption, TicketTaker } from '../api/Twine';
+import { PurchaseTicket, RedemptionType, Store, Product, Redemption, TicketTaker, RedemptionStatus } from '../api/Twine';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import { PublicKey } from '@solana/web3.js';
 
@@ -47,7 +48,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [scannedRedemptionIsValid, setScannedRedemptionIsValid] = useState<boolean|null>(null);
    const [showValidateRedemptionResult, setShowValidateRedemptionResult] = useState(false);
    const [showRedemptionDialog, setShowRedemptionDialog] = useState(false);
-   const [redemptionQuantity, setRedemptionQuantity] = useState();
+   const [redemptionQuantity, setRedemptionQuantity] = useState(purchaseTicket?.remainingQuantity || 0);
    const [redemptionMessage, setRedemptionMessage] = useState("");
    const [addTakerMessage, setAddTakerMessage] = useState("");
    const [showSignedRedemptionDialog, setShowSignedRedemptionDialog] = useState(false);
@@ -256,7 +257,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       //console.log('message: ', message);
       const messageDate = new Date(message.time);
       const currentDate = new Date();
-      resultMessage += `signature time: ${messageDate.toLocaleString()}\n\n`;
+      resultMessage += `Signature time: ${messageDate.toLocaleString()}\n\n`;
 
       var diffSeconds = (messageDate.getTime() - currentDate.getTime()) / 1000;
       if(Math.abs(diffSeconds) > redemptionValidationAllowedSeconds)
@@ -278,15 +279,21 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       if(!twineContext.signatureIsValid(verificationData.message, verificationData.signature, redemption.purchaseTicketSigner))
         throw Error("Signature is invalid");
       
-      if(redemption?.closeTimestamp == 0) {
+      if(redemption.status == RedemptionStatus.WAITING && redemption?.closeTimestamp == 0) {
         console.log('taking redemption');
         redemption = await twineContext
           .takeRedemption(redemptionAddress, SCREEN_DEEPLINK_ROUTE)
           .catch(err=>{throw Error(err);});
       }
 
+      if(redemption.status != RedemptionStatus.REDEEMED) {
+        throw Error(`Redemption status is ${RedemptionStatus[redemption.status]}`);
+      }
+
       if(redemption.closeTimestamp <= 0)
         throw Error("The redemption wasn't properly processed.");
+
+      resultMessage += `Redeemed: ${new Date(redemption.closeTimestamp?.toNumber() * 1000).toLocaleString()}\n`
       
       setScannedRedemptionIsValid(true);      
     }
@@ -406,8 +413,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
           <>
             <View style={[styles.inputRow,{marginTop: 10, backgroundColor:'transparent', width: 140}]}>
               <Text style={styles.inputLabel}>Quantity to Add</Text>
-              <TextInput
-                  placeholder='quantity'
+              <TextInput                  
                   style={[styles.inputBox,{backgroundColor:'white'}]}
                   value={quantityToAddToCart.toString()}
                   keyboardType='numeric'
@@ -439,6 +445,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
               <ListItem.Content >
                   <View style={{flexDirection: 'row'}}>
                       <View style={{marginLeft: 10}}>
+                        <Text style={{fontSize:15}}>status: {RedemptionStatus[redemption?.status ?? 0].toString()}</Text>
                         <Text style={{fontSize:15}}>quantity: {redemption.redeemQuantity.toString()}</Text>
                         <Text style={{fontSize:15}}>initiated : {new Date(redemption.initTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>
                         { redemption.closeTimestamp > 0 &&
@@ -532,13 +539,12 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
           <View style={styles.inputRow}>
             <Text style={styles.inputLabel}>Quantity To Redeem</Text>
             <TextInput
-                placeholder='quantity'
                 style={styles.inputBox}
-                value={redemptionQuantity}
-                keyboardType='decimal-pad'
-                autoCapitalize='words'
-                onChangeText={(n)=>{
-                  if(!isNaN(n))
+                value={redemptionQuantity.toString()}
+                keyboardType='numeric'                
+                onChangeText={(t)=>{
+                  const n = Number(t);
+                  if(!isNaN(n) && n <= purchaseTicket.remainingQuantity)
                     setRedemptionQuantity(n)
                 }}
             />
@@ -598,10 +604,12 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                 }}
             />
           </View>
+          <TouchableOpacity onPress={()=> {setShowValidateRedemptionResult(false); setShowValidateRedemptionScannerDialog(true);}}>
           {scannedRedemptionIsValid == null ? <Dialog.Loading />
            : scannedRedemptionIsValid === true ? <Icon type="ionicon" name="checkmark-circle-outline" color="green" size={70}/>
            : <Icon type="ionicon" name="remove-circle-outline" color="red" size={70}/>
-          }         
+          }
+          </TouchableOpacity>    
         </Dialog>
 
         <Dialog

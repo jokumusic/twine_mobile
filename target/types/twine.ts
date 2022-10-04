@@ -1050,6 +1050,10 @@ export type Twine = {
           {
             "name": "ticketTakerSigner",
             "type": "publicKey"
+          },
+          {
+            "name": "status",
+            "type": "u8"
           }
         ]
       }
@@ -2308,6 +2312,10 @@ export const IDL: Twine = {
           {
             "name": "ticketTakerSigner",
             "type": "publicKey"
+          },
+          {
+            "name": "status",
+            "type": "u8"
           }
         ]
       }

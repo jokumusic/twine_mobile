@@ -163,6 +163,7 @@ export interface Redemption {
     readonly price: number;
     readonly ticketTaker: PublicKey;
     readonly ticketTakerSigner: PublicKey;
+    readonly status: number;
 }
 
 export interface TicketTaker {
@@ -176,6 +177,12 @@ export interface TicketTaker {
     readonly enabledTimestamp: number;
     readonly disabledSlot: number;
     readonly disabledTimestamp: number;
+}
+
+export enum RedemptionStatus{
+    WAITING = 0,
+    REDEEMED = 1,
+    CANCELLED = 2
 }
 
 export enum AssetType{
@@ -1448,18 +1455,7 @@ export class Twine {
                   anchor.utils.bytes.utf8.encode("redemption"),
                   ticket.address.toBuffer(),
                   new anchor.BN(ticket.remainingQuantity).toArrayLike(Buffer, 'be', 8),
-                ], program.programId);
-
-                console.log('programId: ', program.programId.toBase58());
-                console.log('ticket addr: ', ticket.address.toBase58());
-                console.log('tick auth: ', ticket.authority.toBase58());
-                console.log('tick pay: ', ticket.payment.toBase58());
-                console.log('tick mint: ', paymentTokenMintAddress.toBase58());
-                console.log('tick snap meta: ', ticket.productSnapshotMetadata.toBase58());
-                console.log('tick buyer: ', ticket.buyer.toBase58());
-                console.log('tick nonce: ', ticket.nonce);
-                console.log('redemption addr: ', redemptionPda.toBase58());
-            
+                ], program.programId);            
 
             const tx = await program.methods
                 .initiateRedemption(new anchor.BN(redeemQuantity))
