@@ -368,6 +368,10 @@ export function TwineProvider(props) {
         return nacl.sign.detached.verify(Buffer.from(message), bs58.decode(signature), publicKey.toBytes())
     }
 
+    function cancelRedemption(redemptionAddress: PublicKey, deeplinkRoute=""){
+        return twine.cancelRedemption(redemptionAddress, deeplinkRoute);
+    }
+
     return (
         <TwineContext.Provider value={{
             connectWallet,
@@ -414,6 +418,7 @@ export function TwineProvider(props) {
             getPurchaseTicketByAddress,
             signMessage,
             signatureIsValid,
+            cancelRedemption,
         }}
         >
             {props.children}

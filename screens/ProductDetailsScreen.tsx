@@ -40,7 +40,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [redemptions, setRedemptions] = useState<Redemption[]>([]);
    const [showTicketTakerDialog, setShowTicketTakerDialog] = useState(false);
    const [showScannerDialog, setShowScannerDialog] = useState(false);
-   const [scanned, setScanned] = useState(false);
+   //const [scanned, setScanned] = useState(false);
    const [newTakerAddress, setNewTakerAddress] = useState("");
    const [takers, setTakers] = useState<TicketTaker[]>([]);
    const [currentTaker, setCurrentTaker] = useState<TicketTaker>();
@@ -205,8 +205,14 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
 
 
   async function addProductRedemptionTaker() {
+    setAddTakerMessage("");
+    console.log('takers: ', takers);
+    if(!newTakerAddress) {
+      setAddTakerMessage("An address is required.");
+      return;
+    }
 
-    if(takers.findIndex(t=>t.address.toBase58() == newTakerAddress)) {
+    if(takers.length > 0 && takers.findIndex(t=>t.address.toBase58() == newTakerAddress)) {
       setAddTakerMessage("Specified address is already a taker.")
       return;
     }
@@ -219,6 +225,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
     if(taker) {
       setTakers(takers.concat(taker));
       setAddTakerMessage("");
+      setNewTakerAddress("");
     }
 
     setShowLoadingDialog(false);
@@ -227,7 +234,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
 
   const onAddTicketTakerAddressScanned = ({ type, data }) => {
     setScannedRedemptionIsValid(false);
-    setScanned(true);
+    //setScanned(true);
     setNewTakerAddress(data);
     setShowScannerDialog(false);
     setShowTicketTakerDialog(true);
@@ -326,6 +333,25 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
     });
 
     setSignedRedemption(sr);
+  }
+
+  async function cancelRedemption(redemption){
+    setShowLoadingDialog(true);
+    const txSignature = await twineContext
+      .cancelRedemption(redemption.address, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>{
+        setShowLoadingDialog(false);
+        Alert.alert("Error", err);
+      });
+
+    if(txSignature){
+      const ticket = await twineContext.getPurchaseTicketByAddress(purchaseTicket.address);
+      if(ticket){
+        setPurchaseTicket(ticket);
+      }
+    }
+    
+    setShowLoadingDialog(true);
   }
 
   return (         
@@ -444,14 +470,22 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
             >
               <ListItem.Content >
                   <View style={{flexDirection: 'row'}}>
-                      <View style={{marginLeft: 10}}>
+                      <View style={{marginHorizontal: 10}}>
                         <Text style={{fontSize:15}}>status: {RedemptionStatus[redemption?.status ?? 0].toString()}</Text>
                         <Text style={{fontSize:15}}>quantity: {redemption.redeemQuantity.toString()}</Text>
                         <Text style={{fontSize:15}}>initiated : {new Date(redemption.initTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>
                         { redemption.closeTimestamp > 0 &&
                           <Text style={{fontSize:15}}>closed : {new Date(redemption.closeTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                        
-                        }
+                        }                       
                       </View>
+                      { redemption.status == RedemptionStatus.WAITING &&
+                        <PressableIcon
+                          name="close-circle"
+                          size={55}
+                          color={"red"}
+                          style={{alignSelf: 'flex-end', marginRight: 5, paddingLeft: 25 }}
+                          onPress={()=> cancelRedemption(redemption)}/>
+                      }
                   </View>
               </ListItem.Content>
             </ListItem>
@@ -527,7 +561,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         >
           <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>              
             <BarCodeScanner
-              onBarCodeScanned={scanned ? undefined : onAddTicketTakerAddressScanned}
+              onBarCodeScanned={onAddTicketTakerAddressScanned}
               style={StyleSheet.absoluteFill}
               />
           </View>  

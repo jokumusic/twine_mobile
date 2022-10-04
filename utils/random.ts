@@ -13,7 +13,7 @@ export const generateRandomU16 = () => {
 };
   
 export const generateRandomU32 = () => {
-    return Math.floor(Math.random() * Math.pow(2,16));
+    return Math.floor(Math.random() * Math.pow(2,32));
 };
   
 export const uIntToBytes = (num, size, method) => {

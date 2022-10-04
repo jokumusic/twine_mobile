@@ -580,6 +580,10 @@
       ],
       "args": [
         {
+          "name": "nonce",
+          "type": "u32"
+        },
+        {
           "name": "quantity",
           "type": "u64"
         }
@@ -630,6 +634,32 @@
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancelRedemption",
+      "accounts": [
+        {
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -1054,6 +1084,10 @@
           {
             "name": "status",
             "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
           }
         ]
       }
@@ -1259,6 +1293,6 @@
     }
   ],
   "metadata": {
-    "address": "2oZLdzAvNDXNAGgMGhU5bxXr8K6pQ5vDbrgCZXY9bZgu"
+    "address": "Ck5chRRitgDgfhQMGyg2CnZ5vHk3eWwV3m3tKJHy9Smw"
   }
 }

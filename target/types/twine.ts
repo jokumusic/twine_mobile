@@ -580,6 +580,10 @@ export type Twine = {
       ],
       "args": [
         {
+          "name": "nonce",
+          "type": "u32"
+        },
+        {
           "name": "quantity",
           "type": "u64"
         }
@@ -630,6 +634,32 @@ export type Twine = {
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancelRedemption",
+      "accounts": [
+        {
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -1054,6 +1084,10 @@ export type Twine = {
           {
             "name": "status",
             "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
           }
         ]
       }
@@ -1842,6 +1876,10 @@ export const IDL: Twine = {
       ],
       "args": [
         {
+          "name": "nonce",
+          "type": "u32"
+        },
+        {
           "name": "quantity",
           "type": "u64"
         }
@@ -1892,6 +1930,32 @@ export const IDL: Twine = {
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancelRedemption",
+      "accounts": [
+        {
+          "name": "redemption",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "purchaseTicketAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -2316,6 +2380,10 @@ export const IDL: Twine = {
           {
             "name": "status",
             "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
           }
         ]
       }
