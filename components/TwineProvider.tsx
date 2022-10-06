@@ -372,6 +372,10 @@ export function TwineProvider(props) {
         return twine.cancelRedemption(redemptionAddress, deeplinkRoute);
     }
 
+    async function transferTicket(ticketAddress: PublicKey, quantity: number, destinationWalletAddress: PublicKey, deeplinkRoute = "") {
+        return twine.transferTicket(ticketAddress, quantity, destinationWalletAddress, deeplinkRoute);
+    }
+
     return (
         <TwineContext.Provider value={{
             connectWallet,
@@ -419,6 +423,7 @@ export function TwineProvider(props) {
             signMessage,
             signatureIsValid,
             cancelRedemption,
+            transferTicket,
         }}
         >
             {props.children}

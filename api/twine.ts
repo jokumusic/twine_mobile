@@ -1801,5 +1801,88 @@ export class Twine {
             resolve(txSignature);
         });
     }
+
+    async transferTicket(ticketAddress: PublicKey, quantity: number, destinationWalletAddress: PublicKey, deeplinkRoute = "") {
+        return new Promise<PurchaseTicket>(async (resolve,reject) => {    
+            const currentWalletPubkey = this.getCurrentWalletPublicKey();
+            if(!currentWalletPubkey){
+                reject('not connected to a wallet.');
+                return;
+            }
+
+            if(quantity <= 0) {
+                reject('quantity must be greater than 0');
+                return;
+            }
+
+            const program = this.getProgram(deeplinkRoute);
+            const nonce = generateRandomU16();
+            const ticket = await program.account.purchaseTicket
+                .fetchNullable(ticketAddress)
+                .catch(reject);
+
+            if(!ticket) {
+                reject(`unable to retrieve a ticket at address ${ticketAddress.toBase58()}`);
+                return;
+            }
+
+            const mintAddress = new PublicKey(this.productPaymentTokenMint.address);
+            const [destinationTicketPda, destinationTicketPdaBump] = PublicKey.findProgramAddressSync(
+            [
+                anchor.utils.bytes.utf8.encode("purchase_ticket"),
+                ticket.productSnapshotMetadata.toBuffer(),
+                ticket.authority.toBuffer(),
+                Buffer.from(uIntToBytes(nonce,2,"setUint"))
+            ], program.programId);
+
+            const destinationTicketPaymentAddress = await spl_token.getAssociatedTokenAddress(
+                mintAddress,
+                destinationTicketPda,
+                true,
+                TOKEN_PROGRAM_ID,
+                ASSOCIATED_TOKEN_PROGRAM_ID);
+
+            const tx = await program.methods
+            .transferTicket(nonce, new anchor.BN(quantity))
+            .accounts({
+                destinationTicket: destinationTicketPda,
+                destinationTicketPayment: destinationTicketPaymentAddress,
+                destinationTicketAuthority: destinationWalletAddress,
+                sourceTicket: ticketAddress,
+                sourceTicketPayment: ticket.payment,
+                sourceTicketAuthority: currentWalletPubkey,
+                paymentMint: mintAddress,
+            })
+            .transaction();
+            
+            tx.feePayer = currentWalletPubkey;
+            tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+            console.log('sending transfer transaction...');
+            const txSignature = await this.wallet
+                    .signAndSendTransaction(tx, false, true, deeplinkRoute)
+                    .catch(reject);
+            
+            if(!txSignature)
+                return;
+
+            console.log('signature: ', txSignature);
+            const confirmationResponse = await this.connection
+                .confirmTransaction(txSignature, 'finalized')
+                .catch(reject);
+            
+            if(!confirmationResponse)
+                return;
+                
+            const destinationTicket = await program.account.purchaseTicket
+                .fetch(destinationTicketPda)
+                .catch(reject);
+
+            if(!destinationTicket)
+                return;
+
+            resolve(destinationTicket);
+        });
+    }
 }
 

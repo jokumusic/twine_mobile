@@ -56,6 +56,11 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [redemptionResultMessage, setRedemptionResultMessage] = useState("");
    const [redemptionValidationAllowedSeconds, setRedemptionValidationAllowedSeconds] = useState(30);
    const [quantityToAddToCart, setQuantityToAddToCart] = useState(product.inventory > 0 ? 1 : 0);
+   const [transferTicketTo, setTransferTicketTo] = useState("");
+   const [transferTicketQuantity, setTransferTicketQuantity] = useState(1);
+   const [showTransferTicketDialog, setShowTransferTicketDialog] = useState(false);
+   const [showTicketTransferScannerDialog, setShowTicketTransferScannerDialog] = useState(false);
+   const [transferTicketMessage, setTransferTicketMessage] = useState("");
 
 
    useEffect(()=>{
@@ -351,8 +356,32 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       }
     }
     
-    setShowLoadingDialog(true);
+    setShowLoadingDialog(false);
   }
+
+  async function transferTicket(){
+    const destinationWalletAddress = new PublicKey(transferTicketTo);
+    setShowTransferTicketDialog(false);
+    setShowLoadingDialog(true);
+    const txSignature = await twineContext
+      .transferTicket(purchaseTicket.address, transferTicketQuantity, transferTicketTo, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>{
+        console.log(err);
+        setTransferTicketMessage(err);
+        setShowLoadingDialog(false);
+        setShowTransferTicketDialog(true);
+      });
+
+    if(txSignature){
+      const ticket = await twineContext.getPurchaseTicketByAddress(purchaseTicket.address);
+      if(ticket){
+        setPurchaseTicket(ticket);
+      }
+    }
+    
+    setShowLoadingDialog(false);
+  }
+
 
   return (         
     <View style={styles.container}>
@@ -390,11 +419,18 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         </View>
       
         {purchaseTicket && purchaseTicket.remainingQuantity > 0 &&
-          <View style={{flexDirection: 'column', width: '100%', backgroundColor: 'transparent', justifyContent: 'space-around'}}>                   
+          <View style={{flexDirection: 'row', width: '98%', backgroundColor: 'transparent', alignSelf: 'center', justifyContent: 'space-evenly', marginVertical: 10}}>                   
               <Button 
                 title="Reedeem"
                 onPress={()=>setShowRedemptionDialog(true)}
-                buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '95%', height: 50, alignSelf:'center', marginVertical: 10 }}
+                buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50 }}
+                disabled={purchaseTicket.remainingQuantity <= 0}
+              />
+
+              <Button 
+                title="Transfer"
+                onPress={()=>{setTransferTicketQuantity(1); setShowTransferTicketDialog(true);}}
+                buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50 }}
                 disabled={purchaseTicket.remainingQuantity <= 0}
               />
           </View>
@@ -420,8 +456,20 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                      
           <Text style={styles.title}>{product?.data?.displayName}</Text>
           <Text>{product?.data?.displayDescription}</Text>
-          <Text>Price: $ {product.price.toString()}</Text>
-          <Text>Available Quantity: {product.inventory.toString()}</Text> 
+          
+          { product.isSnapshot
+            ? <>
+                <Text>Purchase Price: $ {product.price.toString()}</Text>
+                <Text>Quantity Purchased: {(purchaseTicket.remainingQuantity + purchaseTicket.redeemed + purchaseTicket.pendingRedemption).toString()}</Text>
+                <Text>Remaining Quantity: {purchaseTicket.remainingQuantity.toString()}</Text>
+                <Text>Redeemed: {purchaseTicket.redeemed.toString()}</Text>
+                <Text>Pending Redemption: {purchaseTicket.pendingRedemption.toString()}</Text>
+              </>
+            : <>
+                <Text>Price: $ {product.price.toString()}</Text>
+                <Text>Available Quantity: {product.inventory.toString()}</Text> 
+              </>
+          }
           {      
             product.data?.sku  &&
             <Text>Sku: {product.data?.sku}</Text>
@@ -657,6 +705,76 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
             }
           </View>
         </Dialog>
+
+        <Dialog isVisible={showTransferTicketDialog}>
+          <Text style={{color:'red'}}>{transferTicketMessage}</Text>
+
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Transfer To Address:</Text>                
+            <View style={{flexDirection: 'row'}}>
+              <TextInput 
+                  style={[styles.inputBox,{width: '90%'}]}
+                  value={transferTicketTo}
+                  onChangeText={setTransferTicketTo}                        
+              />
+              <Button
+                  onPress={()=>{setShowTransferTicketDialog(false); setShowTicketTransferScannerDialog(true);}}
+                  style={{borderRadius: 6, margin: 5,}}
+              >
+                <Icon type="ionicon" name="scan-outline" color="blue" size={22}/>
+              </Button>
+            </View>
+          </View>
+        
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Quantity To Transfer</Text>
+            <TextInput
+                style={styles.inputBox}
+                value={transferTicketQuantity.toString()}
+                keyboardType='numeric'                
+                onChangeText={(t)=>{
+                  const n = Number(t);
+                  if(!isNaN(n) && n <= purchaseTicket.remainingQuantity)
+                    setTransferTicketQuantity(n)
+                }}
+            />
+          </View>
+
+          <View style={{flexDirection: 'row', alignSelf: 'center'}}>
+            <Dialog.Button 
+                  type="solid"
+                  onPress={()=>transferTicket()}            
+                  buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
+            >
+              Transfer
+            </Dialog.Button>
+
+            <Dialog.Button 
+              type="solid"
+              onPress={()=>{setShowTransferTicketDialog(false);}}            
+              buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
+            >
+              Cancel
+            </Dialog.Button>
+          </View>
+        </Dialog>
+
+        <Dialog
+            isVisible={showTicketTransferScannerDialog}
+            onBackdropPress={()=>{setShowTicketTransferScannerDialog(false); setShowTransferTicketDialog(true);}}
+        >
+          <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>
+            <BarCodeScanner
+              onBarCodeScanned={({ type, data })=>{
+                setTransferTicketTo(data);
+                setShowTicketTransferScannerDialog(false);
+                setShowTransferTicketDialog(true);
+              }}
+              style={StyleSheet.absoluteFill}
+              />
+          </View>
+        </Dialog>
+
         
     </View>
     );

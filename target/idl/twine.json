@@ -662,9 +662,84 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": []
+    },
+    {
+      "name": "transferTicket",
+      "accounts": [
+        {
+          "name": "destinationTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "destinationTicketPayment",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "destinationTicketAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sourceTicket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sourceTicketPayment",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sourceTicketAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u16"
+        },
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1278,16 +1353,21 @@
     },
     {
       "code": 6024,
+      "name": "InsufficientQuantity",
+      "msg": "insufficient quantity"
+    },
+    {
+      "code": 6025,
       "name": "IncorrectSeed",
       "msg": "incorrect seed"
     },
     {
-      "code": 6025,
+      "code": 6026,
       "name": "AlreadyProcessed",
       "msg": "already processed"
     },
     {
-      "code": 6026,
+      "code": 6027,
       "name": "AlreadyRedeemed",
       "msg": "already redeemed"
     }
