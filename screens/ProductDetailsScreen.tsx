@@ -19,6 +19,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { PurchaseTicket, RedemptionType, Store, Product, Redemption, TicketTaker, RedemptionStatus } from '../api/Twine';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import { PublicKey } from '@solana/web3.js';
+import { updateDefaultAccountState } from '@solana/spl-token';
 
 const SCREEN_DEEPLINK_ROUTE = "product_details";
 
@@ -61,6 +62,9 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [showTransferTicketDialog, setShowTransferTicketDialog] = useState(false);
    const [showTicketTransferScannerDialog, setShowTicketTransferScannerDialog] = useState(false);
    const [transferTicketMessage, setTransferTicketMessage] = useState("");
+   const [showReturnDialog, setShowReturnDialog] = useState(false);
+   const [returnQuantity, setReturnQuantity] = useState(1);
+   const [returnDialogMessage, setReturnDialogMessage] = useState("");
 
 
    useEffect(()=>{
@@ -363,7 +367,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
     const destinationWalletAddress = new PublicKey(transferTicketTo);
     setShowTransferTicketDialog(false);
     setShowLoadingDialog(true);
-    const txSignature = await twineContext
+    const updatedTicket = await twineContext
       .transferTicket(purchaseTicket.address, transferTicketQuantity, transferTicketTo, SCREEN_DEEPLINK_ROUTE)
       .catch(err=>{
         console.log(err);
@@ -372,11 +376,27 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         setShowTransferTicketDialog(true);
       });
 
-    if(txSignature){
-      const ticket = await twineContext.getPurchaseTicketByAddress(purchaseTicket.address);
-      if(ticket){
-        setPurchaseTicket(ticket);
-      }
+    if(updatedTicket){
+        setPurchaseTicket(updatedTicket);      
+    }
+    
+    setShowLoadingDialog(false);
+  }
+
+  async function returnTicket(){
+    setShowReturnDialog(false);
+    setShowLoadingDialog(true);
+    const updatedTicket = await twineContext
+      .cancelTicket(purchaseTicket.address, returnQuantity, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>{
+        console.log(err);
+        setReturnDialogMessage(err);
+        setShowLoadingDialog(false);
+        setShowReturnDialog(true);
+      });
+
+    if(updatedTicket){
+        setPurchaseTicket(updatedTicket);      
     }
     
     setShowLoadingDialog(false);
@@ -423,14 +443,24 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
               <Button 
                 title="Reedeem"
                 onPress={()=>setShowRedemptionDialog(true)}
-                buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50 }}
+                buttonStyle={{ borderWidth: 0, borderRadius: 8 }}
+                containerStyle={{width: '30%', height: 50}}
                 disabled={purchaseTicket.remainingQuantity <= 0}
               />
 
               <Button 
                 title="Transfer"
                 onPress={()=>{setTransferTicketQuantity(1); setShowTransferTicketDialog(true);}}
-                buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '90%', height: 50 }}
+                buttonStyle={{ borderWidth: 0, borderRadius: 8 }}
+                containerStyle={{width: '30%', height: 50}}
+                disabled={purchaseTicket.remainingQuantity <= 0}
+              />
+
+              <Button 
+                title="Return"
+                onPress={()=>setShowReturnDialog(true)}
+                buttonStyle={{ borderWidth: 0, borderRadius: 8 }}
+                containerStyle={{width: '30%', height: 50}}
                 disabled={purchaseTicket.remainingQuantity <= 0}
               />
           </View>
@@ -604,8 +634,8 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         </Dialog>
 
         <Dialog
-            isVisible={showScannerDialog}
-            onBackdropPress={()=>{setShowScannerDialog(false); setShowTicketTakerDialog(true);}}
+          isVisible={showScannerDialog}
+          onBackdropPress={()=>{setShowScannerDialog(false); setShowTicketTakerDialog(true);}}
         >
           <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>              
             <BarCodeScanner
@@ -652,8 +682,8 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         </Dialog>
 
         <Dialog
-            isVisible={showValidateRedemptionScannerDialog}
-            onBackdropPress={()=>{setShowValidateRedemptionScannerDialog(false);}}
+          isVisible={showValidateRedemptionScannerDialog}
+          onBackdropPress={()=>{setShowValidateRedemptionScannerDialog(false);}}
         >
           <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>
             <BarCodeScanner
@@ -669,8 +699,8 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         </Dialog>
 
         <Dialog
-            isVisible={showValidateRedemptionResult}
-            onBackdropPress={()=>{setShowValidateRedemptionResult(false); setShowValidateRedemptionScannerDialog(true);}}
+          isVisible={showValidateRedemptionResult}
+          onBackdropPress={()=>{setShowValidateRedemptionResult(false); setShowValidateRedemptionScannerDialog(true);}}
         >
           <Text style={{marginVertical: 10}}>{redemptionResultMessage}</Text>
           <View style={[styles.inputRow,{marginVertical: 10}]}>
@@ -718,8 +748,8 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                   onChangeText={setTransferTicketTo}                        
               />
               <Button
-                  onPress={()=>{setShowTransferTicketDialog(false); setShowTicketTransferScannerDialog(true);}}
-                  style={{borderRadius: 6, margin: 5,}}
+                onPress={()=>{setShowTransferTicketDialog(false); setShowTicketTransferScannerDialog(true);}}
+                style={{borderRadius: 6, margin: 5,}}
               >
                 <Icon type="ionicon" name="scan-outline" color="blue" size={22}/>
               </Button>
@@ -742,9 +772,9 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
 
           <View style={{flexDirection: 'row', alignSelf: 'center'}}>
             <Dialog.Button 
-                  type="solid"
-                  onPress={()=>transferTicket()}            
-                  buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
+              type="solid"
+              onPress={()=>transferTicket()}            
+              buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
             >
               Transfer
             </Dialog.Button>
@@ -760,8 +790,8 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         </Dialog>
 
         <Dialog
-            isVisible={showTicketTransferScannerDialog}
-            onBackdropPress={()=>{setShowTicketTransferScannerDialog(false); setShowTransferTicketDialog(true);}}
+          isVisible={showTicketTransferScannerDialog}
+          onBackdropPress={()=>{setShowTicketTransferScannerDialog(false); setShowTransferTicketDialog(true);}}
         >
           <View style={{width: WINDOW_WIDTH * 0.5, height: WINDOW_HEIGHT * 0.7, alignSelf: 'center'}}>
             <BarCodeScanner
@@ -772,6 +802,42 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
               }}
               style={StyleSheet.absoluteFill}
               />
+          </View>
+        </Dialog>
+
+        <Dialog isVisible={showReturnDialog}>
+          <Text style={{color:'red'}}>{returnDialogMessage}</Text>
+        
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Quantity To Return</Text>
+            <TextInput
+                style={styles.inputBox}
+                value={returnQuantity.toString()}
+                keyboardType='numeric'
+                onChangeText={(t)=>{
+                  const n = Number(t);
+                  if(!isNaN(n) && n <= purchaseTicket.remainingQuantity)
+                    setReturnQuantity(n);
+                }}
+            />
+          </View>
+
+          <View style={{flexDirection: 'row', alignSelf: 'center'}}>
+            <Dialog.Button 
+              type="solid"
+              onPress={()=>returnTicket()}            
+              buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
+            >
+              Return
+            </Dialog.Button>
+
+            <Dialog.Button 
+              type="solid"
+              onPress={()=>{setShowReturnDialog(false);}}            
+              buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
+            >
+              Cancel
+            </Dialog.Button>
           </View>
         </Dialog>
 

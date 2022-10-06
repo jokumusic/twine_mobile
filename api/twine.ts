@@ -1874,14 +1874,88 @@ export class Twine {
             if(!confirmationResponse)
                 return;
                 
-            const destinationTicket = await program.account.purchaseTicket
-                .fetch(destinationTicketPda)
+            const destinationTicket = await this
+                .getPurchaseTicketByAddress(destinationTicketPda)
                 .catch(reject);
 
             if(!destinationTicket)
                 return;
 
             resolve(destinationTicket);
+        });
+    }
+
+    async cancelTicket(ticketAddress: PublicKey, quantity: number, deeplinkRoute = "") {
+        return new Promise<PurchaseTicket>(async (resolve,reject) => {    
+            const currentWalletPubkey = this.getCurrentWalletPublicKey();
+            if(!currentWalletPubkey){
+                reject('not connected to a wallet.');
+                return;
+            }
+
+            if(quantity <= 0) {
+                reject('quantity must be greater than 0');
+                return;
+            }
+
+            const program = this.getProgram(deeplinkRoute);
+            const ticket = await program.account.purchaseTicket.fetch(ticketAddress);
+            if(!ticket) {
+                reject(`unable to fetch ticket at address ${ticketAddress.toBase58()}`);
+                return;
+            }
+
+            if(quantity > ticket.inventory) {
+                reject(`quantity(${quantity}) is greater than the remaining quantity(${ticket.remainingQuantity.toNumber()}) on the ticket`);
+                return;
+            }
+
+            const mintAddress = new PublicKey(this.productPaymentTokenMint.address);
+            const returnPaymentAddress = await spl_token.getAssociatedTokenAddress(
+                mintAddress,
+                currentWalletPubkey,
+                false,
+                TOKEN_PROGRAM_ID,
+                ASSOCIATED_TOKEN_PROGRAM_ID);
+
+            const tx = await program.methods
+                .cancelTicket(new anchor.BN(quantity))
+                .accounts({
+                  product: ticket.product,
+                  ticket: ticketAddress,
+                  ticketPayment: ticket.payment,
+                  paymentReturn: returnPaymentAddress,
+                  paymentMint: mintAddress,
+                  ticketAuthority: currentWalletPubkey,
+                })
+                .transaction();
+            
+              tx.feePayer = currentWalletPubkey;
+              tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+              console.log('sending transfer transaction...');
+              const txSignature = await this.wallet
+                      .signAndSendTransaction(tx, false, true, deeplinkRoute)
+                      .catch(reject);
+              
+              if(!txSignature)
+                  return;
+  
+              console.log('signature: ', txSignature);
+              const confirmationResponse = await this.connection
+                  .confirmTransaction(txSignature, 'finalized')
+                  .catch(reject);
+              
+              if(!confirmationResponse)
+                  return;
+                  
+              const updatedTicket = await this.getPurchaseTicketByAddress(ticketAddress)
+                  .catch(reject);
+  
+              if(!updatedTicket)
+                  return;
+  
+              resolve(updatedTicket);
         });
     }
 }

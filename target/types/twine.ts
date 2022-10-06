@@ -740,6 +740,52 @@ export type Twine = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "cancelTicket",
+      "accounts": [
+        {
+          "name": "product",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ticket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ticketPayment",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentReturn",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ticketAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -2111,6 +2157,52 @@ export const IDL: Twine = {
           "name": "nonce",
           "type": "u16"
         },
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancelTicket",
+      "accounts": [
+        {
+          "name": "product",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ticket",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ticketPayment",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentReturn",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ticketAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
         {
           "name": "quantity",
           "type": "u64"
