@@ -39,6 +39,7 @@
           "photosPermission": "The app uses your photos for stores, products, proofs, etc..."
         }
       ]
-    ]
+    ],
+    "jsEngine": "hermes"
   }
 }

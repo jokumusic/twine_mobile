@@ -323,7 +323,7 @@ export default function EditProductScreen(props) {
         </View>
         
         <View style={styles.inputRow}>
-          <Text style={styles.inputLabel}>Price</Text>
+          <Text style={styles.inputLabel}>Price ($USDC)</Text>
           <TextInput
             placeholder='price $USD'
             style={styles.inputBox}
@@ -343,6 +343,26 @@ export default function EditProductScreen(props) {
             value={product?.inventory?.toString()}
             keyboardType='numeric'
             onChangeText={(t)=>setProduct({...product,  inventory: Number(t)})}
+          />
+        </View>
+
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Expire Minutes After Purchase</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={product?.expirationMinutesAfterPurchase?.toString()}
+            keyboardType='numeric'
+            onChangeText={(t)=>setProduct({...product,  expirationMinutesAfterPurchase: Number(t)})}
+          />
+        </View>
+
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Expiration Unix Timestamp</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={product?.expirationTimestamp?.toString()}
+            keyboardType='numeric'
+            onChangeText={(t)=>setProduct({...product,  expirationTimestamp: Number(t)})}
           />
         </View>
         

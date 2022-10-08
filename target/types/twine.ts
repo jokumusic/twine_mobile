@@ -241,6 +241,14 @@ export type Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -320,6 +328,14 @@ export type Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -368,6 +384,14 @@ export type Twine = {
         {
           "name": "redemptionType",
           "type": "u8"
+        },
+        {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
         },
         {
           "name": "name",
@@ -951,6 +975,14 @@ export type Twine = {
             "type": "u8"
           },
           {
+            "name": "expirationMinutesAfterPurchase",
+            "type": "u32"
+          },
+          {
+            "name": "expirationTimestamp",
+            "type": "i64"
+          },
+          {
             "name": "name",
             "type": "string"
           },
@@ -1073,6 +1105,10 @@ export type Twine = {
           {
             "name": "payment",
             "type": "publicKey"
+          },
+          {
+            "name": "expiration",
+            "type": "i64"
           }
         ]
       }
@@ -1416,6 +1452,16 @@ export type Twine = {
       "code": 6027,
       "name": "AlreadyRedeemed",
       "msg": "already redeemed"
+    },
+    {
+      "code": 6028,
+      "name": "ProductIsExpired",
+      "msg": "product is expired"
+    },
+    {
+      "code": 6029,
+      "name": "TicketIsExpired",
+      "msg": "ticket is expired"
     }
   ]
 };
@@ -1663,6 +1709,14 @@ export const IDL: Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -1742,6 +1796,14 @@ export const IDL: Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -1790,6 +1852,14 @@ export const IDL: Twine = {
         {
           "name": "redemptionType",
           "type": "u8"
+        },
+        {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
         },
         {
           "name": "name",
@@ -2373,6 +2443,14 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
+            "name": "expirationMinutesAfterPurchase",
+            "type": "u32"
+          },
+          {
+            "name": "expirationTimestamp",
+            "type": "i64"
+          },
+          {
             "name": "name",
             "type": "string"
           },
@@ -2495,6 +2573,10 @@ export const IDL: Twine = {
           {
             "name": "payment",
             "type": "publicKey"
+          },
+          {
+            "name": "expiration",
+            "type": "i64"
           }
         ]
       }
@@ -2838,6 +2920,16 @@ export const IDL: Twine = {
       "code": 6027,
       "name": "AlreadyRedeemed",
       "msg": "already redeemed"
+    },
+    {
+      "code": 6028,
+      "name": "ProductIsExpired",
+      "msg": "product is expired"
+    },
+    {
+      "code": 6029,
+      "name": "TicketIsExpired",
+      "msg": "ticket is expired"
     }
   ]
 };

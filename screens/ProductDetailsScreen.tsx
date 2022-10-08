@@ -490,14 +490,23 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
           { product.isSnapshot
             ? <>
                 <Text>Purchase Price: $ {product.price.toString()}</Text>
-                <Text>Quantity Purchased: {(purchaseTicket.remainingQuantity + purchaseTicket.redeemed + purchaseTicket.pendingRedemption).toString()}</Text>
+                <Text>Quantity Purchased: {(purchaseTicket.remainingQuantity.toNumber() + purchaseTicket.redeemed.toNumber() + purchaseTicket.pendingRedemption.toNumber()).toString()}</Text>
                 <Text>Remaining Quantity: {purchaseTicket.remainingQuantity.toString()}</Text>
                 <Text>Redeemed: {purchaseTicket.redeemed.toString()}</Text>
                 <Text>Pending Redemption: {purchaseTicket.pendingRedemption.toString()}</Text>
+                { purchaseTicket.expiration.toNumber() > 0 &&
+                  <Text>Expiration: {new Date(purchaseTicket.expiration.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                }
               </>
             : <>
                 <Text>Price: $ {product.price.toString()}</Text>
-                <Text>Available Quantity: {product.inventory.toString()}</Text> 
+                <Text>Available Quantity: {product.inventory.toString()}</Text>
+                { product.expirationMinutesAfterPurchase > 0 &&
+                  <Text>Expiration Minutes After Purchase: {product.expirationMinutesAfterPurchase.toString()}</Text>
+                }
+                { product.expirationTimestamp.toNumber() > 0 &&
+                  <Text>Expiration: {new Date(product.expirationTimestamp.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                }
               </>
           }
           {      

@@ -105,6 +105,8 @@ export interface WriteableProduct {
     price: number;
     inventory: number;
     redemptionType: RedemptionType;
+    expirationMinutesAfterPurchase: number;
+    expirationTimestamp: number;
     data: ProductData;
 }
 
@@ -136,6 +138,7 @@ export interface PurchaseTicket {
     readonly pendingRedemption: number;
     readonly nonce: number;
     readonly payment: PublicKey;
+    readonly expiration: number;
 }
 
 export interface Purchase {
@@ -571,6 +574,8 @@ export class Twine {
                         new anchor.BN(product.price * this.productPaymentTokenMint.multiplier),
                         new anchor.BN(product.inventory),
                         product.redemptionType, 
+                        product.expirationMinutesAfterPurchase,
+                        new anchor.BN(product.expirationTimestamp),
                         product.data.displayName.toLowerCase().slice(0,),
                         product.data.displayDescription.toLowerCase(),
                         this.encodeData(product.data)
@@ -596,7 +601,9 @@ export class Twine {
                         product.status, //productMintDecimals, 
                         new anchor.BN(product.price * this.productPaymentTokenMint.multiplier),
                         new anchor.BN(product.inventory),
-                        product.redemptionType, 
+                        product.redemptionType,
+                        product.expirationMinutesAfterPurchase,
+                        new anchor.BN(product.expirationTimestamp),
                         product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
                         product.data.displayDescription.slice(0,PRODUCT_DESCRIPTION_MAX_LEN).toLowerCase(),
                         this.encodeData(product.data)
@@ -743,6 +750,8 @@ export class Twine {
                     new anchor.BN(product.price * this.productPaymentTokenMint.multiplier),
                     new anchor.BN(product.inventory),
                     product.redemptionType,
+                    product.expirationMinutesAfterPurchase,
+                    new anchor.BN(product.expirationTimestamp),
                     product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
                     product.data.displayDescription.slice(0,PRODUCT_DESCRIPTION_MAX_LEN).toLowerCase(),
                     this.encodeData(product.data),

@@ -241,6 +241,14 @@
           "type": "u8"
         },
         {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -320,6 +328,14 @@
           "type": "u8"
         },
         {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -368,6 +384,14 @@
         {
           "name": "redemptionType",
           "type": "u8"
+        },
+        {
+          "name": "expirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "expirationTimestamp",
+          "type": "i64"
         },
         {
           "name": "name",
@@ -951,6 +975,14 @@
             "type": "u8"
           },
           {
+            "name": "expirationMinutesAfterPurchase",
+            "type": "u32"
+          },
+          {
+            "name": "expirationTimestamp",
+            "type": "i64"
+          },
+          {
             "name": "name",
             "type": "string"
           },
@@ -1073,6 +1105,10 @@
           {
             "name": "payment",
             "type": "publicKey"
+          },
+          {
+            "name": "expiration",
+            "type": "i64"
           }
         ]
       }
@@ -1416,9 +1452,19 @@
       "code": 6027,
       "name": "AlreadyRedeemed",
       "msg": "already redeemed"
+    },
+    {
+      "code": 6028,
+      "name": "ProductIsExpired",
+      "msg": "product is expired"
+    },
+    {
+      "code": 6029,
+      "name": "TicketIsExpired",
+      "msg": "ticket is expired"
     }
   ],
   "metadata": {
-    "address": "Ck5chRRitgDgfhQMGyg2CnZ5vHk3eWwV3m3tKJHy9Smw"
+    "address": "4YuP6p7UXgUMNQauAtNSmqcmNkeWYop7wxDSHe6aH4P8"
   }
 }
