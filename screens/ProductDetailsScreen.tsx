@@ -504,8 +504,8 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                 { product.expirationMinutesAfterPurchase > 0 &&
                   <Text>Expiration Minutes After Purchase: {product.expirationMinutesAfterPurchase.toString()}</Text>
                 }
-                { product.expirationTimestamp.toNumber() > 0 &&
-                  <Text>Expiration: {new Date(product.expirationTimestamp.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                { product.expirationTimestamp > 0 &&
+                  <Text>Expiration: {new Date(product.expirationTimestamp * 1000).toLocaleString("en-us")}</Text>
                 }
               </>
           }

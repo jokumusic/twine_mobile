@@ -10,6 +10,7 @@ import { CheckBox, Dialog, Icon, Button } from "@rneui/themed";
 import { TwineContext } from '../components/TwineProvider';
 import * as twine from '../api/Twine';
 import { web3 } from '../dist/browser';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
 
 const SCREEN_DEEPLINK_ROUTE = "edit_product";
@@ -44,7 +45,7 @@ export default function EditProductScreen(props) {
   const [secondaryAuthority, setSecondaryAuthority] = useState(product?.secondaryAuthority?.toBase58() ?? "");
   const [payTo, setPayTo] = useState(product?.payTo?.toBase58() ?? "");
   const [addImageUrl, setAddImageUrl] = useState("");
-
+  const [expirationDate, setExpirationDate] = useState(new Date((product?.expirationTimestamp ?? 0) * 1000));
 
   const log = useCallback((log: string, toConsole=true) => {
     toConsole && console.log(log);
@@ -123,6 +124,14 @@ export default function EditProductScreen(props) {
       }
     }
 
+    if(expirationDate.getTime() != 0 && expirationDate < new Date()) {
+      Alert.alert('error', 'Expiration date cannot be before the current date');
+      return false;
+    } 
+    else {
+      validatedProduct = {...validatedProduct, expirationTimestamp: Math.floor(expirationDate.getTime() / 1000) }     
+    }
+
     log('all inputs look good!');
 
     return validatedProduct;
@@ -163,6 +172,7 @@ export default function EditProductScreen(props) {
     if(refreshedProduct) {
       setProduct(refreshedProduct);
       setProductPrice(refreshedProduct.price);
+      setExpirationDate(new Date(refreshedProduct.expirationTimestamp * 1000))
       log(JSON.stringify(refreshedProduct));
     }
     else {
@@ -226,6 +236,23 @@ export default function EditProductScreen(props) {
       </>
     );
   }
+
+  const onExpirationDatePickerChange = (event, selectedDate) => {
+    setExpirationDate(selectedDate);
+    //const seconds = Math.floor(selectedDate?.getTime() / 1000);
+    //console.log('seconds: ', seconds);
+    //setProduct({...product, expirationTimeStamp: new anchor.BN(seconds)});
+  };
+  const showExpirationDatePicker = (currentMode) => {
+    //console.log('before: ', product.expirationTimestamp.toNumber());
+    DateTimePickerAndroid.open({
+      value: expirationDate.getTime() ? expirationDate : new Date(),
+      onChange: onExpirationDatePickerChange,
+      mode: currentMode,
+      is24Hour: true,
+    });
+  };
+
 
   return (
     <View style={styles.container}>
@@ -357,13 +384,29 @@ export default function EditProductScreen(props) {
         </View>
 
         <View style={styles.inputRow}>
-          <Text style={styles.inputLabel}>Expiration Unix Timestamp</Text>
-          <TextInput
-            style={styles.inputBox}
-            value={product?.expirationTimestamp?.toString()}
-            keyboardType='numeric'
-            onChangeText={(t)=>setProduct({...product,  expirationTimestamp: Number(t)})}
-          />
+          <Text style={styles.inputLabel}>Expiration Date/Time</Text>
+          <View style={{flexDirection: 'row'}}>
+            <TextInput
+              style={[styles.inputBox,{backgroundColor: '#DDDDDD', width: 200}]}
+              value={expirationDate.getTime() ? expirationDate.toLocaleString() : ""}
+              editable={false}
+            />
+            <PressableIcon
+              name='calendar-outline'
+              style={{marginLeft:10}}
+              onPress={()=>showExpirationDatePicker('date')}
+            />
+            <PressableIcon
+              name='time-outline'
+              style={{marginLeft:10}}
+              onPress={()=>showExpirationDatePicker('time')}
+            />
+            <PressableIcon
+              name='close-outline'
+              style={{marginLeft:10}}
+              onPress={()=>setExpirationDate(new Date(0))}
+            />
+          </View>
         </View>
         
         <View style={styles.inputRow}>

@@ -644,20 +644,13 @@ export class Twine {
                 return;
 
             console.log('retrieving finalized account data...');
-            const createdProduct = await program.account
-                                    .product
-                                    .fetchNullable(productPda)              
+            const createdProduct = await this.getProductByAddress(productPda)
                                     .catch(reject);
 
             if(!createdProduct)
                 return;
     
-            try{
-                createdProduct.data = this.decodeData(createdProduct.data);
-                resolve({...createdProduct, address: productPda, price: createdProduct.price.toNumber() / this.productPaymentTokenMint.multiplier, inventory: createdProduct.inventory.toNumber()});
-            } catch(e) {
-                reject(e);
-            }    
+            resolve(createdProduct);    
         });
     }
 
@@ -684,7 +677,12 @@ export class Twine {
 
             try{
                 product.data = this.decodeData(product.data);       
-                resolve({...product, address: address, price: product.price.toNumber() / this.productPaymentTokenMint.multiplier, inventory: product.inventory.toNumber()});       
+                resolve({...product,
+                     address: address,
+                     price: product.price.toNumber() / this.productPaymentTokenMint.multiplier,
+                     inventory: product.inventory.toNumber(),
+                     expirationTimestamp: product.expirationTimestamp.toNumber(),
+                });
             }catch(err) {
                 reject(err);
             }        
@@ -780,15 +778,14 @@ export class Twine {
             console.log('waiting for finalization of transaction ', signature);
             const confirmationResponse = await this.connection.confirmTransaction(signature, 'finalized');
 
-            const updatedProduct = await program.account.product
-                .fetchNullable(product.address)
+            const updatedProduct = await this
+                .getProductByAddress(product.address)
                 .catch(reject);
-
+            
             if(!updatedProduct)
                 return;
-        
-            updatedProduct.data = this.decodeData(updatedProduct.data);
-            resolve({...updatedProduct, address: product.address, price: updatedProduct.price.toNumber() / this.productPaymentTokenMint.multiplier, inventory: updatedProduct.inventory.toNumber()});
+
+            resolve(updatedProduct);    
         });
     }
 
@@ -965,6 +962,7 @@ export class Twine {
                             address: product.publicKey,
                             price: product.account.price.toNumber() / this.productPaymentTokenMint.multiplier,
                             inventory: product.account.inventory.toNumber(),
+                            expirationTimestamp: product.account.expirationTimestamp.toNumber(),
                             account_type: "product"
                         });
                     }
@@ -1005,6 +1003,7 @@ export class Twine {
                             address: product.publicKey,
                             price: product.account.price.toNumber() / this.productPaymentTokenMint.multiplier,
                             inventory: product.account.inventory.toNumber(),
+                            expirationTimestamp: product.account.expirationTimestamp.toNumber(),
                             account_type: "product"
                         };
                         if(regex) {

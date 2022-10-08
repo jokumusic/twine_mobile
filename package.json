@@ -22,6 +22,7 @@
     "@project-serum/anchor": "^0.25.0",
     "@project-serum/borsh": "^0.2.5",
     "@react-native-async-storage/async-storage": "~1.17.3",
+    "@react-native-community/datetimepicker": "6.2.0",
     "@react-native/assets": "^1.0.0",
     "@react-navigation/bottom-tabs": "^6.0.5",
     "@react-navigation/native": "^6.0.2",
