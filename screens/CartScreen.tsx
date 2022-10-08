@@ -191,6 +191,7 @@ export default function CartScreen(props) {
 
         setShowLoadingDialog(true);
         const promises = [];
+        const errors: string[] = [];
 
         for(const checkoutItem of checkoutItems) {
             const buyPromise = twineContext
@@ -198,18 +199,20 @@ export default function CartScreen(props) {
                 .then(async ticket=>{
                     await removeItemFromCart(checkoutItem.address, checkoutItem.count);
                 })
-                .catch(err=>console.log(err));//Alert.alert("error", err));
+                .catch(err=>errors.push(err));//Alert.alert("error", err));
 
             promises.push(buyPromise);
         }
 
         const purchasedItems = await Promise
-            .all(promises)
-            .catch(err=>Alert.alert('error', err))
-            .finally(()=>{
-            });
+            .all(promises);
 
         setShowLoadingDialog(false);
+        
+        if(errors.length > 0){
+            Alert.alert("errors", errors.join("\n\n"));
+        }
+        
         console.log('done');
     }
 
@@ -360,8 +363,8 @@ export default function CartScreen(props) {
                                     <Text style={{fontSize:15}}>price: ${purchase?.snapshot?.price}</Text>
                                     <Text style={{fontSize:15}}>remaining redemptions: {purchase.ticket?.remainingQuantity?.toString()}</Text>
                                     <Text style={{fontSize:15}}>redemptions: {purchase.ticket?.redeemed?.toString()}</Text>
-                                    <Text style={{fontSize:15}}>pending redemptions: {purchase.ticket?.pendingRedemption?.toNumber()}</Text>
-                                    <Text style={{fontSize:15}}>date: {new Date(purchase.ticket?.timestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                    
+                                    <Text style={{fontSize:15}}>pending redemptions: {purchase.ticket?.pendingRedemption}</Text>
+                                    <Text style={{fontSize:15}}>date: {new Date(purchase.ticket?.timestamp * 1000).toLocaleString("en-us")}</Text>                                    
                                 </View>
                             </ListItem.Content>
                         </ListItem>

@@ -373,6 +373,7 @@ export default function EditProductScreen(props) {
           />
         </View>
 
+
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Expire Minutes After Purchase</Text>
           <TextInput
@@ -382,6 +383,16 @@ export default function EditProductScreen(props) {
             onChangeText={(t)=>setProduct({...product,  expirationMinutesAfterPurchase: Number(t)})}
           />
         </View>
+
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Expire Minutes After Redemption</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={product?.expirationMinutesAfterRedemption?.toString()}
+            keyboardType='numeric'
+            onChangeText={(t)=>setProduct({...product,  expirationMinutesAfterRedemption: Number(t)})}
+          />
+        </View>        
 
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Expiration Date/Time</Text>

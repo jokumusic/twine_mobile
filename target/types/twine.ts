@@ -241,12 +241,16 @@ export type Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "expirationMinutesAfterPurchase",
           "type": "u32"
         },
         {
-          "name": "expirationTimestamp",
-          "type": "i64"
+          "name": "expirationMinutesAfterRedemption",
+          "type": "u32"
         },
         {
           "name": "name",
@@ -328,12 +332,16 @@ export type Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "expirationMinutesAfterPurchase",
           "type": "u32"
         },
         {
-          "name": "expirationTimestamp",
-          "type": "i64"
+          "name": "expirationMinutesAfterRedemption",
+          "type": "u32"
         },
         {
           "name": "name",
@@ -386,12 +394,16 @@ export type Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "expirationMinutesAfterPurchase",
           "type": "u32"
         },
         {
-          "name": "expirationTimestamp",
-          "type": "i64"
+          "name": "expirationMinutesAfterRedemption",
+          "type": "u32"
         },
         {
           "name": "name",
@@ -503,6 +515,18 @@ export type Twine = {
         {
           "name": "agreedPrice",
           "type": "u64"
+        },
+        {
+          "name": "agreedExpirationTimestamp",
+          "type": "i64"
+        },
+        {
+          "name": "agreedExpirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "agreedExpirationMinutesAfterRedemption",
+          "type": "u32"
         }
       ]
     },
@@ -610,6 +634,10 @@ export type Twine = {
         {
           "name": "quantity",
           "type": "u64"
+        },
+        {
+          "name": "takeExpirationMinutes",
+          "type": "u32"
         }
       ]
     },
@@ -975,12 +1003,16 @@ export type Twine = {
             "type": "u8"
           },
           {
+            "name": "expirationTimestamp",
+            "type": "i64"
+          },
+          {
             "name": "expirationMinutesAfterPurchase",
             "type": "u32"
           },
           {
-            "name": "expirationTimestamp",
-            "type": "i64"
+            "name": "expirationMinutesAfterRedemption",
+            "type": "u32"
           },
           {
             "name": "name",
@@ -1109,6 +1141,10 @@ export type Twine = {
           {
             "name": "expiration",
             "type": "i64"
+          },
+          {
+            "name": "expirationMinutesAfterRedemption",
+            "type": "u32"
           }
         ]
       }
@@ -1173,6 +1209,10 @@ export type Twine = {
           {
             "name": "version",
             "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
           },
           {
             "name": "initSlot",
@@ -1243,8 +1283,12 @@ export type Twine = {
             "type": "u8"
           },
           {
-            "name": "nonce",
-            "type": "u32"
+            "name": "takeExpiration",
+            "type": "i64"
+          },
+          {
+            "name": "usageExpiration",
+            "type": "i64"
           }
         ]
       }
@@ -1462,6 +1506,26 @@ export type Twine = {
       "code": 6029,
       "name": "TicketIsExpired",
       "msg": "ticket is expired"
+    },
+    {
+      "code": 6030,
+      "name": "AgreedExpirationDoesntMatch",
+      "msg": "agreed expiration doesn't match the currently configured product setting"
+    },
+    {
+      "code": 6031,
+      "name": "AgreedExpirationAfterPurchaseDoesntMatch",
+      "msg": "agreed expiration after purchase doesn't match the currently configured product setting"
+    },
+    {
+      "code": 6032,
+      "name": "AgreedExpirationAfterRedemptionDoesntMatch",
+      "msg": "agreed expiration after redemption doesn't match the currently configured product setting"
+    },
+    {
+      "code": 6033,
+      "name": "TakeIsExpired",
+      "msg": "the ability to take has expired"
     }
   ]
 };
@@ -1709,12 +1773,16 @@ export const IDL: Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "expirationMinutesAfterPurchase",
           "type": "u32"
         },
         {
-          "name": "expirationTimestamp",
-          "type": "i64"
+          "name": "expirationMinutesAfterRedemption",
+          "type": "u32"
         },
         {
           "name": "name",
@@ -1796,12 +1864,16 @@ export const IDL: Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "expirationMinutesAfterPurchase",
           "type": "u32"
         },
         {
-          "name": "expirationTimestamp",
-          "type": "i64"
+          "name": "expirationMinutesAfterRedemption",
+          "type": "u32"
         },
         {
           "name": "name",
@@ -1854,12 +1926,16 @@ export const IDL: Twine = {
           "type": "u8"
         },
         {
+          "name": "expirationTimestamp",
+          "type": "i64"
+        },
+        {
           "name": "expirationMinutesAfterPurchase",
           "type": "u32"
         },
         {
-          "name": "expirationTimestamp",
-          "type": "i64"
+          "name": "expirationMinutesAfterRedemption",
+          "type": "u32"
         },
         {
           "name": "name",
@@ -1971,6 +2047,18 @@ export const IDL: Twine = {
         {
           "name": "agreedPrice",
           "type": "u64"
+        },
+        {
+          "name": "agreedExpirationTimestamp",
+          "type": "i64"
+        },
+        {
+          "name": "agreedExpirationMinutesAfterPurchase",
+          "type": "u32"
+        },
+        {
+          "name": "agreedExpirationMinutesAfterRedemption",
+          "type": "u32"
         }
       ]
     },
@@ -2078,6 +2166,10 @@ export const IDL: Twine = {
         {
           "name": "quantity",
           "type": "u64"
+        },
+        {
+          "name": "takeExpirationMinutes",
+          "type": "u32"
         }
       ]
     },
@@ -2443,12 +2535,16 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
+            "name": "expirationTimestamp",
+            "type": "i64"
+          },
+          {
             "name": "expirationMinutesAfterPurchase",
             "type": "u32"
           },
           {
-            "name": "expirationTimestamp",
-            "type": "i64"
+            "name": "expirationMinutesAfterRedemption",
+            "type": "u32"
           },
           {
             "name": "name",
@@ -2577,6 +2673,10 @@ export const IDL: Twine = {
           {
             "name": "expiration",
             "type": "i64"
+          },
+          {
+            "name": "expirationMinutesAfterRedemption",
+            "type": "u32"
           }
         ]
       }
@@ -2641,6 +2741,10 @@ export const IDL: Twine = {
           {
             "name": "version",
             "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
           },
           {
             "name": "initSlot",
@@ -2711,8 +2815,12 @@ export const IDL: Twine = {
             "type": "u8"
           },
           {
-            "name": "nonce",
-            "type": "u32"
+            "name": "takeExpiration",
+            "type": "i64"
+          },
+          {
+            "name": "usageExpiration",
+            "type": "i64"
           }
         ]
       }
@@ -2930,6 +3038,26 @@ export const IDL: Twine = {
       "code": 6029,
       "name": "TicketIsExpired",
       "msg": "ticket is expired"
+    },
+    {
+      "code": 6030,
+      "name": "AgreedExpirationDoesntMatch",
+      "msg": "agreed expiration doesn't match the currently configured product setting"
+    },
+    {
+      "code": 6031,
+      "name": "AgreedExpirationAfterPurchaseDoesntMatch",
+      "msg": "agreed expiration after purchase doesn't match the currently configured product setting"
+    },
+    {
+      "code": 6032,
+      "name": "AgreedExpirationAfterRedemptionDoesntMatch",
+      "msg": "agreed expiration after redemption doesn't match the currently configured product setting"
+    },
+    {
+      "code": 6033,
+      "name": "TakeIsExpired",
+      "msg": "the ability to take has expired"
     }
   ]
 };

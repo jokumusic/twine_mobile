@@ -327,8 +327,8 @@ export function TwineProvider(props) {
         return twine.getPurchaseFee();
     }
 
-    async function initiateRedemption(purchaseTicket: PurchaseTicket, redeemQuantity: number, deeplinkRoute: "") {
-        return twine.initiateRedemption(purchaseTicket, redeemQuantity, deeplinkRoute);
+    async function initiateRedemption(purchaseTicket: PurchaseTicket, redeemQuantity: number, takeExpirationMinutes=0, deeplinkRoute: "") {
+        return twine.initiateRedemption(purchaseTicket, redeemQuantity, takeExpirationMinutes, deeplinkRoute);
     }
 
     async function takeRedemption(redemptionAddress: PublicKey, deeplinkRoute: "") {

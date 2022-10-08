@@ -50,6 +50,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
    const [showValidateRedemptionResult, setShowValidateRedemptionResult] = useState(false);
    const [showRedemptionDialog, setShowRedemptionDialog] = useState(false);
    const [redemptionQuantity, setRedemptionQuantity] = useState(purchaseTicket?.remainingQuantity || 0);
+   const [redemptionTakeExpirationMinutes, setRedemptionTakeExpirationMinutes] = useState(0);
    const [redemptionMessage, setRedemptionMessage] = useState("");
    const [addTakerMessage, setAddTakerMessage] = useState("");
    const [showSignedRedemptionDialog, setShowSignedRedemptionDialog] = useState(false);
@@ -98,8 +99,8 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         .getRedemptionsByTicketAddress(purchaseTicket.address)
         .catch(console.log);
       
-        setRedemptions(items);
-        setShowLoadingDialog(false);
+      setRedemptions(items ? items : []);        
+      setShowLoadingDialog(false);
     })();    
    }, [purchaseTicket]);
 
@@ -162,8 +163,9 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
     setShowRedemptionDialog(false);
     setShowLoadingDialog(true);
     const redemption = await twineContext
-      .initiateRedemption(purchaseTicket, redemptionQuantity, SCREEN_DEEPLINK_ROUTE)
+      .initiateRedemption(purchaseTicket, redemptionQuantity, redemptionTakeExpirationMinutes, SCREEN_DEEPLINK_ROUTE)
       .catch(err=>{
+        console.log(err);
         setShowLoadingDialog(false);
         setRedemptionMessage(err);
         setShowRedemptionDialog(true);
@@ -309,7 +311,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       if(redemption.closeTimestamp <= 0)
         throw Error("The redemption wasn't properly processed.");
 
-      resultMessage += `Redeemed: ${new Date(redemption.closeTimestamp?.toNumber() * 1000).toLocaleString()}\n`
+      resultMessage += `Redeemed: ${new Date(redemption.closeTimestamp * 1000).toLocaleString()}\n`
       
       setScannedRedemptionIsValid(true);      
     }
@@ -354,7 +356,11 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       });
 
     if(txSignature){
-      const ticket = await twineContext.getPurchaseTicketByAddress(purchaseTicket.address);
+      const ticket = await twineContext.getPurchaseTicketByAddress(purchaseTicket.address).catch(err=>{
+        setShowLoadingDialog(false);
+        Alert.alert("error", err);
+      });
+      
       if(ticket){
         setPurchaseTicket(ticket);
       }
@@ -484,18 +490,23 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
             onPress={() => Alert.alert('not implemented', 'Not Implemented.')}
           />
                      
-          <Text style={styles.title}>{product?.data?.displayName}</Text>
-          <Text>{product?.data?.displayDescription}</Text>
+          <View style={{backgroundColor: 'transparent', marginVertical: 10, }}>
+            <Text style={styles.title}>{product?.data?.displayName}</Text>
+            <Text>{product?.data?.displayDescription}</Text>
+          </View>
           
           { product.isSnapshot
             ? <>
                 <Text>Purchase Price: $ {product.price.toString()}</Text>
-                <Text>Quantity Purchased: {(purchaseTicket.remainingQuantity.toNumber() + purchaseTicket.redeemed.toNumber() + purchaseTicket.pendingRedemption.toNumber()).toString()}</Text>
+                <Text>Quantity Purchased: {(purchaseTicket.remainingQuantity + purchaseTicket.redeemed + purchaseTicket.pendingRedemption).toString()}</Text>
                 <Text>Remaining Quantity: {purchaseTicket.remainingQuantity.toString()}</Text>
                 <Text>Redeemed: {purchaseTicket.redeemed.toString()}</Text>
                 <Text>Pending Redemption: {purchaseTicket.pendingRedemption.toString()}</Text>
-                { purchaseTicket.expiration.toNumber() > 0 &&
-                  <Text>Expiration: {new Date(purchaseTicket.expiration.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                { purchaseTicket.expiration > 0 &&
+                  <Text>Expiration: {new Date(purchaseTicket.expiration * 1000).toLocaleString("en-us")}</Text>
+                }
+                { purchaseTicket.expirationMinutesAfterRedemption > 0 &&
+                  <Text>Redemption Expiration Minutes: {purchaseTicket.expirationMinutesAfterRedemption.toString()}</Text>
                 }
               </>
             : <>
@@ -504,6 +515,10 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                 { product.expirationMinutesAfterPurchase > 0 &&
                   <Text>Expiration Minutes After Purchase: {product.expirationMinutesAfterPurchase.toString()}</Text>
                 }
+                { product.expirationMinutesAfterRedemption > 0 &&
+                  <Text>Redemption Expiration Minutes: {product.expirationMinutesAfterRedemption.toString()}</Text>
+                }
+
                 { product.expirationTimestamp > 0 &&
                   <Text>Expiration: {new Date(product.expirationTimestamp * 1000).toLocaleString("en-us")}</Text>
                 }
@@ -557,20 +572,29 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
             >
               <ListItem.Content >
                   <View style={{flexDirection: 'row'}}>
-                      <View style={{marginHorizontal: 10}}>
+                      <View style={{marginHorizontal: 5}}>
                         <Text style={{fontSize:15}}>status: {RedemptionStatus[redemption?.status ?? 0].toString()}</Text>
                         <Text style={{fontSize:15}}>quantity: {redemption.redeemQuantity.toString()}</Text>
-                        <Text style={{fontSize:15}}>initiated : {new Date(redemption.initTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                        <Text style={{fontSize:15}}>initiated : {new Date(redemption.initTimestamp * 1000).toLocaleString("en-us")}</Text>
+                        
                         { redemption.closeTimestamp > 0 &&
-                          <Text style={{fontSize:15}}>closed : {new Date(redemption.closeTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>                                        
-                        }                       
+                          <Text style={{fontSize:15}}>closed : {new Date(redemption.closeTimestamp * 1000).toLocaleString("en-us")}</Text>                                        
+                        }
+
+                        { redemption.takeExpiration > 0 &&
+                          <Text style={{fontSize:15}}>take expiration : {new Date(redemption.takeExpiration * 1000).toLocaleString("en-us")}</Text>                                        
+                        }
+
+                        { redemption.usageExpiration > 0 &&
+                          <Text style={{fontSize:15}}>usage expiration : {new Date(redemption.usageExpiration * 1000).toLocaleString("en-us")}</Text>                                        
+                        }
                       </View>
                       { redemption.status == RedemptionStatus.WAITING &&
                         <PressableIcon
                           name="close-circle"
-                          size={55}
+                          size={50}
                           color={"red"}
-                          style={{alignSelf: 'flex-end', marginRight: 5, paddingLeft: 25 }}
+                          style={{alignSelf: 'flex-end', marginRight: 5, paddingLeft: 15 }}
                           onPress={()=> cancelRedemption(redemption)}/>
                       }
                   </View>
@@ -629,9 +653,9 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                         <View style={{flexDirection: 'row'}}>              
                             <QRCode value={taker.address?.toBase58()} size={40}/>
                             <View style={{marginLeft: 10}}>
-                              <Text style={{fontSize:15}}>enabled: {new Date(taker.enabledTimestamp?.toNumber() * 1000).toLocaleString("en-us")}</Text>
+                              <Text style={{fontSize:15}}>enabled: {new Date(taker.enabledTimestamp * 1000).toLocaleString("en-us")}</Text>
                               { taker.disabledTimestamp > 0 &&
-                                <Text style={{fontSize:15}}>disabled : {new Date(taker.disabledTimestamp.toNumber() * 1000).toLocaleString("en-us")}</Text>                                        
+                                <Text style={{fontSize:15}}>disabled : {new Date(taker.disabledTimestamp * 1000).toLocaleString("en-us")}</Text>                                        
                               }
                             </View>
                         </View>
@@ -671,6 +695,20 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
             />
           </View>
 
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Minutes Until Take Expires</Text>
+            <TextInput
+                style={styles.inputBox}
+                value={redemptionTakeExpirationMinutes.toString()}
+                keyboardType='numeric'                
+                onChangeText={(t)=>{
+                  const n = Number(t);
+                  if(!isNaN(n))
+                    setRedemptionTakeExpirationMinutes(n)
+                }}
+            />
+          </View>
+
           <View style={{flexDirection: 'row', alignSelf: 'center'}}>
               <Dialog.Button 
                   type="solid"
@@ -682,7 +720,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
 
               <Dialog.Button 
                   type="solid"
-                  onPress={()=>{setShowRedemptionDialog(false); setRedemptionQuantity(0);}}            
+                  onPress={()=>{setShowRedemptionDialog(false); setRedemptionQuantity(0); setRedemptionTakeExpirationMinutes(0);}}            
                   buttonStyle={{ borderWidth: 0, borderRadius: 8, width: '80%', height: 50, alignSelf:'center', marginTop: 10 }}
               >
                   Cancel

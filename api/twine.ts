@@ -106,6 +106,7 @@ export interface WriteableProduct {
     inventory: number;
     redemptionType: RedemptionType;
     expirationMinutesAfterPurchase: number;
+    expirationMinutesAfterRedemption: number;
     expirationTimestamp: number;
     data: ProductData;
 }
@@ -139,6 +140,7 @@ export interface PurchaseTicket {
     readonly nonce: number;
     readonly payment: PublicKey;
     readonly expiration: number;
+    readonly expirationMinutesAfterRedemption: number;
 }
 
 export interface Purchase {
@@ -146,7 +148,11 @@ export interface Purchase {
     readonly productSnapshot: Product;
 }
 
-export interface Redemption {
+export interface WriteableRedemption {
+    takeExpiration: number;
+}
+
+export interface Redemption extends WriteableRedemption {
     readonly address: PublicKey;
     readonly bump: number;
     readonly version: number;
@@ -167,6 +173,7 @@ export interface Redemption {
     readonly ticketTaker: PublicKey;
     readonly ticketTakerSigner: PublicKey;
     readonly status: number;
+    readonly usageExpiration: number;
 }
 
 export interface TicketTaker {
@@ -346,7 +353,7 @@ export class Twine {
                     secondaryAuthority: store.secondaryAuthority ?? currentWalletPubkey,    
                 })
                 .transaction()
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!tx)
                 return;
@@ -357,7 +364,7 @@ export class Twine {
             console.log('signing and sending transaction...');
             const signature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute) 
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!signature)
                 return;
@@ -365,7 +372,7 @@ export class Twine {
             console.log('waiting for finalization...');
             const confirmationResponse = await this.connection
                 .confirmTransaction(signature, 'finalized')
-                .catch(reject); 
+                .catch(err=>reject(err.toString())); 
             
             if(!confirmationResponse)
                 return;
@@ -374,7 +381,7 @@ export class Twine {
             const createdStore = await program.account
                                         .store
                                         .fetchNullable(storePda)
-                                        .catch(reject);
+                                        .catch(err=>reject(err.toString()));
             
             if(!createdStore){
                 reject('failed to fetch store data');
@@ -441,7 +448,7 @@ export class Twine {
                     authority: currentWalletPubkey,
                 })
                 .transaction()
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
         
             if(!tx)
                 return;
@@ -452,7 +459,7 @@ export class Twine {
             console.log('signing and sending transaction...');
             const signature = await this.wallet
                         .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                        .catch(reject);
+                        .catch(err=>reject(err.toString()));
 
             if(!signature)
                 return;
@@ -460,7 +467,7 @@ export class Twine {
             console.log('waiting for finalization...');
             const confirmationResponse = await this.connection
                 .confirmTransaction(signature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
                 
             if(!confirmationResponse)
                 return;
@@ -470,7 +477,7 @@ export class Twine {
                 .account
                 .store
                 .fetchNullable(store.address)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
                 
             if(!updatedStore)
                 return;    
@@ -490,7 +497,7 @@ export class Twine {
 
             const program = this.getProgram();
             const store = await program.account.store.fetchNullable(address)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!store){
                 reject(`store doesn't exist at address: ${address}`);
@@ -573,9 +580,10 @@ export class Twine {
                         product.status, //productMintDecimals, 
                         new anchor.BN(product.price * this.productPaymentTokenMint.multiplier),
                         new anchor.BN(product.inventory),
-                        product.redemptionType, 
-                        product.expirationMinutesAfterPurchase,
+                        product.redemptionType,                        
                         new anchor.BN(product.expirationTimestamp),
+                        product.expirationMinutesAfterPurchase,
+                        product.expirationMinutesAfterRedemption,
                         product.data.displayName.toLowerCase().slice(0,),
                         product.data.displayDescription.toLowerCase(),
                         this.encodeData(product.data)
@@ -591,7 +599,7 @@ export class Twine {
                         //tokenProgram: TOKEN_PROGRAM_ID,
                     })
                     .transaction()
-                    .catch(reject);
+                    .catch(err=>reject(err.toString()));
             } 
             else {
                 console.log('creating lone product transaction...');
@@ -618,7 +626,7 @@ export class Twine {
                         //tokenProgram: TOKEN_PROGRAM_ID,
                     })
                     .transaction()
-                    .catch(reject);
+                    .catch(err=>reject(err.toString()));
             }
 
             if(!tx)
@@ -630,7 +638,7 @@ export class Twine {
             console.log('signing and sending transaction...');
             const signature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!signature)
                 return;
@@ -638,7 +646,7 @@ export class Twine {
             console.log(`waiting for finalization on tx: ${signature}`)
             const confirmationResponse = await this.connection
                 .confirmTransaction(signature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
             
             if(!confirmationResponse)
                 return;
@@ -684,7 +692,7 @@ export class Twine {
                      expirationTimestamp: product.expirationTimestamp.toNumber(),
                 });
             }catch(err) {
-                reject(err);
+                reject(err.toString());
             }        
         });
     }
@@ -747,9 +755,10 @@ export class Twine {
                     product.status,
                     new anchor.BN(product.price * this.productPaymentTokenMint.multiplier),
                     new anchor.BN(product.inventory),
-                    product.redemptionType,
-                    product.expirationMinutesAfterPurchase,
+                    product.redemptionType,                    
                     new anchor.BN(product.expirationTimestamp),
+                    product.expirationMinutesAfterPurchase,
+                    product.expirationMinutesAfterRedemption,
                     product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
                     product.data.displayDescription.slice(0,PRODUCT_DESCRIPTION_MAX_LEN).toLowerCase(),
                     this.encodeData(product.data),
@@ -759,7 +768,7 @@ export class Twine {
                     authority: currentWalletPubkey,      
                 })
                 .transaction()
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!tx)
                 return;
@@ -770,7 +779,7 @@ export class Twine {
             console.log('signing and sending transaction...');
             const signature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!signature)
                 return;
@@ -837,7 +846,7 @@ export class Twine {
 
             const products = await  Promise
                 .all([authorityPromise,authority2Promise])
-                .catch(err=>reject(err));
+                .catch(err=>reject(err.toString()));
 
             if(!products)
                 return;
@@ -874,7 +883,7 @@ export class Twine {
             return this.getProducts([
                 {
                     memcmp: {
-                        offset: 237,
+                        offset: 253,
                         bytes: anchor.utils.bytes.bs58.encode(Buffer.from(nameStartsWith.toLowerCase(),'utf8')),
                     }
                     },
@@ -893,7 +902,7 @@ export class Twine {
             const program = this.getProgram();
             const stores = await program.account.store
                 .all(filters)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             let regex:RegExp;
 
@@ -944,7 +953,7 @@ export class Twine {
                 },
                 ]
             )
-            .catch(reject);
+            .catch(err=>reject(err.toString()));
 
             //console.log(productList);
             //const products = productList.filter(p=> p.account?.store && storeAddress.equals(p.account.store));
@@ -983,7 +992,7 @@ export class Twine {
             const program = this.getProgram();
             const products = await program.account.product
                 .all(filters)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!products)
                 return;
@@ -1030,14 +1039,23 @@ export class Twine {
             const program = this.getProgram();
             const tickets = await program.account.purchaseTicket
                 .all(filters)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!tickets)
                 return;
 
             const items = tickets.map(ticket=>{  
                 try {
-                    return {...ticket.account, price: (ticket.account?.price || 0) / this.productPaymentTokenMint.multiplier,  address: ticket.publicKey};                
+                    return {...ticket.account,
+                        price: (ticket.account?.price || 0) / this.productPaymentTokenMint.multiplier,
+                        address: ticket.publicKey,
+                        slot: ticket.account.slot.toNumber(),
+                        timestamp: ticket.account.timestamp.toNumber(),
+                        remainingQuantity: ticket.account.remainingQuantity.toNumber(),
+                        redeemed: ticket.account.redeemed.toNumber(),
+                        pendingRedemption: ticket.account.pendingRedemption.toNumber(),
+                        expiration: ticket.account.expiration.toNumber()                        
+                    };       
                 }
                 catch(e){
                     console.log('exception: ', e);
@@ -1117,9 +1135,23 @@ export class Twine {
     }
 
     async getPurchaseTicketByAddress(ticketAddress: PublicKey) {
-        const program = this.getProgram();
-        const ticket = await program.account.purchaseTicket.fetch(ticketAddress);
-        return {...ticket, address: ticketAddress};
+        return new Promise<PurchaseTicket>(async (resolve,reject)=>{
+            const program = this.getProgram();
+            const ticket = await program.account.purchaseTicket
+                .fetch(ticketAddress)
+                .catch(err=>reject(err.toString()));
+
+            resolve({...ticket,
+                price: (ticket?.price || 0) / this.productPaymentTokenMint.multiplier,
+                address: ticketAddress,
+                slot: ticket.slot.toNumber(),
+                timestamp: ticket.timestamp.toNumber(),
+                remainingQuantity: ticket.remainingQuantity.toNumber(),
+                redeemed: ticket.redeemed.toNumber(),
+                pendingRedemption: ticket.pendingRedemption.toNumber(),
+                expiration: ticket.expiration.toNumber(),
+            });
+        });
     }
 
     async getMixedItems(searchString: string) {
@@ -1154,7 +1186,7 @@ export class Twine {
                             memcmp: { offset: 43, bytes: authority.toBase58() }
                         }
                 ])
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             const storesBySecondaryAuthorityPromise = program.account.store
                 .all([
@@ -1162,11 +1194,11 @@ export class Twine {
                             memcmp: { offset: 75, bytes: authority.toBase58() }
                         }
                 ])
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             const stores = await  Promise
                 .all([storesByAuthorityPromise,storesBySecondaryAuthorityPromise])
-                .catch(err=>reject(err));
+                .catch(err=>reject(err.toString()));
 
             if(!stores)
                 return;
@@ -1286,7 +1318,7 @@ export class Twine {
             console.log('signing and sending transaction...');
             const signature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
     
             console.log('signature: ', signature);
 
@@ -1296,7 +1328,7 @@ export class Twine {
             console.log('waiting for finalization of transaction...');
             const confirmationResponse = await this.connection
                 .confirmTransaction(signature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!confirmationResponse)
                 return;
@@ -1314,6 +1346,28 @@ export class Twine {
             }
         
             const program = this.getProgram(deeplinkRoute);
+            const currentProduct = await this.getProductByAddress(product.address);
+            if(currentProduct.price != product.price) {
+                reject(`price is no longer ${product.price}, but ${currentProduct.price} instead`);
+                return;
+            }
+
+            if(currentProduct.expirationTimestamp != product.expirationTimestamp) {
+                reject(`expiration is no longer ${new Date(product.expirationTimestamp * 1000).toLocaleString()}, but ${new Date(currentProduct.expirationTimestamp * 1000).toLocaleString()} instead`);
+                return;
+            }
+
+            if(currentProduct.expirationMinutesAfterPurchase != product.expirationMinutesAfterPurchase) {
+                reject(`expiration minutes after purchase is no longer ${product.expirationMinutesAfterPurchase}, but ${currentProduct.expirationMinutesAfterPurchase} instead`);
+                return;
+            }
+
+            if(currentProduct.expirationMinutesAfterRedemption != product.expirationMinutesAfterRedemption) {
+                reject(`expiration minutes after redemption is no longer ${product.expirationMinutesAfterRedemption}, but ${currentProduct.expirationMinutesAfterRedemption} instead`);
+                return;
+            }
+
+
             const purchaseFee = (await this.getProgramMetadata()).fee.toNumber();
             const nonce = generateRandomU16();            
             const transferAmount = product.price * this.productPaymentTokenMint.multiplier * quantity + purchaseFee;
@@ -1390,7 +1444,9 @@ export class Twine {
             console.log('agreedPrice', agreedPrice);
 
             const buyProductIx = await program.methods
-            .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(agreedPrice))
+            .buyProduct(nonce, new anchor.BN(quantity), new anchor.BN(agreedPrice),
+                new anchor.BN(product.expirationTimestamp), product.expirationMinutesAfterPurchase,
+                product.expirationMinutesAfterRedemption)
             .accounts({
                 product: product.address,
                 productSnapshotMetadata: productSnapshotMetadataPda,
@@ -1415,7 +1471,7 @@ export class Twine {
             console.log('signing and sending transaction...');
             const signature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             console.log('purchase signature: ', signature);
             if(!signature)
@@ -1424,26 +1480,25 @@ export class Twine {
             console.log('waiting for finalization of transaction...');
             const confirmationResponse = await this.connection
                 .confirmTransaction(signature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!confirmationResponse)
                 return;
     
-            const purchaseTicket = await program.account
-                .purchaseTicket
-                .fetch(purchaseTicketPda)
-                .catch(reject);
+            const purchaseTicket = await this
+                .getPurchaseTicketByAddress(purchaseTicketPda)
+                .catch(err=>reject(err.toString()));
 
             if(!purchaseTicket)
                 return;
     
-            resolve({...purchaseTicket, address: purchaseTicketPda});
+            resolve(purchaseTicket);
         });
     }
 
  
 
-    async initiateRedemption(ticket: PurchaseTicket, redeemQuantity: number, deeplinkRoute: "") {
+    async initiateRedemption(ticket: PurchaseTicket, redeemQuantity: number, takeExpirationMinutes = 0, deeplinkRoute: "") {
         return new Promise<Redemption>(async (resolve,reject) => {
             if(redeemQuantity > ticket.remainingQuantity) {
                 reject(`Not enough redemptions remain(${ticket.remainingQuantity}) in PurchaseTicket for ${redeemQuantity} redemptions`);
@@ -1453,6 +1508,12 @@ export class Twine {
             const currentWalletPubkey = this.getCurrentWalletPublicKey();
             if(!currentWalletPubkey){
                 reject('not connected to a wallet.');
+                return;
+            }
+
+            const currentTimestamp = Math.floor(new Date().getTime()  / 1000);
+            if(ticket.expiration < currentTimestamp) {
+                reject('ticket has already expired');
                 return;
             }
             
@@ -1467,7 +1528,7 @@ export class Twine {
                 ], program.programId);            
 
             const tx = await program.methods
-                .initiateRedemption(redemptionNonce, new anchor.BN(redeemQuantity))
+                .initiateRedemption(redemptionNonce, new anchor.BN(redeemQuantity), takeExpirationMinutes)
                 .accounts({
                     redemption: redemptionPda,
                     purchaseTicket: ticket.address,
@@ -1481,7 +1542,7 @@ export class Twine {
             tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
             const txSignature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             console.log('initiate redemption signature: ', txSignature);            
             if(!txSignature)
@@ -1490,20 +1551,19 @@ export class Twine {
             console.log('waiting for finalization of transaction...');
             const confirmationResponse = await this.connection
                 .confirmTransaction(txSignature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!confirmationResponse)
                 return;
     
-            const redemption = await program.account
-                .redemption
-                .fetch(redemptionPda)
+            const redemption = await this
+                .getRedemptionByAddress(redemptionPda)
                 .catch(reject);
 
             if(!redemption)
                 return;
     
-            resolve({...redemption, address: redemptionPda});
+            resolve(redemption);
         });
     }
 
@@ -1512,14 +1572,23 @@ export class Twine {
             const program = this.getProgram();
             const redemptions = await program.account.redemption
                 .all(filters)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!redemptions)
                 return;
 
             const items = redemptions.map(redemption=>{  
                 try {
-                    return {...redemption.account, address: redemption.publicKey};                
+                    return {...redemption.account,
+                        address: redemption.publicKey,                       
+                        initSlot: redemption.account.initSlot.toNumber(),
+                        initTimestamp: redemption.account.initTimestamp.toNumber(),
+                        closeSlot: redemption.account.closeSlot.toNumber(),
+                        closeTimestamp: redemption.account.closeTimestamp.toNumber(),
+                        redeemQuantity: redemption.account.redeemQuantity.toNumber(),
+                        takeExpiration: redemption.account.takeExpiration.toNumber(),
+                        usageExpiration: redemption.account.usageExpiration.toNumber(),
+                    };
                 }
                 catch(e){
                     console.log('exception: ', e);
@@ -1537,7 +1606,7 @@ export class Twine {
                 return;
             }
             
-            const redemptions = await this.getRedemptions([{ memcmp: { offset: 170, bytes: ticketAddress.toBase58() }}])
+            const redemptions = await this.getRedemptions([{ memcmp: { offset: 174, bytes: ticketAddress.toBase58() }}])
                 .catch(reject);
             
             resolve(redemptions);
@@ -1575,7 +1644,7 @@ export class Twine {
             tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
             const txSignature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
     
             console.log('created product redemption taker signature: ', txSignature);            
             if(!txSignature)
@@ -1584,19 +1653,25 @@ export class Twine {
             console.log('waiting for finalization of transaction...');
             const confirmationResponse = await this.connection
                 .confirmTransaction(txSignature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!confirmationResponse)
                 return;
     
-            const ticketTaker = await program.account.ticketTaker
+            const taker = await program.account.ticketTaker
                 .fetch(ticketTakerPda)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
-            if(!ticketTaker)
+            if(!taker)
                 return;
         
-            resolve({...ticketTaker, address: ticketTakerPda});
+            resolve({...taker,
+                address: ticketTakerPda,
+                enabledSlot: taker.enabledSlot.toNumber(),
+                enabledTimestamp: taker.enabledTimestamp.toNumber(),
+                disabledSlot: taker.disabledSlot.toNumber(),
+                disabledTimestamp: taker.disabledTimestamp.toNumber(),
+            });
         });
     }
 
@@ -1606,14 +1681,20 @@ export class Twine {
             const program = this.getProgram();
             const takers = await program.account.ticketTaker
                 .all(filters)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!takers)
                 return;
 
             const items = takers.map(taker=>{  
                 try {
-                    return {...taker.account, address: taker.publicKey};                
+                    return {...taker.account,
+                        address: taker.publicKey,
+                        enabledSlot: taker.account.enabledSlot.toNumber(),
+                        enabledTimestamp: taker.account.enabledTimestamp.toNumber(),
+                        disabledSlot: taker.account.disabledSlot.toNumber(),
+                        disabledTimestamp: taker.account.disabledTimestamp.toNumber(),
+                    };
                 }
                 catch(e){
                     console.log('exception: ', e);
@@ -1660,7 +1741,7 @@ export class Twine {
 
             const ticketTaker = await program.account.ticketTaker
                 .fetchNullable(ticketTakerPda)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!ticketTaker)
                 return null;
@@ -1728,7 +1809,7 @@ export class Twine {
             tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
             const txSignature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             console.log('initiate redemption signature: ', txSignature);            
             if(!txSignature)
@@ -1737,7 +1818,7 @@ export class Twine {
             console.log('waiting for finalization of transaction...');
             const confirmationResponse = await this.connection
                 .confirmTransaction(txSignature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!confirmationResponse)
                 return;
@@ -1751,7 +1832,7 @@ export class Twine {
                 return;
             }
     
-            resolve({...updatedRedemption, address: redemptionAddress});            
+            resolve(updatedRedemption);
         });
     }
 
@@ -1760,14 +1841,23 @@ export class Twine {
             const program = this.getProgram();
             const redemption = await program.account.redemption
                 .fetchNullable(redemptionAddress)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!redemption){
                 resolve(null);
                 return;
             }
 
-            resolve({...redemption, address: redemptionAddress});  
+            resolve({...redemption,
+                address: redemptionAddress,                       
+                initSlot: redemption.initSlot.toNumber(),
+                initTimestamp: redemption.initTimestamp.toNumber(),
+                closeSlot: redemption.closeSlot.toNumber(),
+                closeTimestamp: redemption.closeTimestamp.toNumber(),
+                redeemQuantity: redemption.redeemQuantity.toNumber(),
+                takeExpiration: redemption.takeExpiration.toNumber(),
+                usageExpiration: redemption.usageExpiration.toNumber(),
+            });
         });
     }
 
@@ -1780,7 +1870,10 @@ export class Twine {
             }
 
             const program = this.getProgram();
-            const redemptionAccount = await program.account.redemption.fetchNullable(redemptionAddress);
+            const redemptionAccount = await program.account.redemption
+                .fetchNullable(redemptionAddress)
+                .catch(err=>reject(err.toString()));
+
             if(!redemptionAccount) {
                 reject("redemption account doesn't exist");
                 return;
@@ -1793,18 +1886,19 @@ export class Twine {
                     purchaseTicket: redemptionAccount.purchaseTicket,
                     purchaseTicketAuthority: currentWalletPubkey,
                 })
-                .transaction();
+                .transaction()
+                .catch(err=>reject(err.toString()));
         
             tx.feePayer = currentWalletPubkey;          
             tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
 
             const txSignature = await this.wallet
                 .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             const confirmationResponse = await this.connection
                 .confirmTransaction(txSignature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             resolve(txSignature);
         });
@@ -1827,7 +1921,7 @@ export class Twine {
             const nonce = generateRandomU16();
             const ticket = await program.account.purchaseTicket
                 .fetchNullable(ticketAddress)
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
 
             if(!ticket) {
                 reject(`unable to retrieve a ticket at address ${ticketAddress.toBase58()}`);
@@ -1869,7 +1963,7 @@ export class Twine {
             console.log('sending transfer transaction...');
             const txSignature = await this.wallet
                     .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                    .catch(reject);
+                    .catch(err=>reject(err.toString()));
             
             if(!txSignature)
                 return;
@@ -1877,7 +1971,7 @@ export class Twine {
             console.log('signature: ', txSignature);
             const confirmationResponse = await this.connection
                 .confirmTransaction(txSignature, 'finalized')
-                .catch(reject);
+                .catch(err=>reject(err.toString()));
             
             if(!confirmationResponse)
                 return;
@@ -1944,7 +2038,7 @@ export class Twine {
               console.log('sending transfer transaction...');
               const txSignature = await this.wallet
                       .signAndSendTransaction(tx, false, true, deeplinkRoute)
-                      .catch(reject);
+                      .catch(err=>reject(err.toString()));
               
               if(!txSignature)
                   return;
@@ -1952,7 +2046,7 @@ export class Twine {
               console.log('signature: ', txSignature);
               const confirmationResponse = await this.connection
                   .confirmTransaction(txSignature, 'finalized')
-                  .catch(reject);
+                  .catch(err=>reject(err.toString()));
               
               if(!confirmationResponse)
                   return;
