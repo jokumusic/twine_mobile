@@ -1512,7 +1512,7 @@ export class Twine {
             }
 
             const currentTimestamp = Math.floor(new Date().getTime()  / 1000);
-            if(ticket.expiration < currentTimestamp) {
+            if(ticket.expiration > 0 && ticket.expiration < currentTimestamp) {
                 reject('ticket has already expired');
                 return;
             }
