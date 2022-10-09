@@ -294,11 +294,17 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
       if(!product.address.equals(redemption.product))
         throw Error("The redemption is not for this product");
 
+      if(redemption.usageExpiration > 0 && redemption.usageExpiration < Math.floor(currentDate.getTime()/1000))
+        throw Error(`redemption expired on ${new Date(redemption.usageExpiration * 1000).toLocaleString()}`);
+
       if(!twineContext.signatureIsValid(verificationData.message, verificationData.signature, redemption.purchaseTicketSigner))
         throw Error("Signature is invalid");
       
       if(redemption.status == RedemptionStatus.WAITING && redemption?.closeTimestamp == 0) {
-        console.log('taking redemption');
+        
+        if(redemption.takeExpiration > 0 && redemption.takeExpiration < Math.floor(currentDate.getTime()/1000))
+          throw Error(`redemption take expired on ${new Date(redemption.takeExpiration * 1000).toLocaleString()}\n\nTry regenerating the redemption.`);
+
         redemption = await twineContext
           .takeRedemption(redemptionAddress, SCREEN_DEEPLINK_ROUTE)
           .catch(err=>{throw Error(err);});
@@ -360,7 +366,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
         setShowLoadingDialog(false);
         Alert.alert("error", err);
       });
-      
+
       if(ticket){
         setPurchaseTicket(ticket);
       }
@@ -581,7 +587,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                           <Text style={{fontSize:15}}>closed : {new Date(redemption.closeTimestamp * 1000).toLocaleString("en-us")}</Text>                                        
                         }
 
-                        { redemption.takeExpiration > 0 &&
+                        { redemption.takeExpiration > 0 && redemption.closeTimestamp == 0 &&
                           <Text style={{fontSize:15}}>take expiration : {new Date(redemption.takeExpiration * 1000).toLocaleString("en-us")}</Text>                                        
                         }
 
