@@ -13,17 +13,19 @@ const tokenfauceProgramId = new PublicKey(tokenFaucetIdl.metadata.address);
 const USDC_MINTINFO = {name: 'USDC', address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", multiplier: 1000000} as MintInfo;
 
 export class MockSwap implements TokenSwapInterface {
-    private network: string;
     private wallet: WalletInterface;  
     private jupiterSwap: JupiterSwap;
     private connection: Connection;
     private paymentTokenMintAddress = new PublicKey(Mint.USDC.address);
 
-    constructor(network: string, wallet?: WalletInterface) {
-      this.network = network;
-      this.wallet = wallet;
-      this.connection = new Connection(clusterApiUrl(network))
-      this.jupiterSwap = new JupiterSwap(network, wallet);
+    constructor(connection: Connection, wallet?: WalletInterface) {
+        if(!connection)
+            throw new Error("connection must be specified")
+
+        this.connection = connection;
+        this.wallet = wallet;
+        
+        this.jupiterSwap = new JupiterSwap(connection, wallet);
     }
 
     private getTokenfaucetProgram() {

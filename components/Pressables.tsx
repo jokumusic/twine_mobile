@@ -1,20 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Pressable, StyleSheet, StyleSheetProperties, Text, View } from "react-native";
+import { Image, Linking, Pressable, StyleSheet, StyleSheetProperties, Text, View } from "react-native";
+import { Social } from "../api/Twine";
 import NamespaceFactory from "../dist/browser/types/src/program/namespace";
 
 
-export function PressableImage({show, source, style, onPress}) { 
-  if(show){
+export function PressableImage({source, style, onPress}) { 
+  if(source && onPress){
     return (
-    <Pressable 
-      onPress={onPress}
-      style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
-      <Image source={source} style={style}/>
-    </Pressable>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
+        <Image source={source} style={style}/>
+      </Pressable>
     );
   } 
   else {
-    return (<View/>);
+    return (<></>);
   }
 };
 

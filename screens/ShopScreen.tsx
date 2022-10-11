@@ -9,6 +9,7 @@ import { CardView } from '../components/CardView';
 import MarqueeText from 'react-native-marquee';
 import { SearchBar } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
+import {Store, Product} from '../api/Twine';
 
 
 const SCREEN_DEEPLINK_ROUTE = "shop";
@@ -19,8 +20,8 @@ export const ITEM_HEIGHT = Math.round(ITEM_WIDTH/4);
 
 export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>) {
   const [searchText, setSearchText] = useState("");
-  const [stores, setStores] = useState([] as twine.Store[]);
-  const [products, setProducts] = useState([] as twine.Product[]);
+  const [stores, setStores] = useState([] as Store[]);
+  const [products, setProducts] = useState([] as Product[]);
   const twineContext = useContext(TwineContext);
   
   useEffect(()=>{
@@ -67,32 +68,29 @@ export default function ShopScreen({ navigation }: RootTabScreenProps<'ShopTab'>
           </View>
           <ScrollView  contentContainerStyle={{flexGrow:1, flexWrap: 'wrap', flexDirection:'row', alignContent: 'space-around'}}>
               {
-                products.map((item)=>(
-                <CardView 
-                  key={item.address.toBase58()} 
-                  onPress={()=>{
-                    if(item.account_type == "product")
-                      navigation.navigate('ProductDetails',{product: item});
-                    else if (item.account_type == "store")
-                      navigation.navigate('StoreDetails', {store: item});
-                  }}
-                  {...item}
-                />
+                products.map((product)=>(
+                  <CardView
+                    key={product.address.toBase58()} 
+                    onPress={()=>{ navigation.navigate('ProductDetails',{product});}}
+                    {...product}
+                  />
                 ))
               }
           </ScrollView>
           <View style={styles.favorites}>
             <ImageBackground 
-            style={{width: '100%', height: '100%'}} 
-            source={{
-              uri: favorites_uri,
-            }}>  
+              style={{width: '100%', height: '100%'}} 
+              source={{
+                uri: favorites_uri,
+              }}
+            >  
               <CarouselCards
                data={stores}
-               renderItem={p=>          
+               renderItem={({item,index})=>          
                 CarouselCardItem({
-                  ...p,
-                  onPress: () => navigation.navigate('StoreDetails',{store: p.item})
+                  item,
+                  index,
+                  onPress: () => navigation.navigate('StoreDetails',{store: item})
                 })
               }
               sliderWidth={carouselCardItem.SLIDER_WIDTH}

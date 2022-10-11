@@ -133,7 +133,7 @@ export type Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -171,7 +171,7 @@ export type Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -262,7 +262,7 @@ export type Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -353,7 +353,7 @@ export type Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -415,7 +415,7 @@ export type Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -932,7 +932,7 @@ export type Twine = {
           },
           {
             "name": "data",
-            "type": "string"
+            "type": "bytes"
           }
         ]
       }
@@ -1024,7 +1024,7 @@ export type Twine = {
           },
           {
             "name": "data",
-            "type": "string"
+            "type": "bytes"
           }
         ]
       }
@@ -1665,7 +1665,7 @@ export const IDL: Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -1703,7 +1703,7 @@ export const IDL: Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -1794,7 +1794,7 @@ export const IDL: Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -1885,7 +1885,7 @@ export const IDL: Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -1947,7 +1947,7 @@ export const IDL: Twine = {
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -2464,7 +2464,7 @@ export const IDL: Twine = {
           },
           {
             "name": "data",
-            "type": "string"
+            "type": "bytes"
           }
         ]
       }
@@ -2556,7 +2556,7 @@ export const IDL: Twine = {
           },
           {
             "name": "data",
-            "type": "string"
+            "type": "bytes"
           }
         ]
       }

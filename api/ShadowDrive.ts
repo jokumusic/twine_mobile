@@ -21,7 +21,7 @@ export class ShadowDrive {
 
         //this.connection = new Connection(clusterApiUrl(network));
         this.connection = new Connection("https://ssc-dao.genesysgo.net/", "max");
-        this.solana = new Solana("mainnet-beta");
+        this.solana = new Solana(new Connection(clusterApiUrl("mainnet-beta")));
         /*this.initDrive(this.connection, wallet)
         .then(d=>{
             this.drive = d;

@@ -5,7 +5,7 @@ import {
     Store, WriteableStore, StoreData, WriteableStoreData,
     Product, WriteableProduct, ProductData, WriteableProductData, PurchaseTicket 
 } from '../api/Twine'
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { PublicKey, Keypair, Connection, clusterApiUrl } from '@solana/web3.js';
 import { PhantomWallet } from '../api/PhantomWallet';
 import {LocalWallet} from '../api/LocalWallet';
 import { SolChat } from '../api/SolChat';
@@ -25,7 +25,8 @@ global.Buffer = global.Buffer || Buffer;
 
 
 //import { getProduct } from './services/ProductsService.js';
-const NETWORK = "devnet";
+const SOLANA_ENDPOINT = clusterApiUrl("devnet");
+
 export const TwineContext = createContext();
 
 const LOCAL_KEYPAIRS_LOOKUP_KEY = "@LocalKeyPairs";
@@ -40,10 +41,10 @@ export interface StoredLocalWallet {
 
 
 export function TwineProvider(props) {
-    let solana = useRef<Solana>(new Solana(NETWORK)).current;
-    let twine = useRef<Twine>(new Twine(NETWORK)).current;
-    let solchat = useRef<SolChat>(new SolChat(NETWORK)).current;
-    let tokenSwapper = useRef<TokenSwapInterface>(new MockSwap(NETWORK)).current;
+    let solana = useRef<Solana>(new Solana(new Connection(SOLANA_ENDPOINT))).current;
+    let twine = useRef<Twine>(new Twine(new Connection(SOLANA_ENDPOINT))).current;
+    let solchat = useRef<SolChat>(new SolChat(new Connection(SOLANA_ENDPOINT))).current;
+    let tokenSwapper = useRef<TokenSwapInterface>(new MockSwap(new Connection(SOLANA_ENDPOINT))).current;
     let shadowDrive = useRef<ShadowDrive>(new ShadowDrive()).current;
     const [wallet, setWallet] = useState<WalletInterface>();
     const [currentLocalWallet, setCurrentLocalWallet] = useState<StoredLocalWallet>();
@@ -67,7 +68,7 @@ export function TwineProvider(props) {
             let walletToUse: WalletInterface = null;
 
             if(defaultPubkey == "phantom") {
-                walletToUse = new PhantomWallet(NETWORK);
+                walletToUse = new PhantomWallet(SOLANA_ENDPOINT);
             }
             else {
                 const localWallets = await getLocalWallets();
@@ -75,7 +76,7 @@ export function TwineProvider(props) {
                     const defaultWallet = localWallets.find(w=>w.keypair.publicKey.toBase58() == defaultPubkey);
                     if(defaultWallet) {
                         setCurrentLocalWallet(defaultWallet);
-                        walletToUse = new LocalWallet(defaultWallet.keypair, NETWORK);
+                        walletToUse = new LocalWallet(defaultWallet.keypair, new Connection(SOLANA_ENDPOINT));
                     }
                 }
             }            
@@ -183,7 +184,7 @@ export function TwineProvider(props) {
     async function useLocalWallet(localWallet: StoredLocalWallet) {
         console.log('using localwallet: ', localWallet.keypair.publicKey.toBase58());
         setCurrentLocalWallet(localWallet);
-        const walletToUse = new LocalWallet(localWallet.keypair, NETWORK);
+        const walletToUse = new LocalWallet(localWallet.keypair, new Connection(SOLANA_ENDPOINT));
         setWallet(walletToUse);
         twine.setWallet(walletToUse);
         solchat.setWallet(walletToUse);
@@ -196,7 +197,7 @@ export function TwineProvider(props) {
 
     async function usePhantomWallet(){
         console.log('using phantom wallet');
-        const walletToUse = new PhantomWallet(NETWORK);
+        const walletToUse = new PhantomWallet(SOLANA_ENDPOINT);
         setWallet(walletToUse);
         twine.setWallet(walletToUse);
         solchat.setWallet(walletToUse);

@@ -3,15 +3,16 @@ import React from 'react'
 import { View, Text, StyleSheet, Dimensions, Image, ScrollView, Linking, Pressable } from "react-native"
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {PressableImage} from './Pressables';
+import {socials_image} from '../constants/Socials';
+
 
 export const SLIDER_WIDTH = Dimensions.get('window').width;
 export const ITEM_WIDTH = Math.round(SLIDER_WIDTH * .5)
 export const ITEM_HEIGHT = Math.round(ITEM_WIDTH * .5);
 
-
 export const CarouselCardItem = ({ item, index, onPress }) => {
   return ( 
-    <Pressable 
+    <Pressable
         onPress={onPress}
         style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1})}>
     <View style={styles.container} key={index}>
@@ -21,34 +22,22 @@ export const CarouselCardItem = ({ item, index, onPress }) => {
           ? <Image source={{ uri: item.data.img }} style={styles.image} />
           : <View style={styles.image}/>
           }
-          <PressableImage
-            show={item.data.twitter}
-            source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
-            style={styles.contactIcon}
-            onPress={()=>Linking.openURL(item.data.twitter)}
-            />
-          <PressableImage
-            show={item.data.instagram}
-            source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
-            style={styles.contactIcon}
-            onPress={()=>Linking.openURL(item.data.instagram)} />
-          <PressableImage
-            show={item.facebook}
-            source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
-            style={styles.contactIcon}            
-            onPress={()=>Linking.openURL(item.data.facebook)}/>            
-          <PressableImage
-            show={item.data.web}
-            source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
-            style={styles.contactIcon}            
-            onPress={()=>Linking.openURL(item.data.web)}/>
-          <PressableImage
-            show={item.data.wiki}
-            source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
-            style={styles.contactIcon}            
-            onPress={()=>Linking.openURL(item.data.wiki)}/>
-        </View>
-          
+          { item?.data?.socials?.map(social=>{
+              if(social.url)
+                return (
+                  <View key={social.url}>
+                    <PressableImage
+                      source={socials_image.get(social.name)}
+                      style={styles.contactIcon}
+                      onPress={()=>Linking.openURL(social.url)}
+                    />
+                  </View>
+                );
+              else 
+                return (<></>);
+            })
+          }
+        </View>          
         <Text style={styles.header}>{item.data.displayName}</Text>        
         <Text style={styles.body}>{item.data.dislayDescription}</Text>
       </ScrollView>

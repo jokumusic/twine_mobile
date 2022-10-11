@@ -51,9 +51,12 @@ export class SolChat {
   private connection;
   private programId = new PublicKey(idl.metadata.address);
 
-  constructor(network: string, wallet?: WalletInterface){
+  constructor(connection: Connection, wallet?: WalletInterface){
+    if(!connection)
+      throw new Error("connection must be specified")
+
     this.wallet = wallet;
-    this.connection = new Connection(clusterApiUrl(network));
+    this.connection = connection;
   }
 
   setWallet(wallet: WalletInterface) {

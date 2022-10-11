@@ -425,27 +425,22 @@ export default function ContactScreen(props) {
             <PressableImage
                 source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
                 style={styles.contactIcon}
-                show={focusedContact.data.twitter}
                 onPress={()=>Linking.openURL(focusedContact.data.twitter)}/>              
               <PressableImage
                 source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
                 style={styles.contactIcon}
-                show={focusedContact.data.instagram}
                 onPress={()=>Linking.openURL(focusedContact.data.instagram)}/>
               <PressableImage
                 source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
                 style={styles.contactIcon}
-                show={focusedContact.data.facebook}
                 onPress={()=>Linking.openURL(focusedContact.data.facebook)}/>         
               <PressableImage
                 source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
                 style={styles.contactIcon}
-                show={focusedContact.data.web}
                 onPress={()=>Linking.openURL(focusedContact.data.web)}/>
               <PressableImage
                 source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
                 style={styles.contactIcon}
-                show={focusedContact.data.wiki}
                 onPress={()=>Linking.openURL(focusedContact.data.wiki)}/>
           </View>
 

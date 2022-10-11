@@ -7,8 +7,11 @@ import * as anchor from "../dist/browser/index";
 export default class Solana {
   private connection: Web3.Connection;
   
-  constructor(network: string) {
-    this.connection = new Connection(Web3.clusterApiUrl(network));
+  constructor(connection: Connection) {
+    if(!connection)
+      throw new Error("connection must be specified")
+      
+    this.connection = connection;
   }
 
   async getAccountInfo(pubkey: PublicKey){

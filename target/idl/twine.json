@@ -133,7 +133,7 @@
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -171,7 +171,7 @@
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -262,7 +262,7 @@
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -353,7 +353,7 @@
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -415,7 +415,7 @@
         },
         {
           "name": "data",
-          "type": "string"
+          "type": "bytes"
         }
       ]
     },
@@ -932,7 +932,7 @@
           },
           {
             "name": "data",
-            "type": "string"
+            "type": "bytes"
           }
         ]
       }
@@ -1024,7 +1024,7 @@
           },
           {
             "name": "data",
-            "type": "string"
+            "type": "bytes"
           }
         ]
       }
@@ -1529,6 +1529,6 @@
     }
   ],
   "metadata": {
-    "address": "HEoESRbqpu2XPKz7NsfkjnHvFKyNtozFbvGJeG1zkTst"
+    "address": "GFyEm6g84oRmd156hPrJWsbWcsZaM4mhFf4654QgN5ae"
   }
 }

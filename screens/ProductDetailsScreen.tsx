@@ -186,7 +186,6 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
     return (
       item ?
         <PressableImage
-          show={true}
           source={item && {uri: item}}
           style={{height:'100%', resizeMode:'stretch', aspectRatio: 1}}
           onPress={()=>

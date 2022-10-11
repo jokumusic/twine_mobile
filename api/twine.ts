@@ -3,7 +3,8 @@ import * as idl from "../target/idl/twine.json";
 import type { Twine as TwineProgram } from '../target/types/twine';
 import * as web3 from "@solana/web3.js";
 import { generateRandomU16, generateRandomU32, uIntToBytes} from '../utils/random';
-import { compress, decompress, trimUndefined, trimUndefinedRecursively } from 'compress-json'
+//import { compress, decompress, trimUndefined, trimUndefinedRecursively } from 'compress-json'
+import * as brotli from 'brotli';
 import {
   clusterApiUrl,
   Connection,
@@ -19,6 +20,7 @@ import Solana from './Solana';
 import { Mint } from "../constants/Mints";
 import { MintInfo } from "./TokenSwapInterface";
 //import { bs58 } from '../dist/browser/types/src/utils/bytes';
+import * as fflate from 'fflate';
 
 
 if (typeof BigInt === 'undefined') global.BigInt = require('big-integer') //fixes an issue with react native not supporting bigint. added package big-integer to project and then added this
@@ -50,16 +52,17 @@ export enum TicketExhaustionType {
     ExpirationDate=2,
 }
 
+export interface Social {
+    name: string,
+    url: string
+}
+
 export interface WriteableStoreData{
     displayName: string;
     displayDescription: string;
     img: string;
     images: string[];
-    twitter?: string;
-    instagram?: string;
-    facebook?: string;
-    web?: string;
-    wiki?: string;
+    socials: Social[];
 }
 
 export interface StoreData extends WriteableStoreData {
@@ -209,17 +212,33 @@ const PRODUCT_DESCRIPTION_MAX_LEN = 200;
 const programId = new PublicKey(idl.metadata.address);
 const tokenfauceProgramId = new PublicKey(tokenFaucetIdl.metadata.address);
 
+function compress(o){
+    const json = JSON.stringify(o);
+    const jsonBuffer = Buffer.from(json);
+    const compressed = fflate.zlibSync(jsonBuffer, { level: 9 });
+    return Buffer.from(compressed);
+}
+  
+function decompress(compressed) {
+    const decompressed = fflate.unzlibSync(compressed);
+    const json = Buffer.from(decompressed).toString();
+    return JSON.parse(json);
+}
+
 export class Twine {
     private wallet: WalletInterface;
     private connection: Connection;
     private productPaymentTokenMint: MintInfo;
     private solana: Solana;
 
-    constructor(network: string, wallet?: WalletInterface, ) {
-        this.wallet = wallet;
-        this.connection = new Connection(clusterApiUrl(network));
+    constructor(connection: Connection, wallet?: WalletInterface, ) {
+        if(!connection)
+            throw new Error("connection must be specified")
 
-        this.solana = new Solana(network);
+        this.wallet = wallet;
+        this.connection = connection;
+
+        this.solana = new Solana(connection);
         this.productPaymentTokenMint = Mint.USDC;
     }
 
@@ -288,19 +307,6 @@ export class Twine {
             ], programId);
     }
 
-    private encodeData = (data: any) => {
-        trimUndefined(data);
-        const compressed = compress(data);
-        const encoded = JSON.stringify(compressed);
-        return encoded;
-    }
-
-    private decodeData = (data: any) => {
-        const decoded = JSON.parse(data);
-        const decompressed = decompress(decoded);
-        return decompressed;
-    }
-
     async createStore(store: WriteableStore, deeplinkRoute: string) {
         return new Promise<Store>(async (resolve,reject) => {
             const currentWalletPubkey = this.getCurrentWalletPublicKey();
@@ -345,7 +351,7 @@ export class Twine {
                     store.status,
                     store.data.displayName.slice(0,STORE_NAME_MAX_LEN).toLowerCase(),
                     store.data.displayDescription.slice(0,STORE_DESCRIPTION_MAX_LEN).toLowerCase(),
-                    this.encodeData(store.data))
+                    compress(store.data))
                 .accounts({
                     store: storePda,
                     creator: currentWalletPubkey,
@@ -389,7 +395,7 @@ export class Twine {
             }    
         
             console.log('got it!');
-            const createdStoreData = this.decodeData(createdStore.data);
+            const createdStoreData = decompress(createdStore.data);
             createdStore.data = createdStoreData;
             resolve({...createdStore, address: storePda});
         });
@@ -442,7 +448,7 @@ export class Twine {
                     store.status,
                     store.data.displayName.slice(0,STORE_NAME_MAX_LEN).toLowerCase(),
                     store.data.displayDescription.slice(0,STORE_DESCRIPTION_MAX_LEN).toLowerCase(),
-                    this.encodeData(store.data))
+                    compress(store.data))
                 .accounts({
                     store: store.address,
                     authority: currentWalletPubkey,
@@ -473,18 +479,15 @@ export class Twine {
                 return;
 
             console.log('getting finalized account...');
-            const updatedStore = await program
-                .account
-                .store
-                .fetchNullable(store.address)
+
+            const updatedStore = await this
+                .getStoreByAddress(store.address)
                 .catch(err=>reject(err.toString()));
                 
             if(!updatedStore)
                 return;    
-            
-            updatedStore.data = this.decodeData(updatedStore.data);
 
-            resolve({...updatedStore, address: store.address});        
+            resolve(updatedStore);        
         });
     }
 
@@ -504,8 +507,7 @@ export class Twine {
                 return;
             }
 
-            const storeData = this.decodeData(store.data);
-            store.data = storeData;
+            store.data = decompress(store.data);
             resolve({...store, address});
         });
     }
@@ -586,7 +588,7 @@ export class Twine {
                         product.expirationMinutesAfterRedemption,
                         product.data.displayName.toLowerCase().slice(0,),
                         product.data.displayDescription.toLowerCase(),
-                        this.encodeData(product.data)
+                        compress(product.data)
                     )
                     .accounts({
                         //mint: storeProductMintPda,
@@ -614,7 +616,7 @@ export class Twine {
                         new anchor.BN(product.expirationTimestamp),
                         product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
                         product.data.displayDescription.slice(0,PRODUCT_DESCRIPTION_MAX_LEN).toLowerCase(),
-                        this.encodeData(product.data)
+                        compress(product.data)
                     )
                     .accounts({
                         //mint: loneProductMintPda,
@@ -684,7 +686,7 @@ export class Twine {
             }
 
             try{
-                product.data = this.decodeData(product.data);       
+                product.data = decompress(product.data);       
                 resolve({...product,
                      address: address,
                      price: product.price.toNumber() / this.productPaymentTokenMint.multiplier,
@@ -761,7 +763,7 @@ export class Twine {
                     product.expirationMinutesAfterRedemption,
                     product.data.displayName.slice(0,PRODUCT_NAME_MAX_LEN).toLowerCase(),
                     product.data.displayDescription.slice(0,PRODUCT_DESCRIPTION_MAX_LEN).toLowerCase(),
-                    this.encodeData(product.data),
+                    compress(product.data),
                 )
                 .accounts({
                     product: product.address,
@@ -911,15 +913,15 @@ export class Twine {
                 try 
                 {
                     if(store.account?.data){                  
-                        store.account.data = this.decodeData(store.account.data);
-                        const st = {...store.account, address: store.publicKey, account_type: "store"};
+                        store.account.data = decompress(store.account.data);
+                        const st = {...store.account, address: store.publicKey};
                         list.push(st);
                     }
                 }
                 catch(e) {
                     //console.log('exception: ', e, store);
                     //console.log(store.account.data);
-                }  
+                }
             });
 
             list.sort(() => 0.5 - Math.random());
@@ -965,14 +967,13 @@ export class Twine {
                 try
                 {   
                     if(product.account.data) {        
-                        product.account.data = this.decodeData(product.account.data);
+                        product.account.data = decompress(product.account.data);
                         items.push({
                             ...product.account,
                             address: product.publicKey,
                             price: product.account.price.toNumber() / this.productPaymentTokenMint.multiplier,
                             inventory: product.account.inventory.toNumber(),
-                            expirationTimestamp: product.account.expirationTimestamp.toNumber(),
-                            account_type: "product"
+                            expirationTimestamp: product.account.expirationTimestamp.toNumber()
                         });
                     }
                 }
@@ -1004,9 +1005,8 @@ export class Twine {
 
             products.forEach((product) => {  
                 try {      
-                    if(product.account.data) {
-                        const parsedProductData = JSON.parse(product.account.data);
-                        product.account.data = decompress(parsedProductData);
+                    if(product.account.data) {                        
+                        product.account.data = decompress(product.account.data);
                         const p = {
                             ...product.account,
                             address: product.publicKey,
@@ -1218,10 +1218,9 @@ export class Twine {
 
             uniqueStores.forEach((store,i)=>{  
                 try{
-                    if(store.account.data){
-                        const parsedStoreData = JSON.parse(store.account.data);          
-                        store.account.data = decompress(parsedStoreData);
-                        items.push({...store.account, address: store.publicKey, account_type: "store"});          
+                    if(store.account.data){     
+                        store.account.data = decompress(store.account.data);
+                        items.push({...store.account, address: store.publicKey});          
                     }
                 }
                 catch(e){

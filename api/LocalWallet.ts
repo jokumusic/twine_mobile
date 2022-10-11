@@ -20,13 +20,12 @@ export class LocalWallet implements WalletInterface {
     private keypair: Keypair;
     private connection: Connection;
 
-    constructor(keypair: Keypair, network: string) {
-        if(!network)
-            throw new Error("network must be specified");
-
-        this.connection = new Connection(clusterApiUrl(network));
-        this.keypair = keypair; 
-
+    constructor(keypair: Keypair, connection: Connection) {
+        if(!connection)
+            throw new Error("connection must be specified")
+        
+        this.connection = connection;
+        this.keypair = keypair;
     }
     
     /** get wallet name */

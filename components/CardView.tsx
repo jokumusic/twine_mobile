@@ -1,7 +1,8 @@
 import React from "react";
 import { View, ScrollView, Pressable, Image, StyleSheet, Dimensions, Text, Linking } from "react-native";
-import {PressableImage} from './Pressables';
+import {PressableImage,} from './Pressables';
 import { FontAwesome } from '@expo/vector-icons';
+import {socials_image} from '../constants/Socials';
 
 
 export const WINDOW_WIDTH = Dimensions.get('window').width;
@@ -24,32 +25,23 @@ export const CardView = (item: any) => {
               :
               <View style={{width:80,height:80}}/>
             }
+
             <View>
-              <PressableImage
-                source={{uri: 'https://www.iconpacks.net/icons/2/free-twitter-logo-icon-2429-thumb.png'}}
-                style={styles.contactIcon}
-                show={item?.data?.twitter}
-                onPress={()=>Linking.openURL(item?.data?.twitter)}/>              
-              <PressableImage
-                source={{uri: 'https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c521.png'}}
-                style={styles.contactIcon}
-                show={item?.data?.instagram}
-                onPress={()=>Linking.openURL(item?.data?.instagram)}/>
-              <PressableImage
-                source={{uri: 'https://i.pinimg.com/564x/d1/e0/6e/d1e06e9cc0b4c0880e99d7df775e5f7c.jpg'}}
-                style={styles.contactIcon}
-                show={item?.data?.facebook}
-                onPress={()=>Linking.openURL(item?.data?.facebook)}/>         
-              <PressableImage
-                source={{uri: 'https://www.freepnglogos.com/uploads/logo-website-png/logo-website-website-icon-with-png-and-vector-format-for-unlimited-22.png'}}
-                style={styles.contactIcon}
-                show={item?.data?.web}
-                onPress={()=>Linking.openURL(item?.data?.web)}/>
-              <PressableImage
-                source={{uri: 'https://iconape.com/wp-content/png_logo_vector/wikipedia-logo.png'}}
-                style={styles.contactIcon}
-                show={item?.data?.wiki}
-                onPress={()=>Linking.openURL(item?.data?.wiki)}/>
+            { item?.data?.socials?.map(social=>{
+                if(social.url)
+                  return (
+                    <View key={social.url}>
+                      <PressableImage
+                        source={socials_image.get(social.name)}
+                        style={styles.contactIcon}
+                        onPress={()=>Linking.openURL(social.url)}
+                      />
+                    </View>
+                  );
+                else
+                  return (<></>);
+              })
+            }
             </View>
 
             <View style={{flexDirection: 'column', alignContent: 'center', width: 100, margin:4}}>              

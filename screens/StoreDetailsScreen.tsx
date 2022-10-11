@@ -10,7 +10,7 @@ import { View } from '../components/Themed';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { TwineContext } from '../components/TwineProvider';
 import * as twine from '../api/Twine';
-import {PressableIcon, PressableImage} from '../components/Pressables';
+import {PressableIcon} from '../components/Pressables';
 import { Text, ListItem, Avatar, Dialog  } from '@rneui/themed';
 
 const SCREEN_DEEPLINK_ROUTE = "store_details";

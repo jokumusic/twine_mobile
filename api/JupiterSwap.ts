@@ -5,13 +5,14 @@ import { Wallet } from "@project-serum/anchor";
 
 
 export class JupiterSwap implements TokenSwapInterface {
-  private network: string;
   private connection: Connection;
   private wallet: WalletInterface;
 
-  constructor(network: string, wallet?: WalletInterface) {
-    this.network = network;
-    this.connection = new Connection(clusterApiUrl(network))
+  constructor(connection: Connection, wallet?: WalletInterface) {
+    if(!connection)
+      throw new Error("connection must be specified")
+    
+    this.connection = connection;
     this.wallet = wallet;
   }
 
