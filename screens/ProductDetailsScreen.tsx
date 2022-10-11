@@ -449,8 +449,10 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
           }
         </View>
       
-        {purchaseTicket && purchaseTicket.remainingQuantity > 0 &&
-          <View style={{flexDirection: 'row', width: '98%', backgroundColor: 'transparent', alignSelf: 'center', justifyContent: 'space-evenly', marginVertical: 10}}>                   
+        {purchaseTicket?.remainingQuantity > 0 && 
+          <View style={{flexDirection: 'row', width: '98%', backgroundColor: 'transparent', alignSelf: 'center', justifyContent: 'space-evenly', marginVertical: 10}}>
+            { (purchaseTicket.expiration == 0 || purchaseTicket.expiration > Math.floor(new Date().getTime()/1000)) &&
+              <>
               <Button 
                 title="Reedeem"
                 onPress={()=>setShowRedemptionDialog(true)}
@@ -458,7 +460,7 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                 containerStyle={{width: '30%', height: 50}}
                 disabled={purchaseTicket.remainingQuantity <= 0}
               />
-
+            
               <Button 
                 title="Transfer"
                 onPress={()=>{setTransferTicketQuantity(1); setShowTransferTicketDialog(true);}}
@@ -466,7 +468,8 @@ const ITEM_WIDTH = Math.round(SLIDER_WIDTH/2);
                 containerStyle={{width: '30%', height: 50}}
                 disabled={purchaseTicket.remainingQuantity <= 0}
               />
-
+              </>
+            }
               <Button 
                 title="Return"
                 onPress={()=>setShowReturnDialog(true)}

@@ -4,6 +4,7 @@ import { CartContext } from "../components/CartProvider";
 import { Tab, Text, TabView, ListItem, Avatar, Button, Dialog } from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
 import {Mint} from '../constants/Mints';
+import {Product, Purchase, PurchaseTicket} from '../api/Twine';
 
 const SCREEN_DEEPLINK_ROUTE = "cart";
 
@@ -11,9 +12,9 @@ export default function CartScreen(props) {
     const navigation = useRef(props.navigation).current;
     const twineContext = useContext(TwineContext);
     const {map, itemCount, addItemToCart, removeItemFromCart, getItemsResolved} = useContext(CartContext);
-    const [checkoutItems, setCheckoutItems] = useState([] as twine.Product[]);
+    const [checkoutItems, setCheckoutItems] = useState([] as Product[]);
     const [checkoutItemsTotal, setCheckoutItemsTotal] = useState(0);
-    const [purchases, setPurchases] = useState([]);
+    const [purchases, setPurchases] = useState<Purchase[]>([]);
     const [tabIndex, setTabIndex] = useState(0);
     const [showLoadingDialog, setShowLoadingDialog] = useState(false);
     const [initialized, setInitialized] = useState(false);
@@ -98,17 +99,17 @@ export default function CartScreen(props) {
         if(!tickets)
             return;
 
-        const refreshedPurchases = [];
+        const refreshedPurchases: Purchase[] = [];
         
         for(const ticket of tickets){            
             const snapshot = await twineContext
                 .getProductByAddress(ticket.productSnapshot)
                 .catch(err=>console.log(err));
             
-            refreshedPurchases.push({ticket,snapshot});
+            refreshedPurchases.push({purchaseTicket: ticket, productSnapshot: snapshot});
         }
 
-        refreshedPurchases.sort((a,b)=> b?.ticket?.timestamp - a?.ticket?.timestamp);
+        refreshedPurchases.sort((a,b)=> b?.purchaseTicket?.timestamp - a?.purchaseTicket?.timestamp);
         setPurchases(refreshedPurchases);        
         setShowLoadingDialog(false);
     }
@@ -351,20 +352,24 @@ export default function CartScreen(props) {
                     {
                         purchases.map((purchase, i) => (
                         <ListItem
-                            key={"purchase" + purchase.ticket?.address?.toBase58()}
+                            key={"purchase" + purchase.purchaseTicket?.address?.toBase58()}
                             bottomDivider
-                            onPress={()=>navigation.navigate('ProductDetails',{product:purchase.snapshot, purchaseTicket: purchase.ticket})}
+                            onPress={()=>navigation.navigate('ProductDetails',{product:purchase.productSnapshot, purchaseTicket: purchase.purchaseTicket})}
                         >
-                            <Avatar source={purchase?.snapshot?.data?.img && {uri: purchase.snapshot?.data.img}} size={70} />
+                            <Avatar source={purchase?.productSnapshot?.data?.img && {uri: purchase.productSnapshot?.data.img}} size={70} />
                             <ListItem.Content >
-                                <ListItem.Title>{purchase?.snapshot?.data?.displayName}</ListItem.Title>
-                                <ListItem.Subtitle>{purchase?.snapshot?.data?.displayDescription}</ListItem.Subtitle>
+                                <ListItem.Title>{purchase?.productSnapshot?.data?.displayName}</ListItem.Title>
+                                <ListItem.Subtitle>{purchase?.productSnapshot?.data?.displayDescription}</ListItem.Subtitle>
                                 <View>
-                                    <Text style={{fontSize:15}}>price: ${purchase?.snapshot?.price}</Text>
-                                    <Text style={{fontSize:15}}>remaining redemptions: {purchase.ticket?.remainingQuantity?.toString()}</Text>
-                                    <Text style={{fontSize:15}}>redemptions: {purchase.ticket?.redeemed?.toString()}</Text>
-                                    <Text style={{fontSize:15}}>pending redemptions: {purchase.ticket?.pendingRedemption}</Text>
-                                    <Text style={{fontSize:15}}>date: {new Date(purchase.ticket?.timestamp * 1000).toLocaleString("en-us")}</Text>                                    
+                                    <Text style={{fontSize:15}}>price: ${purchase?.productSnapshot?.price?.toString()}</Text>
+                                    <Text style={{fontSize:15}}>purchased: {new Date(purchase.purchaseTicket.timestamp * 1000).toLocaleString("en-us")}</Text>
+                                    <Text style={{fontSize:15}}>remaining redemptions: {purchase.purchaseTicket.remainingQuantity.toString()}</Text>                          
+                                    <Text style={{fontSize:15}}>pending redemptions: {purchase.purchaseTicket.pendingRedemption?.toString()}</Text>                                    
+                                    { purchase?.purchaseTicket?.expiration > 0  &&
+                                        <Text style={{fontSize:15, color: purchase.purchaseTicket.expiration < Math.floor(new Date().getTime()/1000) ? 'red' : 'black',}}>
+                                            expiration: {new Date(purchase.purchaseTicket.expiration * 1000).toLocaleString()}
+                                        </Text>
+                                    }                                    
                                 </View>
                             </ListItem.Content>
                         </ListItem>
