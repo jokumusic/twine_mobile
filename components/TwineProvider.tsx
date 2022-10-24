@@ -430,6 +430,7 @@ export function TwineProvider(props) {
             cancelRedemption,
             transferTicket,
             cancelTicket,
+            shadowDrive,
         }}
         >
             {props.children}

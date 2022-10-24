@@ -15,7 +15,30 @@ export default function StoresScreen({ navigation }: RootTabScreenProps<'StoresT
   const [payToSells, setPayToSells] = useState<twine.Purchase[]>([]);
   const [tabIndex, setTabIndex] = useState(0);
   const [showLoadingDialog, setShowLoadingDialog] = useState(false);
+/*
+  useEffect(()=>{
+    (async ()=>{
+    const shdwAccounts = await twineContext.shadowDrive.getStorageAccounts()
+      .catch(err=>console.log(err));
+    console.log('shdw accounts: ', shdwAccounts);
 
+    const shdwTokenAccount = await twineContext.shadowDrive.getTokenAccount(twineContext.walletPubkey)
+      .catch(err=>console.log(err));
+    console.log('shdw token account: ', shdwTokenAccount);
+
+    const shdwTokenAccountBalance = await twineContext.shadowDrive.getTokenBalance(twineContext.walletPubkey)
+      .catch(err=>console.log(err));
+    console.log('shdw token account balance: ', shdwTokenAccountBalance);
+
+    const createAccountSignature = await twineContext.shadowDrive.createAccount("test", "1KB")
+      .catch(err=>console.log(err));
+    console.log('signature : ', createAccountSignature);
+
+    
+    })();
+
+  },[]);
+*/
   useEffect(()=>{
     refreshTab();
   },[

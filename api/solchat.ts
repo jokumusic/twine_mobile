@@ -34,14 +34,48 @@ export interface Contact extends WriteableContact {
 }
 
 export interface Allow {
-  directMessage: true,
+  directMessage: true;
 }
 
 export interface DirectConversation {
-  readonly address: PublicKey,
-  readonly contact1: PublicKey,
-  readonly contact2: PublicKey,
-  readonly messages: [],
+  readonly address: PublicKey;
+  readonly contact1: PublicKey;
+  readonly contact2: PublicKey;
+  readonly messages: [];
+}
+
+export interface WriteableGroup {
+  name: string;
+  data: string;
+}
+
+export interface Group extends WriteableGroup {
+  bump: number;
+  nonce: number;
+  owner: PublicKey;
+}
+
+export interface WriteableGroupContact {
+  groupContactRole: number;
+  groupContactPreference: number;
+}
+
+export interface GroupContact extends WriteableGroupContact {
+  bump: number;
+  group: PublicKey;
+  contact: PublicKey;
+}
+
+export enum GroupContactRole {
+  Ignore = 0,
+  Read = 1,
+  Write = 2,
+  Admin = 4,
+}
+
+export enum GroupContactPreference {
+  Ignore = 0,
+  Subscribe = 1,
 }
 
 
@@ -507,4 +541,185 @@ export class SolChat {
       resolve();
     });
   }
+
+  getGroupContact(groupAddress: PublicKey, contactAddress: PublicKey) : PublicKey {
+    const program = this.getProgram();
+    let [groupContactPda, groupContactPdaBump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode("group_contact"),
+        groupAddress.toBuffer(),
+        contactAddress.toBuffer(),
+      ], program.programId);
+
+    return groupContactPda;
+  }
+
+  async createGroup(groupName: string, deeplinkRoute = "") {
+    return new Promise<Group>(async (resolve,reject) =>{
+      if(!groupName) {
+        reject("groupName is required");
+        return;
+      }
+      
+      const currentWalletKey = this.getCurrentWalletPublicKey();
+      if(!currentWalletKey) {
+        reject('not connected to a wallet');
+        return;
+      }
+
+      const groupData = "";
+      const program = this.getProgram();
+      const contactPda = this.getCurrentWalletContactPda();
+      const groupNonce = Math.floor(Math.random() * Math.pow(2,16));
+      let [groupPda, groupPdaBump] = PublicKey.findProgramAddressSync(
+        [
+          anchor.utils.bytes.utf8.encode("group"), 
+          contactPda.toBuffer(),
+          new anchor.BN(groupNonce).toArrayLike(Buffer, 'be', 2),
+        ], program.programId);
+      const groupContactPda = this.getGroupContact(groupPda, contactPda);
+
+      const tx = await program.methods
+        .createGroup(groupNonce, groupName, groupData)
+        .accounts({
+          signer: currentWalletKey,
+          contact: contactPda,
+          group: groupPda,
+          signerGroupContact: groupContactPda,
+        })
+        .transaction();
+      
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = currentWalletKey;  
+  
+      console.log('signing and sending transaction...');
+      const signature = await this.wallet
+        .signAndSendTransaction(tx, false, true, deeplinkRoute) 
+        .catch(reject);
+      
+      if(!signature)
+        return;
+
+      const group = await program.account.group.fetch(groupPda);
+      resolve(group);
+    });
+  }
+
+
+  async createGroupContact(groupAddress: PublicKey, contactAddress: PublicKey, deeplinkRoute = "") {
+    return new Promise<GroupContact>(async (resolve,reject) => {
+      const currentWalletKey = this.getCurrentWalletPublicKey();
+      if(!currentWalletKey) {
+        reject('not connected to a wallet');
+        return;
+      }
+
+      const program = this.getProgram();
+      const signerContactPda = this.getCurrentWalletContactPda();
+      const signerGroupContactPda = this.getGroupContact(groupAddress, signerContactPda);
+      const newGroupContact = this.getGroupContact(groupAddress, contactAddress);
+
+      const tx = await program.methods
+        .createGroupContact()
+        .accounts({
+          signer: currentWalletKey,
+          signerContact: signerContactPda,
+          group: groupAddress,
+          signerGroupContact: signerGroupContactPda,
+          groupContact: newGroupContact,
+          contact: contactAddress
+        })
+        .transaction();
+
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = currentWalletKey;
+
+      console.log('signing and sending transaction...');
+      const signature = await this.wallet
+        .signAndSendTransaction(tx, false, true, deeplinkRoute) 
+        .catch(reject);
+        
+      if(!signature)
+        return;    
+
+      const groupContact = await program.account.groupContact.fetch(newGroupContact);
+      resolve(groupContact);
+    });
+  }
+
+  async setGroupContactRole(groupAddress: PublicKey, groupContactAddress: PublicKey, role: GroupContactRole, deeplinkRoute = "") {
+    return new Promise<GroupContact>(async (resolve,reject) => {
+      const currentWalletKey = this.getCurrentWalletPublicKey();
+      if(!currentWalletKey) {
+        reject('not connected to a wallet');
+        return;
+      }
+
+      const program = this.getProgram();
+      const signerContact = this.getCurrentWalletContact();
+      const signerGroupContact = this.getGroupContact(groupAddress, signerContact);
+
+      const tx = await program.methods
+      .setGroupContactRole(role) //write
+      .accounts({
+        signer: currentWalletKey,
+        signerContact: signerContact,
+        signerGroupContact: signerGroupContact,
+        groupContact: groupContactAddress,
+      })
+      .transaction();
+    
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = currentWalletKey;
+
+      console.log('signing and sending transaction...');
+      const signature = await this.wallet
+        .signAndSendTransaction(tx, false, true, deeplinkRoute) 
+        .catch(reject);
+        
+      if(!signature)
+        return;    
+
+      const groupContact = await program.account.groupContact.fetch(groupContactAddress);
+      resolve(groupContact);
+    });
+  }
+
+  async setGroupContactPreference(groupAddress: PublicKey, groupContactAddress: PublicKey, preference: GroupContactPreference, deeplinkRoute = "") {
+    return new Promise<GroupContact>(async (resolve,reject) => {
+      const currentWalletKey = this.getCurrentWalletPublicKey();
+      if(!currentWalletKey) {
+        reject('not connected to a wallet');
+        return;
+      }
+
+      const program = this.getProgram();
+      const signerContact = this.getCurrentWalletContact();
+      const signerGroupContact = this.getGroupContact(groupAddress, signerContact);
+
+      const tx = await program.methods
+      .setGroupContactPreference(preference) //subscribe
+      .accounts({
+        signer: currentWalletKey,
+        signerContact: signerContact,
+        signerGroupContact: signerGroupContact,
+      })
+      .transaction();
+    
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = currentWalletKey;
+
+      console.log('signing and sending transaction...');
+      const signature = await this.wallet
+        .signAndSendTransaction(tx, false, true, deeplinkRoute) 
+        .catch(reject);
+        
+      if(!signature)
+        return;    
+
+      const groupContact = await program.account.groupContact.fetch(signerGroupContact);
+      resolve(groupContact);
+    });
+  }
+
 }

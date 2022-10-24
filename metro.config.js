@@ -19,7 +19,7 @@ module.exports = async () => {
     resolver: {
       sourceExts: [...sourceExts, 'cjs', 'svg'],
       extraNodeModules: {
-        //crypto: path.resolve(__dirname, './node_modules/react-native-quick-crypto'),
+        crypto: path.resolve(__dirname, './node_modules/expo-crypto'),
         stream: path.resolve(__dirname, './node_modules/stream-browserify'),
         buffer: path.resolve(__dirname, './node_modules/@craftzdog/react-native-buffer'),
         //os: path.resolve(__dirname, './node_modules/react-native-os'),

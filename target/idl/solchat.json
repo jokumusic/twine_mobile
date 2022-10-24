@@ -145,6 +145,148 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "createGroup",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "contact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signerGroupContact",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u16"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "createGroupContact",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "signerContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "group",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "signerGroupContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "groupContact",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "contact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "setGroupContactRole",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "signerContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "signerGroupContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "groupContact",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "role",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "setGroupContactPreference",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "signerContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "signerGroupContact",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "preference",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -204,6 +346,62 @@
             "type": {
               "vec": "string"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Group",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "type": "u16"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "data",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GroupContact",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "group",
+            "type": "publicKey"
+          },
+          {
+            "name": "contact",
+            "type": "publicKey"
+          },
+          {
+            "name": "groupContactRole",
+            "type": "u8"
+          },
+          {
+            "name": "groupContactPreference",
+            "type": "u8"
           }
         ]
       }
