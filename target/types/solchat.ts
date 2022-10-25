@@ -191,6 +191,46 @@ export type Solchat = {
       ]
     },
     {
+      "name": "editGroup",
+      "accounts": [
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "signerContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "signerGroupContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "createGroupContact",
       "accounts": [
         {
@@ -364,7 +404,7 @@ export type Solchat = {
             "type": "u16"
           },
           {
-            "name": "owner",
+            "name": "creator",
             "type": "publicKey"
           },
           {
@@ -420,8 +460,8 @@ export type Solchat = {
     },
     {
       "code": 6002,
-      "name": "TestError",
-      "msg": "test error"
+      "name": "NotAuthorized",
+      "msg": "Not Authorized"
     }
   ]
 };
@@ -619,6 +659,46 @@ export const IDL: Solchat = {
       ]
     },
     {
+      "name": "editGroup",
+      "accounts": [
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "signerContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "signerGroupContact",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "createGroupContact",
       "accounts": [
         {
@@ -792,7 +872,7 @@ export const IDL: Solchat = {
             "type": "u16"
           },
           {
-            "name": "owner",
+            "name": "creator",
             "type": "publicKey"
           },
           {
@@ -848,8 +928,8 @@ export const IDL: Solchat = {
     },
     {
       "code": 6002,
-      "name": "TestError",
-      "msg": "test error"
+      "name": "NotAuthorized",
+      "msg": "Not Authorized"
     }
   ]
 };

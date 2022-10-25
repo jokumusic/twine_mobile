@@ -11,6 +11,7 @@ import {
     Transaction,
   } from "@solana/web3.js";
 import WalletInterface from "./WalletInterface";
+import { rejects } from "assert";
 
 export interface ContactProfile {
   description?: string;
@@ -45,14 +46,15 @@ export interface DirectConversation {
 }
 
 export interface WriteableGroup {
+  owner: PublicKey;
   name: string;
   data: string;
 }
 
 export interface Group extends WriteableGroup {
-  bump: number;
-  nonce: number;
-  owner: PublicKey;
+  readonly address: PublicKey;
+  readonly bump: number;
+  readonly nonce: number;  
 }
 
 export interface WriteableGroupContact {
@@ -61,9 +63,10 @@ export interface WriteableGroupContact {
 }
 
 export interface GroupContact extends WriteableGroupContact {
-  bump: number;
-  group: PublicKey;
-  contact: PublicKey;
+  readonly address: PublicKey;
+  readonly bump: number;
+  readonly group: PublicKey;
+  readonly contact: PublicKey;
 }
 
 export enum GroupContactRole {
@@ -542,7 +545,7 @@ export class SolChat {
     });
   }
 
-  getGroupContact(groupAddress: PublicKey, contactAddress: PublicKey) : PublicKey {
+  getGroupContactPda(groupAddress: PublicKey, contactAddress: PublicKey) : PublicKey {
     const program = this.getProgram();
     let [groupContactPda, groupContactPdaBump] = PublicKey.findProgramAddressSync(
       [
@@ -552,6 +555,48 @@ export class SolChat {
       ], program.programId);
 
     return groupContactPda;
+  }
+
+  async getGroup(groupAddress: PublicKey) : Promise<Group> {
+    const program = this.getProgram();
+    const group = await program.account.group.fetch(groupAddress);
+    group.address = groupAddress;
+    return group;
+  }
+
+
+  async getContactGroupContacts(contactAddress: PublicKey) {
+    return new Promise<GroupContact[]>(async (resolve,reject) => {
+      const program = this.getProgram();
+      const groupContacts = await program.account.groupContact
+        .all([{ memcmp: { offset: 41, bytes: contactAddress.toBase58() }}])
+        .catch(err=>reject(err.toString()));
+
+      const groupContactAccounts = groupContacts.map(gc=>{
+        gc.account.address = gc.publicKey;
+        return gc.account;
+      })
+
+      resolve(groupContactAccounts);
+    });      
+  }
+
+  async getContactGroups(contactAddress: PublicKey) : Promise<Group[]> {
+    return new Promise<Group[]>(async (resolve,reject) => {
+      const contactGroupContacts = await this.getContactGroupContacts(contactAddress)
+        .catch(err=>reject(err.toString()));
+
+      if(!contactGroupContacts)
+        return;
+      
+      const program = this.getProgram();
+      const promises = contactGroupContacts.map(gc=> this.getGroup(gc.group));
+      const groups = await Promise
+        .all(promises)
+        .catch(err=>console.log(err));
+      
+      resolve(groups);
+    });
   }
 
   async createGroup(groupName: string, deeplinkRoute = "") {
@@ -571,13 +616,17 @@ export class SolChat {
       const program = this.getProgram();
       const contactPda = this.getCurrentWalletContactPda();
       const groupNonce = Math.floor(Math.random() * Math.pow(2,16));
+      console.log('contactPda: ', contactPda?.toBase58());
+      console.log('groupNonce: ', groupNonce);
+
       let [groupPda, groupPdaBump] = PublicKey.findProgramAddressSync(
         [
           anchor.utils.bytes.utf8.encode("group"), 
-          contactPda.toBuffer(),
+          currentWalletKey.toBuffer(),
           new anchor.BN(groupNonce).toArrayLike(Buffer, 'be', 2),
         ], program.programId);
-      const groupContactPda = this.getGroupContact(groupPda, contactPda);
+      const groupContactPda = this.getGroupContactPda(groupPda, contactPda);
+      console.log('groupContactPda: ', groupContactPda.toBase58());
 
       const tx = await program.methods
         .createGroup(groupNonce, groupName, groupData)
@@ -600,8 +649,63 @@ export class SolChat {
       if(!signature)
         return;
 
-      const group = await program.account.group.fetch(groupPda);
+      const group = await this.getGroup(groupPda)
+        .catch(err=>reject(err));
+
+      if(!group)
+        return;
+
       resolve(group);
+    });
+  }
+
+  async updateGroup(group: Group, deeplinkRoute="") {
+    return new Promise<Group>(async (resolve,reject) => {
+      const writeableGroup = group as WriteableGroup;
+      if(!writeableGroup.name) {
+        reject("name is required");
+        return;
+      }
+
+      const currentWalletKey = this.getCurrentWalletPublicKey();
+      if(!currentWalletKey) {
+        reject('not connected to a wallet');
+        return;
+      }
+    
+      const currentWalletContactAddress = this.getCurrentWalletContactPda();
+      const signerGroupContactAddress = this.getGroupContactPda(group.address, currentWalletContactAddress);
+
+      const program = this.getProgram(deeplinkRoute);
+      const tx = await program.methods
+        .editGroup(writeableGroup.name, writeableGroup.data)
+        .accounts({
+          group: group.address,
+          signer: currentWalletKey,
+          signerContact: currentWalletContactAddress,
+          signerGroupContact: signerGroupContactAddress
+        })
+        .transaction();
+
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = currentWalletKey;  
+    
+      console.log('signing and sending transaction...');
+      const signature = await this.wallet
+        .signAndSendTransaction(tx, false, true, deeplinkRoute) 
+        .catch(err=>reject(err.toString()));
+        
+      console.log('signature: ', signature);
+      if(!signature)
+        return;
+  
+      const updatedGroup = await this.getGroup(group.address)
+        .catch(err=>reject(err));
+  
+        if(!updatedGroup)
+          return;
+  
+        resolve(updatedGroup);
     });
   }
 

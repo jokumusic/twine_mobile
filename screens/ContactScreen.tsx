@@ -8,7 +8,7 @@ import { AssetType } from '../api/Twine';
 import SelectDropdown from 'react-native-select-dropdown'
 import { Avatar, Dialog, Icon, ListItem, Button} from '@rneui/themed';
 import { TwineContext } from '../components/TwineProvider';
-import { Contact, ContactProfile, DirectConversation} from '../api/SolChat';
+import { Contact, ContactProfile, DirectConversation, Group} from '../api/SolChat';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
 import uuid from 'react-native-uuid';
 import QRCode from 'react-native-qrcode-svg';
@@ -27,13 +27,14 @@ interface SendAsset {
   amount: number;
 }
 
-const mockGroups = [];
+
 
 export default function ContactScreen(props) {
   const navigation = useRef(props.navigation).current;
   const [addContactModalVisible, setAddContactModalVisible] = useState(false);
+  const [addContactModalMessage, setAddContactModalMessage] = useState("");
   const [sendAssetModalVisible, setSendAssetModalVisible] = useState(false);
-  const [contact, setContact] = useState(null);
+  const [contact, setContact] = useState<Contact>(null);
   const [addContactWalletAddress,setAddContactWalletAddress]= useState("");
   const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [allowedContacts, setAllowedContacts] = useState([] as Contact[]);
@@ -49,6 +50,13 @@ export default function ContactScreen(props) {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [showScannerDialog, setShowScannerDialog] = useState(false);
+  const [createGroupDialogVisible, setCreateGroupDialogVisible] = useState(false);
+  const [createGroupDialogMessage, setCreateGroupDialogMessage] = useState("");
+  const [createGroupName, setCreateGroupName] = useState("");
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [editGroup, setEditGroup] = useState<Group>();
+  const [editGroupDialogVisible, setEditGroupDialogVisible] = useState(false);
+  const [editGroupDialogMessage, setEditGroupDialogMessage] = useState("");
  
   useEffect(() => {
     (async () => {
@@ -92,6 +100,23 @@ export default function ContactScreen(props) {
         }*/
       })
       .catch(err=>console.log(err));
+  }, [contact]);
+
+  useEffect(()=>{
+    if(!contact?.address)
+      return;
+
+    console.log('getContactGroups...');
+    (async ()=>{
+      const results = await twineContext.solchat
+        .getContactGroups(contact.address)
+        .catch(err=>console.log(err.toString()));
+      
+      if(results) {
+        setGroups(results);
+      }
+    })();
+
   }, [contact]);
 
   async function refreshChatWithFocusedContact() {
@@ -249,29 +274,33 @@ export default function ContactScreen(props) {
  }, [allowedContacts])
 
 
-  function allowContact() {
+  async function allowContact() {
     console.log('here');
     if(!walletIsConnected("You must be connected to wallet to add a contact.\nConnect to a wallet?"))
       return;
 
     if(!addContactWalletAddress){
-      Alert.alert('A contact address must be specified');
+      setAddContactModalMessage('A contact address must be specified');
       return;
     }
 
+    setAddContactModalVisible(false);
     setShowLoadingDialog(true);
     console.log('allowing contact...');
 
-    twineContext.solchat
+    const addedContact = await twineContext.solchat
       .addAllowByWalletAddress(new PublicKey(addContactWalletAddress), {directMessage: true}, SCREEN_DEEPLINK_ROUTE)
-      .then(updatedContact=>setContact(updatedContact))
-      .catch(err=>console.log(err))
+      .catch(err=>setAddContactModalMessage(err.toString()))
       .finally(()=>{
-        console.log('done');
-        setAddContactModalVisible(false);
         setShowLoadingDialog(false);
-        setAddContactWalletAddress("");
-      });    
+      });
+
+    if(addedContact){
+      setAddContactModalVisible(false);
+      setContact(addedContact);
+    } else {
+      setAddContactModalVisible(true);
+    }
   }
 
   async function sendAssetToFocusedContact(){
@@ -307,6 +336,60 @@ export default function ContactScreen(props) {
     setShowLoadingDialog(false);
   }
 
+  async function createGroup() {
+    if(!createGroupName){
+      setCreateGroupDialogMessage('A group name must be specified');
+      return;
+    }
+
+    setCreateGroupDialogVisible(false);
+    setShowLoadingDialog(true);
+
+    const createdGroup = await twineContext.solchat
+      .createGroup(createGroupName, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>setCreateGroupDialogMessage(err.toString()))
+      .finally(()=>{
+        setShowLoadingDialog(false);
+      });
+    
+    if(createdGroup){
+      setCreateGroupDialogVisible(false);
+      setGroups(groups.concat(createdGroup));
+    } else {
+      setCreateGroupDialogVisible(true);
+    }
+  }
+
+  async function updateGroup() {
+    if(!editGroup?.name){
+      setEditGroupDialogMessage('A group name must be specified');
+      return;
+    }
+
+    setEditGroupDialogVisible(false);
+    setShowLoadingDialog(true);
+
+    const updatedGroup = await twineContext.solchat
+      .updateGroup(editGroup, SCREEN_DEEPLINK_ROUTE)
+      .catch(err=>setEditGroupDialogMessage(err.toString()))
+      .finally(()=>{
+        setShowLoadingDialog(false);
+      });
+    console.log('updatedGroup: ', updatedGroup);
+
+    if(updatedGroup){
+      setEditGroupDialogVisible(false);
+      setGroups(groups.map(g=>{
+        if(g.address.equals(updatedGroup.address))
+          return updatedGroup;
+        else
+          return g;
+      }));
+    } else {
+      setCreateGroupDialogVisible(true);
+    }
+  }
+
 
    return (
     <View style={styles.container}>
@@ -315,12 +398,25 @@ export default function ContactScreen(props) {
       </Dialog>
       <View style={styles.leftPanel}>
         <View style={styles.leftPanelHeader}>
-          <Button            
+          <PressableIcon            
             style={{margin: 5}}  
-            onPress={()=>{setAddContactModalVisible(true);}}
-          >
-            <Icon type='ionicon' name='person-add' color='white'/>          
-          </Button>
+            onPress={()=>{
+              setAddContactModalMessage("");
+              setAddContactWalletAddress("");
+              setAddContactModalVisible(true);}}
+            name="person-add"
+            color='white'
+          />
+          <PressableIcon            
+            style={{margin: 5}}  
+            onPress={()=>{
+              setCreateGroupDialogMessage("");
+              setCreateGroupName("");
+              setCreateGroupDialogVisible(true);
+            }}
+            name="people"
+            color='white'
+          />
           {/*<PressableIcon name="refresh" style={{margin: 5}} color={'white'} onPress={updateWalletContact} />*/}
         </View>
 
@@ -384,9 +480,9 @@ export default function ContactScreen(props) {
             >
             <ScrollView>
             {
-              mockGroups.map((group, i) => (
+              groups.map((group, i) => (
                 <ListItem
-                  key={"group" + i}
+                  key={"group_" + group.address.toBase58()}
                   containerStyle={{
                     marginHorizontal: 1,
                     marginVertical: 1,
@@ -396,11 +492,20 @@ export default function ContactScreen(props) {
                   }}
                   bottomDivider
                 >
-                  <Avatar rounded source={group?.img && { uri: group.img }} size={45} />
-                  <ListItem.Content>
-                    <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 14 }}>
+                  {/*<Avatar rounded source={group?.img && { uri: group.img }} size={45} />*/}
+                  <ListItem.Content style={{flexDirection: 'row', alignContent: 'flex-start', justifyContent: 'flex-start'}}>
+                    <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 15, alignSelf: 'flex-start' }}>
                       {group.name}
                     </Text>
+                    <PressableIcon
+                      style={{marginLeft: 5}}
+                      name="create-outline"
+                      onPress={()=>{
+                        setEditGroupDialogMessage("");
+                        setEditGroup({...group});
+                        setEditGroupDialogVisible(true);
+                      }}
+                    />
                   </ListItem.Content>
                 </ListItem>
                 )
@@ -475,6 +580,7 @@ export default function ContactScreen(props) {
 
       <Dialog isVisible={addContactModalVisible} onBackdropPress={()=>{setAddContactWalletAddress(''); setShowScannerDialog(false); setAddContactModalVisible(false);}}>
         <Dialog.Title title="Add Contact"/>
+            <Text style={{color:'red'}}>{addContactModalMessage}</Text>
           <Text>allows contact to communicate with you</Text>
           <View style={{flexDirection: 'row'}}>
             <TextInput 
@@ -554,6 +660,43 @@ export default function ContactScreen(props) {
                 />
             </View>  
           </Dialog>
+
+      <Dialog isVisible={createGroupDialogVisible} onBackdropPress={()=>{setCreateGroupDialogVisible(false);}}>
+        <Dialog.Title title="Create Group"/>
+          <Text style={{color:'red'}}>{createGroupDialogMessage}</Text>
+          
+          <Text>Group Name:</Text>
+          <View style={{flexDirection: 'row'}}>
+            <TextInput 
+              placeholder="Group Name" 
+              value={createGroupName} 
+              style={styles.textInput} 
+              onChangeText={(value) => setCreateGroupName(value)} 
+            />
+          </View>    
+        <Dialog.Actions>
+          <Dialog.Button title="Create" onPress={() => createGroup()}/>
+          <Dialog.Button title="Cancel" onPress={() =>{setCreateGroupDialogVisible(false);}}/>
+        </Dialog.Actions>
+      </Dialog>
+
+      <Dialog isVisible={editGroupDialogVisible} onBackdropPress={()=>{setEditGroupDialogVisible(false);}}>
+        <Dialog.Title title="Update Group"/>
+          <Text style={{color:'red'}}>{editGroupDialogMessage}</Text>
+          
+          <Text>Group Name:</Text>
+          <View style={{flexDirection: 'row'}}>
+            <TextInput 
+              value={editGroup?.name} 
+              style={styles.textInput} 
+              onChangeText={(value) => setEditGroup({...editGroup, name: value})} 
+            />
+          </View>    
+        <Dialog.Actions>
+          <Dialog.Button title="Update" onPress={() => updateGroup()}/>
+          <Dialog.Button title="Cancel" onPress={() =>{setEditGroupDialogVisible(false);}}/>
+        </Dialog.Actions>
+      </Dialog>
           
     </View>
    )
