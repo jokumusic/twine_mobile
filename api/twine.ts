@@ -1366,9 +1366,8 @@ export class Twine {
                 return;
             }
 
-
             const purchaseFee = (await this.getProgramMetadata()).fee.toNumber();
-            const nonce = generateRandomU16();            
+            const nonce = generateRandomU16();
             const transferAmount = product.price * this.productPaymentTokenMint.multiplier * quantity + purchaseFee;
             console.log('transferAmount: ', transferAmount);
             const [programMetadataPda, programMetadataPdaBump] = this.getProgramMetadataPda();

@@ -826,4 +826,20 @@ export class SolChat {
     });
   }
 
+  async getGroupContacts(group: PublicKey) {
+    return new Promise<GroupContact[]>(async (resolve,reject) => {
+      const program = this.getProgram();
+      const groupContacts = await program.account.groupContact
+        .all([{ memcmp: { offset: 9, bytes: group.toBase58() }}])
+        .catch(err=>reject(err.toString()));
+
+      const groupContactAccounts = groupContacts.map(gc=>{
+        gc.account.address = gc.publicKey;
+        return gc.account;
+      })
+
+      resolve(groupContactAccounts);
+    });
+  }
+
 }
